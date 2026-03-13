@@ -2548,7 +2548,7 @@ function MobileBar({
     const items = isBasic ? ['S', 'V', 'C'] : ['S', 'V', 'O', 'A'];
 
     return (
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 shadow-[0_-2px_14px_rgba(0,0,0,0.08)]">
+      <div className="md:hidden flex-shrink-0 bg-white border-t border-gray-200 z-30 shadow-[0_-2px_14px_rgba(0,0,0,0.08)]">
         <div className="px-3 pt-1.5 text-xs font-semibold text-slate-400 tracking-wide">
           🏗️ {t.structureModeMobile}
         </div>
@@ -2579,7 +2579,7 @@ function MobileBar({
   }
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 shadow-[0_-2px_14px_rgba(0,0,0,0.08)]">
+    <div className="md:hidden flex-shrink-0 bg-white border-t border-gray-200 z-30 shadow-[0_-2px_14px_rgba(0,0,0,0.08)]">
       <div className="px-3 pt-1.5 text-xs font-semibold text-slate-400 tracking-wide">
         {isManual ? `✏️ ${t.paintModeMobile}` : `📘 ${t.partsOfSpeech.toUpperCase()}`}
       </div>
@@ -2999,7 +2999,7 @@ function App() {
 
         {/* Main content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="px-4 pt-5 pb-48 md:px-6 md:pt-6 md:pb-10">
+          <div className="px-4 pt-5 pb-6 md:px-6 md:pt-6 md:pb-10">
             {/* ── Top controls row ── */}
             <div className="flex flex-wrap items-center justify-between gap-2.5 mb-4">
               {/* Mode toggle */}
