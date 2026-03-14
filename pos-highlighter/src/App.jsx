@@ -2556,7 +2556,7 @@ function MobileBar({
     return (
       <div className="md:hidden flex-shrink-0 bg-white border-t border-gray-200 z-30 shadow-[0_-2px_14px_rgba(0,0,0,0.08)]">
         <div className="px-3 pt-1.5 text-xs font-semibold text-slate-400 tracking-wide">
-          🏗️ {t.structureModeMobile}
+          {isManual ? `🏗️ ${t.structureModeMobile}` : `📐 ${t.sentenceStructure.toUpperCase()}`}
         </div>
         <div className="flex gap-1.5 px-3 pt-1.5 pb-2.5 overflow-x-auto">
           {items.map(key => {
@@ -2565,13 +2565,13 @@ function MobileBar({
             return (
               <button
                 key={key}
-                onClick={() => onSelectStructure(key)}
+                onClick={() => isManual && onSelectStructure(key)}
                 className="flex-shrink-0 flex flex-col items-center py-1.5 px-2.5 rounded-xl border-2 transition-all min-w-[50px]"
                 style={{
                   background: s.bg,
                   color: s.color,
                   borderColor: sel ? s.color : 'transparent',
-                  cursor: 'pointer',
+                  cursor: isManual ? 'pointer' : 'default',
                 }}
               >
                 <span className="font-extrabold text-xs">{s.label}</span>
