@@ -2936,14 +2936,14 @@ function App() {
       <header className="flex-shrink-0 bg-white border-b border-gray-200 shadow-sm z-10 px-4 pt-3 pb-2.5">
         {/* Row 1: logo + title */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             <img
               src={`${import.meta.env.BASE_URL}pwa-192x192.png`}
               alt="Desgramatizador"
-              className="w-9 h-9 rounded-lg flex-shrink-0"
+              className="w-11 h-11 md:w-9 md:h-9 rounded-xl flex-shrink-0"
             />
             <div>
-              <div className="text-base font-bold text-slate-800 leading-tight">
+              <div className="text-lg md:text-base font-bold text-slate-800 leading-tight">
                 {t.appTitle}
               </div>
               <div className="text-xs text-slate-400">POS & Structure</div>
