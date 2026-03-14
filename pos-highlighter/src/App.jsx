@@ -2889,8 +2889,15 @@ function App() {
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
+  const isMobileDevice = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+
   useEffect(() => {
-    const onBeforeInstall = e => { e.preventDefault(); setInstallPrompt(e); setShowInstallBanner(true); };
+    const onBeforeInstall = e => {
+      e.preventDefault();
+      if (!isMobileDevice) return;
+      setInstallPrompt(e);
+      setShowInstallBanner(true);
+    };
     window.addEventListener('beforeinstallprompt', onBeforeInstall);
     window.addEventListener('online',  () => setIsOnline(true));
     window.addEventListener('offline', () => setIsOnline(false));
