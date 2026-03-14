@@ -31,6 +31,7 @@ const TRANSLATIONS = {
     painting: 'Pintando',
     selectCategory: 'Selecciona una categoría arriba',
     levelLabel: 'Nivel',
+    langLabel: 'Idioma',
     showLabels: 'Mostrar Etiquetas',
     hideLabels: 'Ocultar Etiquetas',
     clearAll: 'Limpiar Todo',
@@ -103,6 +104,7 @@ const TRANSLATIONS = {
     painting: 'Painting',
     selectCategory: 'Select a category above',
     levelLabel: 'Level',
+    langLabel: 'Language',
     showLabels: 'Show Labels',
     hideLabels: 'Hide Labels',
     clearAll: 'Clear All',
@@ -2949,10 +2951,13 @@ function App() {
           </div>
 
           {/* Controls: inline on md+, hidden on mobile */}
-          <div className="hidden md:flex items-center gap-2">
-            <div className="flex bg-slate-100 border border-slate-300 rounded-lg p-0.5">
-              <button onClick={() => setLang('es')} className={`px-3 py-1 rounded text-sm font-bold transition-all ${lang === 'es' ? 'bg-white shadow-sm text-indigo-600' : 'hover:bg-slate-50 text-slate-600'}`} title="Español">ES</button>
-              <button onClick={() => setLang('en')} className={`px-3 py-1 rounded text-sm font-bold transition-all ${lang === 'en' ? 'bg-white shadow-sm text-indigo-600' : 'hover:bg-slate-50 text-slate-600'}`} title="English">EN</button>
+          <div className="hidden md:flex items-end gap-2">
+            <div className="flex flex-col items-start">
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide px-1 mb-0.5">{t.langLabel}</span>
+              <div className="flex bg-slate-100 border border-slate-300 rounded-lg p-0.5">
+                <button onClick={() => setLang('es')} className={`px-3 py-1 rounded text-sm font-bold transition-all ${lang === 'es' ? 'bg-white shadow-sm text-indigo-600' : 'hover:bg-slate-50 text-slate-600'}`} title="Español">ES</button>
+                <button onClick={() => setLang('en')} className={`px-3 py-1 rounded text-sm font-bold transition-all ${lang === 'en' ? 'bg-white shadow-sm text-indigo-600' : 'hover:bg-slate-50 text-slate-600'}`} title="English">EN</button>
+              </div>
             </div>
             <div className="flex flex-col items-start">
               <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide px-1 mb-0.5">{t.levelLabel}</span>
@@ -2966,14 +2971,17 @@ function App() {
         </div>
 
         {/* Row 2: controls on mobile only */}
-        <div className="flex md:hidden items-center gap-2 mt-2">
-          <div className="flex bg-slate-100 border border-slate-300 rounded-lg p-0.5">
-            <button onClick={() => setLang('es')} className={`px-3 py-1 rounded text-sm font-bold transition-all ${lang === 'es' ? 'bg-white shadow-sm text-indigo-600' : 'hover:bg-slate-50 text-slate-600'}`} title="Español">ES</button>
-            <button onClick={() => setLang('en')} className={`px-3 py-1 rounded text-sm font-bold transition-all ${lang === 'en' ? 'bg-white shadow-sm text-indigo-600' : 'hover:bg-slate-50 text-slate-600'}`} title="English">EN</button>
+        <div className="flex md:hidden items-end gap-3 mt-2">
+          <div className="flex flex-col items-start">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide px-1 mb-0.5">{t.langLabel}</span>
+            <div className="flex bg-slate-100 border border-slate-300 rounded-lg p-0.5">
+              <button onClick={() => setLang('es')} className={`px-3 py-1 rounded text-sm font-bold transition-all ${lang === 'es' ? 'bg-white shadow-sm text-indigo-600' : 'hover:bg-slate-50 text-slate-600'}`} title="Español">ES</button>
+              <button onClick={() => setLang('en')} className={`px-3 py-1 rounded text-sm font-bold transition-all ${lang === 'en' ? 'bg-white shadow-sm text-indigo-600' : 'hover:bg-slate-50 text-slate-600'}`} title="English">EN</button>
+            </div>
           </div>
-          <div className="flex flex-col flex-1 items-start">
+          <div className="flex flex-col items-start">
             <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide px-1 mb-0.5">{t.levelLabel}</span>
-            <select value={level} onChange={e => setLevel(e.target.value)} className="w-full text-sm font-bold bg-indigo-50 border-indigo-200 border-[1.5px] text-indigo-800 rounded-lg px-3 py-1.5 cursor-pointer outline-none">
+            <select value={level} onChange={e => setLevel(e.target.value)} className="text-sm font-bold bg-indigo-50 border-indigo-200 border-[1.5px] text-indigo-800 rounded-lg px-3 py-1.5 cursor-pointer outline-none">
               {['Básico', 'Elemental', 'Intermedio', 'Intermedio Alto'].map(l => (
                 <option key={l} value={l}>{l}</option>
               ))}
