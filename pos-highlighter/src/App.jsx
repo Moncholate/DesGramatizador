@@ -2929,54 +2929,44 @@ function App() {
         </div>
       )}
       {/* ══ HEADER ══════════════════════════════════════════ */}
-      <header className="flex-shrink-0 bg-white border-b border-gray-200 flex items-center justify-between px-4 py-2.5 shadow-sm z-10">
-        <div className="flex items-center gap-3">
-          <img
-            src={`${import.meta.env.BASE_URL}pwa-192x192.png`}
-            alt="Desgramatizador"
-            className="w-9 h-9 rounded-lg flex-shrink-0"
-          />
-          <div>
-            <div className="text-base font-bold text-slate-800 leading-tight">
-              {t.appTitle}
+      <header className="flex-shrink-0 bg-white border-b border-gray-200 shadow-sm z-10 px-4 pt-3 pb-2.5">
+        {/* Row 1: logo + title */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <img
+              src={`${import.meta.env.BASE_URL}pwa-192x192.png`}
+              alt="Desgramatizador"
+              className="w-9 h-9 rounded-lg flex-shrink-0"
+            />
+            <div>
+              <div className="text-base font-bold text-slate-800 leading-tight">
+                {t.appTitle}
+              </div>
+              <div className="text-xs text-slate-400">POS & Structure</div>
             </div>
-            <div className="text-xs text-slate-400">
-              POS & Structure
+          </div>
+
+          {/* Controls: inline on md+, hidden on mobile */}
+          <div className="hidden md:flex items-center gap-2">
+            <div className="flex bg-slate-100 border border-slate-300 rounded-lg p-0.5">
+              <button onClick={() => setLang('es')} className={`px-3 py-1 rounded text-sm font-bold transition-all ${lang === 'es' ? 'bg-white shadow-sm text-indigo-600' : 'hover:bg-slate-50 text-slate-600'}`} title="Español">ES</button>
+              <button onClick={() => setLang('en')} className={`px-3 py-1 rounded text-sm font-bold transition-all ${lang === 'en' ? 'bg-white shadow-sm text-indigo-600' : 'hover:bg-slate-50 text-slate-600'}`} title="English">EN</button>
             </div>
+            <select value={level} onChange={e => setLevel(e.target.value)} className="text-sm font-bold bg-indigo-50 border-indigo-200 border-[1.5px] text-indigo-800 rounded-lg px-3.5 py-1.5 cursor-pointer outline-none">
+              {['Básico', 'Elemental', 'Intermedio', 'Intermedio Alto'].map(l => (
+                <option key={l} value={l}>{l}</option>
+              ))}
+            </select>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Row 2: controls on mobile only */}
+        <div className="flex md:hidden items-center gap-2 mt-2">
           <div className="flex bg-slate-100 border border-slate-300 rounded-lg p-0.5">
-            <button
-              onClick={() => setLang('es')}
-              className={`px-3 py-1 rounded text-sm font-bold transition-all ${
-                lang === 'es'
-                  ? 'bg-white shadow-sm text-indigo-600'
-                  : 'hover:bg-slate-50 text-slate-600'
-              }`}
-              title="Español"
-            >
-              ES
-            </button>
-            <button
-              onClick={() => setLang('en')}
-              className={`px-3 py-1 rounded text-sm font-bold transition-all ${
-                lang === 'en'
-                  ? 'bg-white shadow-sm text-indigo-600'
-                  : 'hover:bg-slate-50 text-slate-600'
-              }`}
-              title="English"
-            >
-              EN
-            </button>
+            <button onClick={() => setLang('es')} className={`px-3 py-1 rounded text-sm font-bold transition-all ${lang === 'es' ? 'bg-white shadow-sm text-indigo-600' : 'hover:bg-slate-50 text-slate-600'}`} title="Español">ES</button>
+            <button onClick={() => setLang('en')} className={`px-3 py-1 rounded text-sm font-bold transition-all ${lang === 'en' ? 'bg-white shadow-sm text-indigo-600' : 'hover:bg-slate-50 text-slate-600'}`} title="English">EN</button>
           </div>
-
-          <select
-            value={level}
-            onChange={e => setLevel(e.target.value)}
-            className="text-sm font-bold bg-indigo-50 border-indigo-200 border-[1.5px] text-indigo-800 rounded-lg px-3.5 py-1.5 cursor-pointer outline-none"
-          >
+          <select value={level} onChange={e => setLevel(e.target.value)} className="flex-1 text-sm font-bold bg-indigo-50 border-indigo-200 border-[1.5px] text-indigo-800 rounded-lg px-3 py-1.5 cursor-pointer outline-none">
             {['Básico', 'Elemental', 'Intermedio', 'Intermedio Alto'].map(l => (
               <option key={l} value={l}>{l}</option>
             ))}
