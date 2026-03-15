@@ -1642,6 +1642,28 @@ function tokenizeText(inputText) {
     }
   }
 
+  // ── Post-processing: merge "how + adj/adv" into single WH token in questions ─
+  const HOW_COMPOUNDS = new Set([
+    'long','much','many','often','far','old','tall','big',
+    'good','well','fast','late','early','hard','loud',
+  ]);
+  if (isQuestion(inputText)) {
+    for (let i = 0; i < tokens.length - 1; i++) {
+      const tok = tokens[i];
+      if (tok.isPunct || tok.pos !== 'wh' || tok.text.toLowerCase() !== 'how') continue;
+      // Find next non-punct token
+      let j = i + 1;
+      while (j < tokens.length && tokens[j].isPunct) j++;
+      if (j >= tokens.length) continue;
+      const next = tokens[j];
+      if (!next.isPunct && HOW_COMPOUNDS.has(next.text.toLowerCase())) {
+        // Merge: update how-token text, remove next token
+        tok.text = tok.text + ' ' + next.text;
+        tokens.splice(j, 1);
+      }
+    }
+  }
+
   // ── Post-processing: Phrasal Verb detection ──────────────────────────────
   for (let i = 0; i < tokens.length; i++) {
     const tok = tokens[i];
