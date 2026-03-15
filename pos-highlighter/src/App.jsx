@@ -880,6 +880,8 @@ function analyzeSentenceStructure(sentenceText, level) {
         'remain','remains','remained','stay','stays','stayed',
         'sound','sounds','sounded','taste','tastes','tasted',
         'grow','grows','grew','get','gets','got','keep','keeps','kept',
+        'go','goes','went','turn','turns','turned','fall','falls','fell',
+        'come','comes','came','prove','proves','proved',
       ];
       for (const lv of LINKING_VERBS) {
         const m = sentenceText.match(new RegExp(`\\b${lv}\\b`, 'i'));
@@ -946,7 +948,8 @@ function analyzeSentenceStructure(sentenceText, level) {
 
     // Mid-position adverbs (also, always, never, etc.) between S and V belong to the V block
     const MID_ADV = new Set(['also','always','never','often','still','just','already',
-                             'usually','sometimes','rarely','seldom','ever','even']);
+                             'usually','sometimes','rarely','seldom','ever','even',
+                             'almost','only','probably','certainly','perhaps','simply','really']);
     const beforeWords = beforeVerb.split(/\s+/);
     const midAdvWords = [];
     while (beforeWords.length > 0) {
@@ -976,13 +979,15 @@ function analyzeSentenceStructure(sentenceText, level) {
       // Common time/place adverbials that appear before subject
       const timeAdverbials = [
         // Time/place markers
-        'yesterday', 'today', 'tomorrow', 'now', 'then', 'recently', 'always', 'never',
-        'sometimes', 'often', 'usually', 'rarely', 'seldom', 'daily', 'weekly', 'monthly',
+        'yesterday', 'today', 'tomorrow', 'now', 'then', 'recently', 'soon', 'once',
+        'always', 'never', 'sometimes', 'often', 'usually', 'rarely', 'seldom',
+        'daily', 'weekly', 'monthly', 'early', 'late',
         'last', 'next', 'this', 'every', 'in', 'on', 'at', 'during', 'before', 'after',
         // Discourse markers (however, therefore, etc.) — also treated as fronted C
         'however', 'therefore', 'moreover', 'furthermore', 'besides', 'consequently',
         'nevertheless', 'nonetheless', 'additionally', 'meanwhile', 'otherwise',
         'unfortunately', 'fortunately', 'surprisingly', 'interestingly',
+        'indeed', 'certainly', 'clearly', 'obviously',
       ];
 
       if (timeAdverbials.includes(firstWord)) {
@@ -1225,7 +1230,7 @@ const SUBORD_CONJ = [
 
 // Subordinating conjunctions that introduce a visible separate clause row
 // when both sides have S+V (because, when, although, while…)
-const SUBORD_SPLIT_CONJ = ['because', 'when', 'although', 'while', 'whereas', 'though', 'before', 'after', 'until', 'since', 'once', 'whenever', 'even though', 'even if', 'in case', 'now that', 'unless', 'so that'];
+const SUBORD_SPLIT_CONJ = ['because', 'when', 'although', 'while', 'whereas', 'though', 'before', 'after', 'until', 'since', 'once', 'whenever', 'provided', 'even though', 'even if', 'in case', 'now that', 'unless', 'so that'];
 
 // Try to split a sentence at the first clause-level conjunction (coord or subord).
 // Returns { first, conj, second } or null.
@@ -1512,6 +1517,10 @@ const CONTRACTION_SPLITS = new Map([
   ["wouldn't",[{text:'would', pos:'modal'},    {text:"n't", pos:'adverb'}]],
   ["shouldn't",[{text:'should',pos:'modal'},   {text:"n't", pos:'adverb'}]],
   ["mustn't", [{text:'must',  pos:'modal'},    {text:"n't", pos:'adverb'}]],
+  ["mightn't",[{text:'might', pos:'modal'},   {text:"n't", pos:'adverb'}]],
+  ["shan't",  [{text:'shall', pos:'modal'},   {text:"n't", pos:'adverb'}]],
+  // Suggestions
+  ["let's",   [{text:'Let',   pos:'verb'},    {text:"'s",  pos:'pronoun'}]],
 ]);
 
 // Priority-ordered rules that map compromise's internal tag names to
