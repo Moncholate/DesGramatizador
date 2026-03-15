@@ -2796,6 +2796,15 @@ function MobileBar({
   const t = TRANSLATIONS[lang];
   const isBoth = !isManual && autoView === 'both';
   const [bothTab, setBothTab] = useState('structure');
+  const [showScrollHint, setShowScrollHint] = useState(
+    () => localStorage.getItem('legendScrolled') !== '1'
+  );
+  const handleLegendScroll = () => {
+    if (showScrollHint) {
+      localStorage.setItem('legendScrolled', '1');
+      setShowScrollHint(false);
+    }
+  };
 
   const showStructure = (isManual && manualView === 'structure')
     || (!isManual && (autoView === 'structure' || (isBoth && bothTab === 'structure')));
@@ -2819,28 +2828,34 @@ function MobileBar({
             {isManual ? t.structureModeMobile : t.sentenceStructure.toUpperCase()}
           </div>
         )}
-        <div className="flex gap-1.5 px-3 pt-1.5 pb-2.5 overflow-x-auto">
-          {items.map(key => {
-            const s = STRUCTURE[key];
-            const sel = selectedStructure === key;
-            return (
-              <button
-                key={key}
-                onClick={() => isManual && onSelectStructure(key)}
-                className="flex-shrink-0 flex flex-col items-center py-1.5 px-2.5 rounded-xl border-2 transition-all min-w-[50px]"
-                style={{
-                  background: s.bg,
-                  color: s.color,
-                  borderColor: sel ? s.color : 'transparent',
-                  cursor: isManual ? 'pointer' : 'default',
-                }}
-              >
-                <span className="font-extrabold text-xs">{s.label}</span>
-                <span className="text-[9px] mt-0.5">{s.name}</span>
-              </button>
-            );
-          })}
+        <div className="relative">
+          <div className="flex gap-1.5 px-3 pt-1.5 pb-2.5 overflow-x-auto" onScroll={handleLegendScroll}>
+            {items.map(key => {
+              const s = STRUCTURE[key];
+              const sel = selectedStructure === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => isManual && onSelectStructure(key)}
+                  className="flex-shrink-0 flex flex-col items-center py-1.5 px-2.5 rounded-xl border-2 transition-all min-w-[50px]"
+                  style={{
+                    background: s.bg,
+                    color: s.color,
+                    borderColor: sel ? s.color : 'transparent',
+                    cursor: isManual ? 'pointer' : 'default',
+                  }}
+                >
+                  <span className="font-extrabold text-xs">{s.label}</span>
+                  <span className="text-[9px] mt-0.5">{s.name}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="absolute top-0 right-0 h-full w-10 pointer-events-none" style={{background:'linear-gradient(to right, transparent, white)'}} />
         </div>
+        {showScrollHint && (
+          <p className="text-xs text-gray-400 text-center mt-0.5 pb-1">← desliza para ver todas las categorías →</p>
+        )}
       </div>
     );
   }
@@ -2858,30 +2873,36 @@ function MobileBar({
           {isManual ? t.paintModeMobile : t.partsOfSpeech.toUpperCase()}
         </div>
       )}
-      <div className="flex gap-1.5 px-3 pt-1.5 pb-2.5 overflow-x-auto">
-        {POS_ORDER.map(key => {
-          const p = POS[key];
-          const ok = unlocked.includes(key);
-          const sel = selectedPos === key;
-          return (
-            <button
-              key={key}
-              onClick={() => ok && isManual && onSelectPos(key)}
-              className="flex-shrink-0 flex flex-col items-center py-1.5 px-2.5 rounded-xl border-2 transition-all min-w-[50px]"
-              style={{
-                background: ok ? p.bg : '#F1F5F9',
-                color: ok ? p.color : '#94A3B8',
-                borderColor: sel ? p.color : 'transparent',
-                cursor: ok && isManual ? 'pointer' : 'default',
-                opacity: ok ? 1 : 0.5,
-              }}
-            >
-              <span className="font-extrabold text-xs">{ok ? p.label : '🔒'}</span>
-              <span className="text-[9px] mt-0.5">{p.name}</span>
-            </button>
-          );
-        })}
+      <div className="relative">
+        <div className="flex gap-1.5 px-3 pt-1.5 pb-2.5 overflow-x-auto" onScroll={handleLegendScroll}>
+          {POS_ORDER.map(key => {
+            const p = POS[key];
+            const ok = unlocked.includes(key);
+            const sel = selectedPos === key;
+            return (
+              <button
+                key={key}
+                onClick={() => ok && isManual && onSelectPos(key)}
+                className="flex-shrink-0 flex flex-col items-center py-1.5 px-2.5 rounded-xl border-2 transition-all min-w-[50px]"
+                style={{
+                  background: ok ? p.bg : '#F1F5F9',
+                  color: ok ? p.color : '#94A3B8',
+                  borderColor: sel ? p.color : 'transparent',
+                  cursor: ok && isManual ? 'pointer' : 'default',
+                  opacity: ok ? 1 : 0.5,
+                }}
+              >
+                <span className="font-extrabold text-xs">{ok ? p.label : '🔒'}</span>
+                <span className="text-[9px] mt-0.5">{p.name}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="absolute top-0 right-0 h-full w-10 pointer-events-none" style={{background:'linear-gradient(to right, transparent, white)'}} />
       </div>
+      {showScrollHint && (
+        <p className="text-xs text-gray-400 text-center mt-0.5 pb-1">← desliza para ver todas las categorías →</p>
+      )}
     </div>
   );
 }
