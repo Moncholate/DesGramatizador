@@ -418,16 +418,26 @@ function analyzeSentenceStructure(sentenceText, level) {
         'long','much','many','often','far','old','tall','big',
         'good','well','fast','late','early','hard','loud',
       ]);
+      const WHAT_WHICH_COMPOUNDS_STRUCT = new Set([
+        'time','day','kind','type','sort','year','one',
+        'color','colour','size','age','language','country','city',
+        'sport','food','music','movie','film','book','class','grade','floor',
+      ]);
       const firstWordLower = firstTerm.text.toLowerCase().replace(/[?!.]$/, '');
       if (WH_WORDS.has(firstWordLower)) {
         // Wh-question: WH-word + Auxiliary/Modal + Subject + Main Verb (+ Object/Complement)
 
-        // 1. Wh-word → WH block; merge "how + adj/adv" into single WH text
+        // 1. Wh-word → WH block; merge compound WH expressions into single text
         let whText = firstTerm.text;
         let auxSearchStart = 1;
-        if (firstWordLower === 'how' && termPOS.length > 1) {
+        if (termPOS.length > 1) {
           const nextLower = termPOS[1].text.toLowerCase().replace(/[?!.]$/, '');
-          if (HOW_COMPOUNDS_STRUCT.has(nextLower)) {
+          const nextPos = termPOS[1].pos;
+          const shouldMerge =
+            (firstWordLower === 'how' && HOW_COMPOUNDS_STRUCT.has(nextLower)) ||
+            ((firstWordLower === 'what' || firstWordLower === 'which') && WHAT_WHICH_COMPOUNDS_STRUCT.has(nextLower)) ||
+            (firstWordLower === 'whose' && nextPos === 'noun');
+          if (shouldMerge) {
             whText = firstTerm.text + ' ' + termPOS[1].text;
             auxSearchStart = 2;
           }
@@ -1655,22 +1665,32 @@ function tokenizeText(inputText) {
     }
   }
 
-  // ── Post-processing: merge "how + adj/adv" into single WH token in questions ─
+  // ── Post-processing: merge compound WH expressions into single WH token ─────
   const HOW_COMPOUNDS = new Set([
     'long','much','many','often','far','old','tall','big',
     'good','well','fast','late','early','hard','loud',
   ]);
+  const WHAT_WHICH_COMPOUNDS = new Set([
+    'time','day','kind','type','sort','year','one',
+    'color','colour','size','age','language','country','city',
+    'sport','food','music','movie','film','book','class','grade','floor',
+  ]);
   if (isQuestion(inputText)) {
     for (let i = 0; i < tokens.length - 1; i++) {
       const tok = tokens[i];
-      if (tok.isPunct || tok.pos !== 'wh' || tok.text.toLowerCase() !== 'how') continue;
-      // Find next non-punct token
+      if (tok.isPunct || tok.pos !== 'wh') continue;
+      const lower = tok.text.toLowerCase();
       let j = i + 1;
       while (j < tokens.length && tokens[j].isPunct) j++;
       if (j >= tokens.length) continue;
       const next = tokens[j];
-      if (!next.isPunct && HOW_COMPOUNDS.has(next.text.toLowerCase())) {
-        // Merge: update how-token text, remove next token
+      if (next.isPunct) continue;
+      const nextLower = next.text.toLowerCase();
+      const shouldMerge =
+        (lower === 'how' && HOW_COMPOUNDS.has(nextLower)) ||
+        ((lower === 'what' || lower === 'which') && WHAT_WHICH_COMPOUNDS.has(nextLower)) ||
+        (lower === 'whose' && next.pos === 'noun');
+      if (shouldMerge) {
         tok.text = tok.text + ' ' + next.text;
         tokens.splice(j, 1);
       }
