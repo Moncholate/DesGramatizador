@@ -231,6 +231,74 @@ Las palabras interrogativas tienen su propia categoría `wh` (teal, `#0F766E` / 
 
 ---
 
+### REGLA 14 — Expresiones WH compuestas
+
+Cuando la oración es una pregunta directa, ciertos pares de palabras se fusionan en un único token `[WH]`. Aplica tanto en **Análisis Automático** (POS y Estructura) como en **Práctica Manual**.
+
+#### Orden de prioridad (primera coincidencia gana)
+
+| Prioridad | Patrón | Resultado |
+|---|---|---|
+| 1 | `what/which` + sustantivo + `of` + frase nominal | `[WH: what + noun]` + `[C: of + noun]` |
+| 2 | `what/which/whose` + sustantivo | `[WH: what + noun]` |
+| 3 | `how` + adjetivo/adverbio | `[WH: how + adj/adv]` |
+| 4 | WH simple | `[WH]` (Regla 13) |
+
+#### Patrón 1 — `what/which` + sustantivo + `of` + frase nominal
+
+El bloque WH captura solo el par `wh + noun`. La frase `of + noun` se separa como bloque `[C]` inmediatamente después, antes del auxiliar invertido.
+
+**Ejemplos:**
+```
+"What kind of music do you listen to?"
+→ [WH: What kind] [C: of music] [V: do] [S: you] [V: listen to] ❓
+
+"What type of food do you prefer?"
+→ [WH: What type] [C: of food] [V: do] [S: you] [V: prefer] ❓
+
+"What level of English do you have?"
+→ [WH: What level] [C: of English] [V: do] [S: you] [V: have] ❓
+
+"What part of Chile are you from?"
+→ [WH: What part] [C: of Chile] [V: are] [S: you] [C: from] ❓
+```
+
+**Detección:** el sustantivo después de `what/which` se detecta por POS tag (`#Noun`) — sin lista hardcodeada.
+
+#### Patrón 2 — `what/which/whose` + sustantivo (sin `of`)
+
+```
+"What time is it?"      → [WH: What time] [V: is] [S: it] ❓
+"Which one do you prefer?" → [WH: Which one] [V: do] [S: you] [V: prefer] ❓
+"Whose book is this?"   → [WH: Whose book] [V: is] [S: this] ❓
+```
+
+#### Patrón 3 — `how` + adjetivo o adverbio
+
+Lista implementada (no cerrada — cualquier adj/adv puede extenderla):
+`how long · how much · how many · how often · how far · how old · how tall · how big · how good · how well · how fast · how late · how early · how hard · how loud`
+
+```
+"How long does it take?"  → [WH: How long] [V: does] [S: it] [V: take] ❓
+"How often do you exercise?" → [WH: How often] [V: do] [S: you] [V: exercise] ❓
+```
+
+#### POS mode
+
+Los tokens compuestos se renderizan como una única píldora coloreada:
+- `[WH: How long]` — una sola píldora teal, no dos separadas
+- `[WH: What time]` — ídem
+- En Patrón 1, `of + noun` se renderiza con sus colores POS normales (PREP + N)
+
+#### Modo práctica manual
+
+El token compuesto es una única unidad clickeable. El alumno hace clic una vez para etiquetar todo el compuesto como `[WH]`.
+
+- Etiquetar el compuesto completo como WH = ✓ correcto
+- Etiquetar solo la primera palabra como WH = ✗ incorrecto
+
+---
+
 ## PWA — Progressive Web App
 
 | Característica | Implementación |
