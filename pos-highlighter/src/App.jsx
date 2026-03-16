@@ -2945,7 +2945,7 @@ function App() {
   const [mode, setMode] = useState('auto');
   const [autoView, setAutoView] = useState('structure'); // 'pos' | 'structure' | 'both'
   const [manualView, setManualView] = useState('structure'); // 'pos' | 'structure'
-  const [text, setText] = useState('');
+  const [text, setText] = useState(() => new URLSearchParams(window.location.search).get('texto') || '');
   const [selectedPos, setSelectedPos] = useState(null);
   const [selectedStructure, setSelectedStructure] = useState(null); // 'S' | 'V' | 'C' | 'O' | 'A'
   const [showLabels, setShowLabels] = useState(true);
