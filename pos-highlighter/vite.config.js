@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'favicon.svg', 'favicon-96x96.png', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Desgramatizador',
-        short_name: 'Desgramatizador',
+        name: 'DesGramatizador',
+        short_name: 'DesGramatizador',
         description: 'Identificador de Partes de la Oración para estudiantes de inglés',
         theme_color: '#4F46E5',
         background_color: '#ffffff',

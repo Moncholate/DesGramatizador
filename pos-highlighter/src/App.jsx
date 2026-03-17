@@ -7,7 +7,7 @@ import nlp from 'compromise';
 
 const TRANSLATIONS = {
   es: {
-    appTitle: 'Desgramatizador',
+    appTitle: 'DesGramatizador',
     autoAnalysis: 'Análisis Automático',
     manualPractice: 'Práctica Manual',
     showStructure: 'Mostrar Estructura',
@@ -83,7 +83,7 @@ const TRANSLATIONS = {
     offlineMsg: '⚠️ Sin conexión — la app sigue funcionando con el contenido cargado',
   },
   en: {
-    appTitle: 'Desgramatizador',
+    appTitle: 'DesGramatizador',
     autoAnalysis: 'Auto Analysis',
     manualPractice: 'Manual Practice',
     showStructure: 'Show Structure',
@@ -3265,7 +3265,7 @@ function App() {
           <div className="flex items-center gap-3">
             <img
               src={`${import.meta.env.BASE_URL}web-app-manifest-192x192.png`}
-              alt="Desgramatizador"
+              alt="DesGramatizador"
               className="w-11 h-11 md:w-9 md:h-9 rounded-[22%] flex-shrink-0"
             />
             <div>
