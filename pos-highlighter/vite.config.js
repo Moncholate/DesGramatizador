@@ -3,7 +3,11 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  base: '/Desgramatizador/',
+  base: '/DesGramatizador/',
+  server: {
+    port: 5175,
+    open: false
+  },
   plugins: [
     react(),
     VitePWA({
@@ -17,8 +21,8 @@ export default defineConfig({
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
-        scope: '/Desgramatizador/',
-        start_url: '/Desgramatizador/',
+        scope: '/DesGramatizador/',
+        start_url: '/DesGramatizador/',
         icons: [
           { src: 'web-app-manifest-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
           { src: 'web-app-manifest-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
