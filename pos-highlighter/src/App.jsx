@@ -3210,11 +3210,20 @@ function App() {
 
   const isMobileDevice = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
 
-  // Grammar HUB: escuchar cambio de idioma vía postMessage
+  // Grammar HUB: escuchar cambio de idioma y nivel vía postMessage
   useEffect(() => {
+    const levelMap = {
+      basico1: 'Básico', basico2: 'Básico',
+      elemental1: 'Elemental', elemental2: 'Elemental',
+      intermedio1: 'Intermedio', intermedio2: 'Intermedio',
+      avanzado: 'Intermedio Alto',
+    };
     const handler = (e) => {
       if (e.data?.type === 'GRAMMAR_HUB_LANG' && (e.data.lang === 'es' || e.data.lang === 'en')) {
         setLang(e.data.lang);
+      }
+      if (e.data?.type === 'GRAMMAR_HUB_LEVEL' && levelMap[e.data.level]) {
+        setLevel(levelMap[e.data.level]);
       }
     };
     window.addEventListener('message', handler);
