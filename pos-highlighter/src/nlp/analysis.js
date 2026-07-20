@@ -1227,8 +1227,17 @@ function analyzeStructure(text, level) {
 
   return sentences.map((s, idx) => {
     const sentText = s.text;
+    // Flags always come from the whole-sentence analysis (isComplex counts the
+    // full sentence, hasEmbeddedClause/error come from the top-level parse).
     const base = analyzeSentenceStructure(sentText, level);
-    const rows = buildClauseRows(sentText, level);
+
+    // Single-clause sentences (the common case): reuse the analysis we just did
+    // instead of re-parsing inside buildClauseRows. For a no-split sentence at
+    // top level buildClauseRows would return exactly [{ components }], so this
+    // is behavior-preserving — it just drops the redundant second parse.
+    const rows = splitOnClauseConj(sentText)
+      ? buildClauseRows(sentText, level)
+      : [{ components: base.components || [] }];
 
     return {
       id: idx,

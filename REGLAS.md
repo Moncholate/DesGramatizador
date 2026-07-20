@@ -613,3 +613,17 @@ Se pasó `lang` a los componentes que no lo recibían (`QuestionMessage`,
 Intermedio/Intermedio Alto) se muestran en español en ambos idiomas porque son
 las claves de `LEVELS` e identificadores app-wide; traducirlos requeriría
 refactor de la lógica de niveles.
+
+### N7 — Evitar doble análisis en `analyzeStructure`
+
+`analyzeStructure` analizaba cada oración dos veces: una con
+`analyzeSentenceStructure` (para los flags isComplex/isQuestion/
+hasEmbeddedClause/error) y otra con `buildClauseRows` (para las filas), que a
+su vez volvía a llamar `analyzeSentenceStructure` sobre el mismo texto.
+
+Ahora, para oraciones de **una sola cláusula** (el caso común) se reutiliza el
+análisis ya hecho para construir la fila, en vez de re-parsear. Las oraciones
+multi-cláusula siguen usando `buildClauseRows` (ahí los dos análisis son
+genuinamente distintos: oración completa vs. cláusulas). Equivalencia de salida
+verificada; sin cambio de comportamiento. Reducción ~50% de parses en textos de
+oraciones simples.
