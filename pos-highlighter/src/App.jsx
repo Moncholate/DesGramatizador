@@ -43,8 +43,8 @@ const TRANSLATIONS = {
     assigning: 'Asignando',
     structureModeMobile: 'MODO ESTRUCTURA — toca tipo de bloque, luego toca palabras',
     paintModeMobile: 'MODO PINTAR — toca categoría, luego toca palabras',
-    hintManualPOS: 'Selecciona una categoría POS en la leyenda, luego haz clic en palabras para etiquetarlas.',
-    hintManualStructure: 'Selecciona un tipo de bloque de estructura, luego haz clic en palabras para asignarlas.',
+    hintManualPOS: 'Selecciona una categoría POS en la leyenda y haz clic en palabras para etiquetarlas — o toca una palabra varias veces para rotar entre categorías.',
+    hintManualStructure: 'Selecciona un tipo de bloque de estructura y haz clic en palabras para asignarlas — o toca una palabra varias veces para rotar entre bloques.',
     hintCheckAnswers: 'Presiona "Verificar Respuestas" cuando termines.',
     hintAutoAnalysis: 'Escribe o pega texto en inglés, luego haz clic en "Analizar" para resaltar automáticamente cada parte de la oración.',
     placeholderEmpty: 'Ingresa texto arriba o carga un ejemplo para comenzar.',
@@ -156,8 +156,8 @@ const TRANSLATIONS = {
     assigning: 'Assigning',
     structureModeMobile: 'STRUCTURE MODE — tap block type then tap words',
     paintModeMobile: 'PAINT MODE — tap category then tap words',
-    hintManualPOS: 'Select a POS category in the legend, then click words to label them.',
-    hintManualStructure: 'Select a structure block type, then click words to assign them.',
+    hintManualPOS: 'Select a POS category in the legend and click words to label them — or tap a word repeatedly to cycle through the categories.',
+    hintManualStructure: 'Select a structure block type and click words to assign them — or tap a word repeatedly to cycle through the blocks.',
     hintCheckAnswers: 'Press "Check Answers" when done.',
     hintAutoAnalysis: 'Type or paste English text, then click "Analyze" to automatically highlight each part of speech.',
     placeholderEmpty: 'Enter text above or load an example to get started.',
@@ -1493,39 +1493,38 @@ function App() {
     }
   };
 
+  // Next tag when cycling through a category list: none → 1 → 2 → … → N → none
+  const nextInCycle = (current, list) => {
+    if (!current) return list[0];
+    const i = list.indexOf(current);
+    if (i === -1) return list[0];
+    return i + 1 < list.length ? list[i + 1] : null; // wrap back to unset
+  };
+
+  // Set or clear a token's tag inside a state updater (null clears)
+  const applyTag = (prev, tokenId, tag) => {
+    if (!tag) { const updated = { ...prev }; delete updated[tokenId]; return updated; }
+    return { ...prev, [tokenId]: tag };
+  };
+
   const handleWordClick = (tokenId) => {
     if (manualView === 'pos') {
-      // POS mode: assign selectedPos to the word
-      if (!selectedPos) return; // No POS selected
-
-      setUserPOSTags(prev => {
-        const current = prev[tokenId];
-        if (current === selectedPos) {
-          // Same tag: clear it
-          const updated = { ...prev };
-          delete updated[tokenId];
-          return updated;
-        } else {
-          // Different or no tag: set it
-          return { ...prev, [tokenId]: selectedPos };
-        }
-      });
+      // With a palette category selected → paint it (toggle off if same).
+      // With nothing selected → cycle through the level's unlocked categories.
+      if (selectedPos) {
+        setUserPOSTags(prev => applyTag(prev, tokenId, prev[tokenId] === selectedPos ? null : selectedPos));
+      } else {
+        const cycle = POS_ORDER.filter(k => unlocked.includes(k));
+        setUserPOSTags(prev => applyTag(prev, tokenId, nextInCycle(prev[tokenId], cycle)));
+      }
     } else if (manualView === 'structure') {
-      // Structure mode: assign selectedStructure to the word
-      if (!selectedStructure) return; // No structure selected
-
-      setUserStructureTags(prev => {
-        const current = prev[tokenId];
-        if (current === selectedStructure) {
-          // Same tag: clear it
-          const updated = { ...prev };
-          delete updated[tokenId];
-          return updated;
-        } else {
-          // Different or no tag: set it
-          return { ...prev, [tokenId]: selectedStructure };
-        }
-      });
+      const isBasic = level === 'Básico' || level === 'Elemental';
+      const cycle = isBasic ? ['WH', 'S', 'V', 'C'] : ['WH', 'S', 'V', 'O', 'A'];
+      if (selectedStructure) {
+        setUserStructureTags(prev => applyTag(prev, tokenId, prev[tokenId] === selectedStructure ? null : selectedStructure));
+      } else {
+        setUserStructureTags(prev => applyTag(prev, tokenId, nextInCycle(prev[tokenId], cycle)));
+      }
     }
   };
 

@@ -627,3 +627,16 @@ multi-cláusula siguen usando `buildClauseRows` (ahí los dos análisis son
 genuinamente distintos: oración completa vs. cláusulas). Equivalencia de salida
 verificada; sin cambio de comportamiento. Reducción ~50% de parses en textos de
 oraciones simples.
+
+### Práctica Manual — rotar categorías con clicks repetidos
+
+En Práctica Manual, si **no** hay categoría seleccionada en la paleta, hacer
+clic repetido en una palabra rota entre las categorías disponibles y vuelve a
+"sin etiqueta" al terminar el ciclo:
+
+- **POS:** rota por las categorías desbloqueadas del nivel (orden de la leyenda).
+- **Estructura:** rota por WH/S/V/C (Básico/Elemental) o WH/S/V/O/A (Intermedio).
+
+Si **sí** hay una categoría seleccionada, se mantiene el comportamiento anterior
+(pintar la seleccionada; volver a hacer clic la quita). Antes, un clic sin
+categoría seleccionada no hacía nada.
