@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { isQuestion, tokenizeText, analyzeStructure, buildStructureAnswerMap } from './nlp/analysis';
 
 /* ═══════════════════════════════════════════════════════════
@@ -76,6 +76,11 @@ const TRANSLATIONS = {
     // Structure warnings
     complexWarning: 'Oración compleja (múltiples cláusulas o más de 15 palabras)',
     questionNotAvailable: 'Pregunta — análisis de estructura no disponible para este tipo de oración.',
+    // Educational hints (shown via InfoTip on hover/tap)
+    tipLocked: 'Categoría bloqueada en este nivel',
+    tipPhrasal: (pv) => `Phrasal verb — "${pv}" funciona como un solo verbo`,
+    tipFormalSubject: 'Sujeto formal — el significado real está en el complemento (that…)',
+    tipQuestion: 'Pregunta — el sujeto y el verbo están invertidos. Orden normal: [S] + [V] + [C]',
     // PWA banners
     installBannerMsg: '📲 Instala la app en tu celular para usarla sin internet',
     installBannerBtn: 'Instalar',
@@ -152,6 +157,11 @@ const TRANSLATIONS = {
     // Structure warnings
     complexWarning: 'Complex sentence (multiple clauses or 15+ words)',
     questionNotAvailable: 'Question — structure analysis not available for this sentence type.',
+    // Educational hints (shown via InfoTip on hover/tap)
+    tipLocked: 'Category locked for this level',
+    tipPhrasal: (pv) => `Phrasal verb — "${pv}" works as a single verb`,
+    tipFormalSubject: 'Formal subject — the real meaning is in the complement (that…)',
+    tipQuestion: 'Question — subject and verb are inverted. Normal order: [S] + [V] + [C]',
     // PWA banners
     installBannerMsg: '📲 Install this app on your phone for offline use',
     installBannerBtn: 'Install',
@@ -164,19 +174,22 @@ const TRANSLATIONS = {
    DATA & CONSTANTS
 ═══════════════════════════════════════════════════════════ */
 
+// Text colours darkened to Tailwind 700/600 shades so every text/bg pair
+// clears WCAG AA (≥4.5:1); backgrounds kept unchanged to preserve the palette
+// identity. Ratios verified against each `bg` (see REGLAS.md, sección I5).
 const POS = {
-  noun:         { color: '#D97706', bg: '#FEF3C7', label: 'N',    name: 'Noun',         def: 'person, place, thing, or idea', ex: 'dog, city, love'           },
-  verb:         { color: '#E11D48', bg: '#FFE4E6', label: 'V',    name: 'Verb',         def: 'action or state',               ex: 'run, is, think'            },
-  adjective:    { color: '#0891B2', bg: '#CFFAFE', label: 'ADJ',  name: 'Adjective',    def: 'describes a noun',              ex: 'big, happy, red'           },
-  adverb:       { color: '#EAB308', bg: '#FEFCE8', label: 'ADV',  name: 'Adverb',       def: 'modifies verb or adjective',    ex: 'quickly, very, often'      },
-  pronoun:      { color: '#C026D3', bg: '#FAE8FF', label: 'PRO',  name: 'Pronoun',      def: 'replaces a noun',               ex: 'he, she, they, it'         },
-  preposition:  { color: '#10B981', bg: '#ECFDF5', label: 'PREP', name: 'Preposition',  def: 'shows relationship',            ex: 'in, on, at, with'          },
-  conjunction:  { color: '#3B82F6', bg: '#DBEAFE', label: 'CONJ', name: 'Conjunction',  def: 'connects clauses',              ex: 'and, but, because'         },
-  determiner:   { color: '#64748B', bg: '#F1F5F9', label: 'DET',  name: 'Determiner',   def: 'specifies a noun',              ex: 'the, a, this, my, some'    },
-  modal:        { color: '#6366F1', bg: '#E0E7FF', label: 'MOD',  name: 'Modal',        def: 'ability / possibility',         ex: 'can, should, must, might'  },
-  auxiliary:    { color: '#EF4444', bg: '#FEE2E2', label: 'AUX',  name: 'Auxiliary',    def: 'helps the main verb',           ex: 'is, have, do, was'         },
+  noun:         { color: '#B45309', bg: '#FEF3C7', label: 'N',    name: 'Noun',         def: 'person, place, thing, or idea', ex: 'dog, city, love'           },
+  verb:         { color: '#BE123C', bg: '#FFE4E6', label: 'V',    name: 'Verb',         def: 'action or state',               ex: 'run, is, think'            },
+  adjective:    { color: '#0E7490', bg: '#CFFAFE', label: 'ADJ',  name: 'Adjective',    def: 'describes a noun',              ex: 'big, happy, red'           },
+  adverb:       { color: '#A16207', bg: '#FEFCE8', label: 'ADV',  name: 'Adverb',       def: 'modifies verb or adjective',    ex: 'quickly, very, often'      },
+  pronoun:      { color: '#A21CAF', bg: '#FAE8FF', label: 'PRO',  name: 'Pronoun',      def: 'replaces a noun',               ex: 'he, she, they, it'         },
+  preposition:  { color: '#047857', bg: '#ECFDF5', label: 'PREP', name: 'Preposition',  def: 'shows relationship',            ex: 'in, on, at, with'          },
+  conjunction:  { color: '#1D4ED8', bg: '#DBEAFE', label: 'CONJ', name: 'Conjunction',  def: 'connects clauses',              ex: 'and, but, because'         },
+  determiner:   { color: '#475569', bg: '#F1F5F9', label: 'DET',  name: 'Determiner',   def: 'specifies a noun',              ex: 'the, a, this, my, some'    },
+  modal:        { color: '#4338CA', bg: '#E0E7FF', label: 'MOD',  name: 'Modal',        def: 'ability / possibility',         ex: 'can, should, must, might'  },
+  auxiliary:    { color: '#B91C1C', bg: '#FEE2E2', label: 'AUX',  name: 'Auxiliary',    def: 'helps the main verb',           ex: 'is, have, do, was'         },
   wh:            { color: '#0F766E', bg: '#F0FDFA', label: 'WH',   name: 'Wh- Word',     def: 'introduces a question',         ex: 'what, where, when, why, how' },
-  number:       { color: '#6B7280', bg: '#F3F4F6', label: 'NUM',  name: 'Numeral',      def: 'expresses quantity or a number', ex: '2020, three, 42'           },
+  number:       { color: '#4B5563', bg: '#F3F4F6', label: 'NUM',  name: 'Numeral',      def: 'expresses quantity or a number', ex: '2020, three, 42'           },
 };
 
 const POS_ORDER = [
@@ -184,13 +197,14 @@ const POS_ORDER = [
   'preposition', 'conjunction', 'determiner', 'number', 'modal', 'auxiliary',
 ];
 
+// Text colours darkened for WCAG AA on their (unchanged) backgrounds — see POS above.
 const STRUCTURE = {
   WH: { color: '#0F766E', bg: '#F0FDFA', label: 'WH', name: 'Wh- Word',   def: 'introduces the question' },
   S:  { color: '#4F46E5', bg: '#EEF2FF', label: 'S',  name: 'Subject',    def: 'who or what does the action' },
-  V:  { color: '#E11D48', bg: '#FFF1F2', label: 'V',  name: 'Verb',       def: 'the action or state' },
-  C:  { color: '#059669', bg: '#ECFDF5', label: 'C',  name: 'Complement', def: 'everything else' },
-  O:  { color: '#059669', bg: '#ECFDF5', label: 'O',  name: 'Object',     def: 'receives the action: what? / whom?' },
-  A:  { color: '#D97706', bg: '#FFFBEB', label: 'A',  name: 'Adverbial',  def: 'when? / where? / how?' },
+  V:  { color: '#BE123C', bg: '#FFF1F2', label: 'V',  name: 'Verb',       def: 'the action or state' },
+  C:  { color: '#047857', bg: '#ECFDF5', label: 'C',  name: 'Complement', def: 'everything else' },
+  O:  { color: '#047857', bg: '#ECFDF5', label: 'O',  name: 'Object',     def: 'receives the action: what? / whom?' },
+  A:  { color: '#B45309', bg: '#FFFBEB', label: 'A',  name: 'Adverbial',  def: 'when? / where? / how?' },
 };
 
 const LEVELS = {
@@ -225,10 +239,82 @@ const EXAMPLES = [
 
 
 /* ═══════════════════════════════════════════════════════════
+   INFO TIP — accessible tooltip that works on hover AND tap (I6)
+   The educational hints (phrasal verbs, formal subject, question
+   inversion, locked categories) used to live only in `title=`, which is
+   invisible on touch devices — and this is a mobile-first PWA. InfoTip
+   shows the same text as a bubble on tap/focus, keeps the native `title`
+   for desktop hover, and is keyboard-operable.
+═══════════════════════════════════════════════════════════ */
+
+function InfoTip({ content, children, wrapClassName = '', wrapStyle = {} }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onOutside = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onScroll = () => setOpen(false);
+    document.addEventListener('pointerdown', onOutside);
+    window.addEventListener('scroll', onScroll, { capture: true, once: true });
+    return () => {
+      document.removeEventListener('pointerdown', onOutside);
+      window.removeEventListener('scroll', onScroll, { capture: true });
+    };
+  }, [open]);
+
+  return (
+    <span ref={ref} className={`relative inline-block ${wrapClassName}`} style={wrapStyle}>
+      <span
+        role="button"
+        tabIndex={0}
+        aria-label={content}
+        aria-expanded={open}
+        title={content}
+        className="cursor-help"
+        onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(o => !o); }
+          else if (e.key === 'Escape') setOpen(false);
+        }}
+      >
+        {children}
+      </span>
+      {open && (
+        <span
+          role="tooltip"
+          className="absolute z-50 left-1/2 bottom-full mb-1.5 px-2.5 py-1.5 rounded-lg text-xs leading-snug text-white shadow-lg"
+          style={{
+            transform: 'translateX(-50%)',
+            width: 'max-content',
+            maxWidth: 220,
+            whiteSpace: 'normal',
+            background: '#1E293B',
+          }}
+        >
+          {content}
+          <span
+            className="absolute left-1/2 top-full"
+            style={{
+              transform: 'translateX(-50%)',
+              width: 0, height: 0,
+              borderLeft: '5px solid transparent',
+              borderRight: '5px solid transparent',
+              borderTop: '5px solid #1E293B',
+            }}
+          />
+        </span>
+      )}
+    </span>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
    WORD TOKEN (renders analyzed words with POS highlighting)
 ═══════════════════════════════════════════════════════════ */
 
-function WordToken({ text, pos, isPunct, unlocked, showLabels, phrasalVerb, phrasalAdjacent, unrecognized, splitParts }) {
+function WordToken({ text, pos, isPunct, unlocked, showLabels, phrasalVerb, unrecognized, splitParts, lang = 'es' }) {
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.es;
   // Punctuation: plain unstyled text
   if (isPunct) {
     return <span className="text-slate-700">{text}</span>;
@@ -245,7 +331,7 @@ function WordToken({ text, pos, isPunct, unlocked, showLabels, phrasalVerb, phra
             const bg  = ok ? cfg.bg    : '#F1F5F9';
             const col = ok ? cfg.color : '#94A3B8';
             return (
-              <ruby key={idx} title={ok ? cfg.name : '(locked for this level)'}>
+              <ruby key={idx} title={ok ? cfg.name : t.tipLocked}>
                 <span
                   className="inline-block px-1.5 py-0.5 cursor-default"
                   style={{
@@ -292,12 +378,8 @@ function WordToken({ text, pos, isPunct, unlocked, showLabels, phrasalVerb, phra
   const bg = ok ? cfg.bg : '#F1F5F9';
   const col = ok ? cfg.color : '#94A3B8';
 
-  const pvTooltip = phrasalVerb
-    ? `Phrasal verb — "${phrasalVerb}" works as a single verb`
-    : (ok ? cfg.name : '(locked for this level)');
-
-  return (
-    <ruby title={pvTooltip}>
+  const ruby = (
+    <ruby title={ok && !phrasalVerb ? cfg.name : undefined}>
       <span
         className="inline-block px-1.5 py-0.5 rounded cursor-default"
         style={{
@@ -315,6 +397,16 @@ function WordToken({ text, pos, isPunct, unlocked, showLabels, phrasalVerb, phra
       )}
     </ruby>
   );
+
+  // Educational hints get a tap/hover popover (I6); ordinary words keep the
+  // lightweight native title so they don't all become interactive elements.
+  if (phrasalVerb) {
+    return <InfoTip content={t.tipPhrasal(phrasalVerb)}>{ruby}</InfoTip>;
+  }
+  if (!ok) {
+    return <InfoTip content={t.tipLocked}>{ruby}</InfoTip>;
+  }
+  return ruby;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -329,7 +421,6 @@ function ManualWordPill({
   onClick,
   showAnswers,
   answerChecked,
-  unlocked,
 }) {
   const { text, isPunct } = token;
 
@@ -401,8 +492,13 @@ function ManualWordPill({
           : (isIncorrect && token.isPhrasalParticle ? `'${token.text}' in '${token.phrasalVerb}' is part of a phrasal verb — tag it as Verb` : 'Click to tag')
       }>
         <span
+          role="button"
+          tabIndex={0}
+          aria-pressed={hasUserTag}
+          aria-label={`${text}${userTag ? ` — ${POS[userTag].name}` : ''}`}
           onClick={onClick}
-          className="inline-block px-2 py-1 rounded-lg cursor-pointer border-2 transition-all hover:shadow-sm relative"
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
+          className="inline-block px-2 py-1 rounded-lg cursor-pointer border-2 transition-all hover:shadow-sm relative focus:outline-none focus:ring-2 focus:ring-indigo-400"
           style={{
             background: bg,
             color: col,
@@ -466,8 +562,13 @@ function ManualWordPill({
 
   return (
     <span
+      role="button"
+      tabIndex={0}
+      aria-pressed={hasUserTag}
+      aria-label={`${text}${userTag ? ` — ${STRUCTURE[userTag].name}` : ''}`}
       onClick={onClick}
-      className="inline-block px-1.5 py-1 cursor-pointer transition-all hover:opacity-80"
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
+      className="inline-block px-1.5 py-1 cursor-pointer transition-all hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-indigo-400 rounded"
       style={{
         color: col,
         borderBottom: `3px solid ${underlineColor}`,
@@ -659,8 +760,9 @@ function QuestionMessage({ text }) {
    STRUCTURE BLOCK COMPONENT
 ═══════════════════════════════════════════════════════════ */
 
-function StructureBlock({ type, text, isAuxiliary, isMainVerb, formal }) {
+function StructureBlock({ type, text, isAuxiliary, isMainVerb, formal, lang = 'es' }) {
   const s = STRUCTURE[type];
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.es;
 
   // Render auxiliary verb (same as regular block, no special styling)
   if (isAuxiliary || isMainVerb) {
@@ -705,13 +807,11 @@ function StructureBlock({ type, text, isAuxiliary, isMainVerb, formal }) {
         </div>
         <span className="text-sm" style={{ color: s.color }}>
           {formal ? (
-            <span
-              title="Sujeto formal — el significado real está en el complemento (that...)"
-              className="cursor-help border-b border-dashed"
-              style={{ borderColor: s.color }}
-            >
-              {text}*
-            </span>
+            <InfoTip content={t.tipFormalSubject}>
+              <span className="border-b border-dashed" style={{ borderColor: s.color }}>
+                {text}*
+              </span>
+            </InfoTip>
           ) : text}
         </span>
       </div>
@@ -719,7 +819,8 @@ function StructureBlock({ type, text, isAuxiliary, isMainVerb, formal }) {
   );
 }
 
-function ClauseRow({ components, isQuestion }) {
+function ClauseRow({ components, isQuestion, lang = 'es' }) {
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.es;
   return (
     <div className="flex flex-wrap items-center gap-1">
       {components.map((comp, idx) =>
@@ -735,17 +836,19 @@ function ClauseRow({ components, isQuestion }) {
             isAuxiliary={comp.isAuxiliary}
             isMainVerb={comp.isMainVerb}
             formal={comp.formal}
+            lang={lang}
           />
         )
       )}
       {isQuestion && (
-        <span
-          className="inline-flex items-center justify-center w-5 h-5 rounded-full text-sm cursor-default ml-1"
-          title="Question — subject and verb are inverted. Normal order: [S] + [V] + [C]"
-          style={{ background: '#EFF6FF', color: '#3B82F6', border: '1px solid #BFDBFE', fontSize: 12 }}
-        >
-          ?
-        </span>
+        <InfoTip content={t.tipQuestion} wrapClassName="ml-1">
+          <span
+            className="inline-flex items-center justify-center w-5 h-5 rounded-full text-sm"
+            style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', fontSize: 12 }}
+          >
+            ?
+          </span>
+        </InfoTip>
       )}
     </div>
   );
@@ -792,7 +895,7 @@ function SentenceStructure({ sentence, lang = 'es' }) {
               </span>
             </div>
           ) : (
-            <ClauseRow key={i} components={row.components} isQuestion={sentence.isQuestion} />
+            <ClauseRow key={i} components={row.components} isQuestion={sentence.isQuestion} lang={lang} />
           )
         )}
       </div>
@@ -869,12 +972,24 @@ function LegendItem({ posKey, unlocked, isManual, isSelected, onSelect }) {
   const p = POS[posKey];
   const clickable = isManual && unlocked;
 
+  // Only interactive (keyboard-focusable, toggle role) when it can be selected
+  const interactiveProps = clickable
+    ? {
+        role: 'button',
+        tabIndex: 0,
+        'aria-pressed': isSelected,
+        'aria-label': `${p.name} — ${p.def}`,
+        onClick: () => onSelect(posKey),
+        onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(posKey); } },
+      }
+    : {};
+
   return (
     <div
-      onClick={() => clickable && onSelect(posKey)}
+      {...interactiveProps}
       className={`flex items-start gap-2.5 p-2 rounded-lg border-2 transition-all ${
         isSelected ? 'border-current' : 'border-transparent'
-      } ${unlocked ? 'opacity-100' : 'opacity-40'} ${clickable ? 'cursor-pointer' : 'cursor-default'}`}
+      } ${unlocked ? 'opacity-100' : 'opacity-40'} ${clickable ? 'cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-400' : 'cursor-default'}`}
       style={{
         borderColor: isSelected ? p.color : 'transparent',
         background: isSelected ? p.bg + 'BB' : 'transparent',
@@ -961,7 +1076,6 @@ function Sidebar({
   onSelectPos,
   selectedStructure,
   onSelectStructure,
-  showStructure,
   autoView,
   lang,
 }) {
@@ -1076,8 +1190,6 @@ function MobileBar({
 
   const showStructure = (isManual && manualView === 'structure')
     || (!isManual && (autoView === 'structure' || (isBoth && bothTab === 'structure')));
-  const showPOS = (isManual && manualView === 'pos')
-    || (!isManual && (autoView === 'pos' || (isBoth && bothTab === 'pos')));
 
   if (showStructure) {
     const isBasic = level === 'Básico' || level === 'Elemental';
@@ -1671,8 +1783,12 @@ function App() {
                 <>
                   {/* Mobile: collapsible */}
                   <div
-                    className={`md:hidden border rounded-xl px-3.5 py-2.5 mb-4 text-xs leading-relaxed cursor-pointer select-none ${bannerColor}`}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={bannerExpanded}
+                    className={`md:hidden border rounded-xl px-3.5 py-2.5 mb-4 text-xs leading-relaxed cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-indigo-400 ${bannerColor}`}
                     onClick={() => setBannerExpanded(v => !v)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setBannerExpanded(v => !v); } }}
                   >
                     <div className="flex items-center justify-between">
                       <span><strong>{bannerIcon} {bannerTitle}</strong> — toca para {bannerExpanded ? 'ocultar' : 'ver instrucciones'}</span>
@@ -1903,9 +2019,9 @@ function App() {
                             unlocked={unlocked}
                             showLabels={showLabels}
                             phrasalVerb={t.phrasalVerb}
-                            phrasalAdjacent={t.phrasalAdjacent}
                             unrecognized={t.unrecognized}
                             splitParts={t.splitParts}
+                            lang={lang}
                           />
                           {t.post && <span>{t.post}</span>}
                         </React.Fragment>
