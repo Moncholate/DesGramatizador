@@ -652,10 +652,11 @@ function ManualWordPill({
    STRUCTURE PALETTE (block type selector for Paint Structure)
 ═══════════════════════════════════════════════════════════ */
 
-function StructurePalette({ level, selectedStructure, onSelectStructure, lang }) {
+function StructurePalette({ level, selectedStructure, onSelectStructure, activeStruct, lang }) {
   const t = TRANSLATIONS[lang];
   const isBasic = level === 'Básico' || level === 'Elemental';
   const items = isBasic ? ['WH', 'S', 'V', 'C'] : ['WH', 'S', 'V', 'O', 'A'];
+  const highlight = selectedStructure || activeStruct;
 
   return (
     <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-xl">
@@ -668,7 +669,7 @@ function StructurePalette({ level, selectedStructure, onSelectStructure, lang })
       <div className="flex flex-wrap gap-2">
         {items.map(key => {
           const s = STRUCTURE[key];
-          const isSelected = selectedStructure === key;
+          const isSelected = highlight === key;
           return (
             <button
               key={key}
@@ -1143,10 +1144,15 @@ function Sidebar({
   onSelectPos,
   selectedStructure,
   onSelectStructure,
+  activePos,
+  activeStruct,
   autoView,
   lang,
 }) {
   const t = TRANSLATIONS[lang];
+  // Legend highlight: the palette selection if any, else the last-touched
+  // word's category (so its name is visible even when colours look similar).
+  const highlightPos = selectedPos || activePos;
 
   // In manual mode, show either POS legend or Structure palette based on manualView
   // In auto mode, show only the corresponding legend based on autoView
@@ -1184,7 +1190,7 @@ function Sidebar({
                   posKey={key}
                   unlocked={unlocked.includes(key)}
                   isManual={isManual}
-                  isSelected={selectedPos === key}
+                  isSelected={highlightPos === key}
                   onSelect={onSelectPos}
                 />
               ))}
@@ -1218,6 +1224,7 @@ function Sidebar({
             level={level}
             selectedStructure={selectedStructure}
             onSelectStructure={onSelectStructure}
+            activeStruct={activeStruct}
             lang={lang}
           />
         )}
@@ -1239,10 +1246,15 @@ function MobileBar({
   onSelectPos,
   selectedStructure,
   onSelectStructure,
+  activePos,
+  activeStruct,
   level,
   lang,
 }) {
   const t = TRANSLATIONS[lang];
+  // Highlight the palette selection, or the last-touched word's category
+  const highlightPos = selectedPos || activePos;
+  const highlightStruct = selectedStructure || activeStruct;
   const isBoth = !isManual && autoView === 'both';
   const [bothTab, setBothTab] = useState('structure');
   const [showScrollHint, setShowScrollHint] = useState(
@@ -1279,7 +1291,7 @@ function MobileBar({
           <div className="flex gap-1.5 px-3 pt-1.5 pb-2.5 overflow-x-auto" onScroll={handleLegendScroll}>
             {items.map(key => {
               const s = STRUCTURE[key];
-              const sel = selectedStructure === key;
+              const sel = highlightStruct === key;
               return (
                 <button
                   key={key}
@@ -1325,7 +1337,7 @@ function MobileBar({
           {POS_ORDER.map(key => {
             const p = POS[key];
             const ok = unlocked.includes(key);
-            const sel = selectedPos === key;
+            const sel = highlightPos === key;
             return (
               <button
                 key={key}
@@ -1368,6 +1380,10 @@ function App() {
   const [text, setText] = useState(() => new URLSearchParams(window.location.search).get('texto') || '');
   const [selectedPos, setSelectedPos] = useState(null);
   const [selectedStructure, setSelectedStructure] = useState(null); // 'S' | 'V' | 'C' | 'O' | 'A'
+  // Category of the last word touched in practice — highlighted in the legend
+  // so the student can read its name (colours alone can look similar).
+  const [activePos, setActivePos] = useState(null);
+  const [activeStruct, setActiveStruct] = useState(null);
   const [showLabels, setShowLabels] = useState(true);
 
   const t = TRANSLATIONS[lang];
@@ -1394,6 +1410,8 @@ function App() {
     setMode(m);
     setSelectedPos(null);
     setSelectedStructure(null);
+    setActivePos(null);
+    setActiveStruct(null);
     // Clear auto-analysis when switching modes
     setAnalyzed(false);
     setTokens([]);
@@ -1475,6 +1493,8 @@ function App() {
       // Clear previous user tags and answers
       setUserPOSTags({});
       setUserStructureTags({});
+      setActivePos(null);
+      setActiveStruct(null);
       setShowAnswers(false);
       setAnswerChecked(false);
       setAnalyzed(true);
@@ -1511,20 +1531,21 @@ function App() {
     if (manualView === 'pos') {
       // With a palette category selected → paint it (toggle off if same).
       // With nothing selected → cycle through the level's unlocked categories.
-      if (selectedPos) {
-        setUserPOSTags(prev => applyTag(prev, tokenId, prev[tokenId] === selectedPos ? null : selectedPos));
-      } else {
-        const cycle = POS_ORDER.filter(k => unlocked.includes(k));
-        setUserPOSTags(prev => applyTag(prev, tokenId, nextInCycle(prev[tokenId], cycle)));
-      }
+      const current = userPOSTags[tokenId];
+      const applied = selectedPos
+        ? (current === selectedPos ? null : selectedPos)
+        : nextInCycle(current, POS_ORDER.filter(k => unlocked.includes(k)));
+      setUserPOSTags(prev => applyTag(prev, tokenId, applied));
+      setActivePos(applied);
     } else if (manualView === 'structure') {
       const isBasic = level === 'Básico' || level === 'Elemental';
       const cycle = isBasic ? ['WH', 'S', 'V', 'C'] : ['WH', 'S', 'V', 'O', 'A'];
-      if (selectedStructure) {
-        setUserStructureTags(prev => applyTag(prev, tokenId, prev[tokenId] === selectedStructure ? null : selectedStructure));
-      } else {
-        setUserStructureTags(prev => applyTag(prev, tokenId, nextInCycle(prev[tokenId], cycle)));
-      }
+      const current = userStructureTags[tokenId];
+      const applied = selectedStructure
+        ? (current === selectedStructure ? null : selectedStructure)
+        : nextInCycle(current, cycle);
+      setUserStructureTags(prev => applyTag(prev, tokenId, applied));
+      setActiveStruct(applied);
     }
   };
 
@@ -1536,8 +1557,10 @@ function App() {
   const handleClearAll = () => {
     if (manualView === 'pos') {
       setUserPOSTags({});
+      setActivePos(null);
     } else if (manualView === 'structure') {
       setUserStructureTags({});
+      setActiveStruct(null);
     }
     setShowAnswers(false);
     setAnswerChecked(false);
@@ -1738,6 +1761,8 @@ function App() {
           onSelectPos={togglePos}
           selectedStructure={selectedStructure}
           onSelectStructure={toggleStructure}
+          activePos={activePos}
+          activeStruct={activeStruct}
           showStructure={showStructure}
           autoView={autoView}
           lang={lang}
@@ -1825,6 +1850,8 @@ function App() {
                         setManualView(key);
                         setSelectedPos(null);
                         setSelectedStructure(null);
+                        setActivePos(null);
+                        setActiveStruct(null);
                         setShowAnswers(false);
                         setAnswerChecked(false);
                       }}
@@ -2132,6 +2159,8 @@ function App() {
         onSelectPos={togglePos}
         selectedStructure={selectedStructure}
         onSelectStructure={toggleStructure}
+        activePos={activePos}
+        activeStruct={activeStruct}
         level={level}
         lang={lang}
       />
