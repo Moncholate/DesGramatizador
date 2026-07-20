@@ -19,20 +19,24 @@
 
 La app usa **12 categorías** con colores del esquema Okabe-Ito (accesible para daltonismo):
 
+> Los **colores de texto** se oscurecieron (jul 2026) para cumplir WCAG AA (≥4.5:1)
+> sobre su fondo; los fondos NO cambiaron. Ver sección I5 al final. Si se alinea
+> con Grammar HUB, usar estos valores nuevos.
+
 | Clave | Label | Color texto | Color fondo | Descripción |
 |---|---|---|---|---|
-| `noun` | N | `#D97706` | `#FEF3C7` | Sustantivo |
-| `verb` | V | `#E11D48` | `#FFE4E6` | Verbo |
-| `adjective` | ADJ | `#0891B2` | `#CFFAFE` | Adjetivo |
-| `adverb` | ADV | `#EAB308` | `#FEFCE8` | Adverbio |
-| `pronoun` | PRO | `#C026D3` | `#FAE8FF` | Pronombre |
+| `noun` | N | `#B45309` | `#FEF3C7` | Sustantivo |
+| `verb` | V | `#BE123C` | `#FFE4E6` | Verbo |
+| `adjective` | ADJ | `#0E7490` | `#CFFAFE` | Adjetivo |
+| `adverb` | ADV | `#A16207` | `#FEFCE8` | Adverbio |
+| `pronoun` | PRO | `#A21CAF` | `#FAE8FF` | Pronombre |
 | `wh` | WH | `#0F766E` | `#F0FDFA` | Palabra interrogativa (wh-word) |
-| `preposition` | PREP | `#10B981` | `#ECFDF5` | Preposición |
-| `conjunction` | CONJ | `#3B82F6` | `#DBEAFE` | Conjunción |
-| `determiner` | DET | `#64748B` | `#F1F5F9` | Determinante |
-| `number` | NUM | `#6B7280` | `#F3F4F6` | Numeral *(Regla 17)* |
-| `modal` | MOD | `#6366F1` | `#E0E7FF` | Modal |
-| `auxiliary` | AUX | `#EF4444` | `#FEE2E2` | Auxiliar |
+| `preposition` | PREP | `#047857` | `#ECFDF5` | Preposición |
+| `conjunction` | CONJ | `#1D4ED8` | `#DBEAFE` | Conjunción |
+| `determiner` | DET | `#475569` | `#F1F5F9` | Determinante |
+| `number` | NUM | `#4B5563` | `#F3F4F6` | Numeral *(Regla 17)* |
+| `modal` | MOD | `#4338CA` | `#E0E7FF` | Modal |
+| `auxiliary` | AUX | `#B91C1C` | `#FEE2E2` | Auxiliar |
 
 ### Niveles CEFR — categorías desbloqueadas
 
@@ -53,10 +57,10 @@ La app usa **12 categorías** con colores del esquema Okabe-Ito (accesible para 
 |---|---|---|
 | WH | `#0F766E` / `#F0FDFA` | Palabra interrogativa (preguntas) |
 | S | `#4F46E5` / `#EEF2FF` | Sujeto |
-| V | `#E11D48` / `#FFF1F2` | Verbo |
-| C | `#059669` / `#ECFDF5` | Complemento (nivel básico) |
-| O | `#059669` / `#ECFDF5` | Objeto directo (nivel intermedio) |
-| A | `#D97706` / `#FFFBEB` | Adverbial (cuándo / dónde / cómo) |
+| V | `#BE123C` / `#FFF1F2` | Verbo |
+| C | `#047857` / `#ECFDF5` | Complemento (nivel básico) |
+| O | `#047857` / `#ECFDF5` | Objeto directo (nivel intermedio) |
+| A | `#B45309` / `#FFFBEB` | Adverbial (cuándo / dónde / cómo) |
 
 ---
 
@@ -483,3 +487,105 @@ NUM sigue las mismas reglas de bloque que DET — pertenece al bloque de su sust
 Noun / Verb / Adjective / Adverb / Pronoun / Wh- Word /
 Preposition / Conjunction / Determiner / Numeral / Modal / Auxiliary
 ```
+
+---
+
+## Mantenimiento — correcciones de julio 2026
+
+La lógica NLP se extrajo de `App.jsx` a **`src/nlp/analysis.js`** y ahora tiene
+suite de regresión en `src/nlp/analysis.test.js` (`npm test`, Vitest, 37 casos
+basados en los ejemplos de este documento).
+
+| Fix | Antes | Ahora |
+|---|---|---|
+| **C1** — búsqueda del verbo con límite de palabra | *"This is my book."* → `[S: Th]` ("is" se encontraba dentro de "This") | `[S: This] [V: is] [C: my book]` |
+| **C2** — Práctica Manual → Pintar Estructura | Toda respuesta se calificaba ✗ (comparaba contra un campo inexistente) | `buildStructureAnswerMap` alinea token↔bloque en orden, soporta contracciones, varias oraciones y deja las conjunciones sin calificar |
+| **C3** — preguntas copulares | *"Is she happy?"* → `[V: happy]` (adjetivo forzado a verbo) | `[V: Is] [S: she] [C: happy]`; solo se fuerza verbo tras do/does/did/modal o con evidencia de tags |
+| **C4** — negativas | *"She doesn't like coffee."* → `[V: does not] [C: like coffee]` | `[V: does not like] [C: coffee]`; con "be + not" el adjetivo sigue en C |
+| **C5** — detección de pregunta | *"Do your homework."* se analizaba como pregunta | `isQuestion` exige `?` (como ya documentaban las Reglas 12/13); imperativos → `[V] [C]` |
+| **I2** — tokenización por oración | Los pases de análisis cruzaban límites de oración (*"Is the food ready? Cooking..."* → "ready" = verbo) | Cada oración se tokeniza y post-procesa de forma independiente |
+
+Cambio de comportamiento a tener en cuenta: una pregunta **sin** signo `?` ya
+no activa la ruta de preguntas (antes bastaba empezar con Do/Is/Where…). Esto
+es intencional — el costo de leer imperativos como preguntas era mayor.
+
+### Segundo lote — I1 / I3 / I4
+
+| Fix | Antes | Ahora |
+|---|---|---|
+| **I1** — phrasal verbs vs verbo+preposición | *"came in the morning"*, *"went on holiday"* se marcaban como phrasal (color verbo + tooltip) | Partículas que también son preposiciones (in/on/at/into/after/to/for) no se marcan phrasal si encabezan un adverbial de tiempo/lugar (`ADVERBIAL_HEADS`) o un año; la forma separada se rechaza si la partícula va seguida de otro sustantivo (*"took the bus back home"*). Los phrasal legítimos (turn off, look at, get on the bus…) se mantienen |
+| **I3** — cópula *be* + adjetivo -ing | *"The movie is interesting"* → `is` = auxiliar | Se respeta la etiqueta de compromise: adjetivo predicativo -ing (interesting, boring, tiring) → `is` = verbo copular; progresivo real (running, studying) → auxiliar |
+| **nlpTags (bug raíz)** | `term.tags` de `doc.json()` es un **array** de nombres, pero el código hacía `Object.keys()` → índices numéricos; todo `nlpTags.includes('Participle'/'Gerund'/…)` devolvía `false` en silencio | Se maneja array/objeto correctamente. Bonus: la pasiva *"was built"* ahora se detecta como auxiliar |
+| **I4** — relativas de sujeto | *"The man who called is here."* → `[V: called] [C: is here]` (verbo de la relativa tratado como principal) | `[S: The man who called] [V: is] [C: here]`. Se activa solo cuando un pronombre relativo (who/which/that/whom/whose) aparece antes del primer verbo y hay ≥2 verbos; las relativas de objeto y los "that" complementantes no se ven afectados |
+
+Limitación conocida: si compromise etiqueta mal como sustantivo el verbo principal de una relativa (*"Students who study hard pass their exams."* → "pass" = noun), el verbo principal no se detecta. Es una limitación del tagger, no de la regla.
+
+### I5 — Contraste de color (WCAG AA)
+
+Los colores de **texto** de las categorías POS y de los bloques de estructura se
+oscurecieron al tono Tailwind más claro que alcanza AA (≥4.5:1) sobre su fondo
+original (los fondos NO cambiaron, para preservar la identidad visual). Antes,
+10 de 12 categorías POS estaban por debajo del umbral (el adverbio en 1.85:1 era
+prácticamente ilegible en proyector/celular).
+
+| POS | texto antes → ahora | ratio | | Estructura | antes → ahora |
+|---|---|---|---|---|---|
+| noun | `#D97706` → `#B45309` | 4.51 | | V | `#E11D48` → `#BE123C` |
+| verb | `#E11D48` → `#BE123C` | 5.24 | | C / O | `#059669` → `#047857` |
+| adjective | `#0891B2` → `#0E7490` | 4.79 | | A | `#D97706` → `#B45309` |
+| adverb | `#EAB308` → `#A16207` | 4.76 | | (WH, S sin cambio: ya pasaban) | |
+| pronoun | `#C026D3` → `#A21CAF` | 5.43 | | | |
+| preposition | `#10B981` → `#047857` | 5.21 | | | |
+| conjunction | `#3B82F6` → `#1D4ED8` | 5.49 | | | |
+| determiner | `#64748B` → `#475569` | 6.92 | | | |
+| modal | `#6366F1` → `#4338CA` | 6.41 | | | |
+| auxiliary | `#EF4444` → `#B91C1C` | 5.30 | | | |
+| number | `#6B7280` → `#4B5563` | 6.87 | | | |
+| wh | `#0F766E` (sin cambio) | 5.25 | | | |
+
+> Los colores semánticos de feedback (error rojo, ✓/✗/? indicadores) NO se
+> tocaron: usan símbolos redundantes además del color, así que no dependen solo
+> del color para transmitir el significado.
+>
+> **Para alinear Grammar HUB:** usar los valores "ahora" de estas tablas.
+
+### I6 / I7 — Accesibilidad
+
+**I6 — Ayuda visible en táctil.** Las explicaciones educativas (phrasal verbs,
+sujeto formal `It*`, inversión en preguntas, categorías bloqueadas) vivían solo
+en `title=`, invisible en móvil (y la app es una PWA móvil). Nuevo componente
+`InfoTip`: muestra el mismo texto como burbuja al **tocar o enfocar**, conserva
+el `title` nativo para hover en desktop, es operable por teclado (Enter/Espacio/
+Escape) y se cierra al tocar fuera o hacer scroll. Los textos de estos tips
+ahora están traducidos (es/en) en `TRANSLATIONS.tip*`.
+
+**I7 — Teclado.** Los elementos clickeables que eran `<div>`/`<span>` sueltos
+(`LegendItem` selección de categoría, `ManualWordPill` etiquetado de palabras,
+banner colapsable móvil) ahora tienen `role="button"`, `tabIndex`, `aria-pressed`/
+`aria-expanded`, manejo de Enter/Espacio y anillo de foco visible. Los tokens
+sin respuesta conocida no se vuelven interactivos.
+
+**N4 (de paso).** Se eliminó código muerto que ensuciaba el lint: prop
+`phrasalAdjacent` sin usar, y variables `unlocked`/`showStructure`/`showPOS`
+sin usar. Lint queda en 0 errores.
+
+### N1 — Contracciones ambiguas 's / 'd (is/has, would/had)
+
+`'s` y `'d` se expandían siempre igual (`'s`→"is", `'d`→"would"), lo que
+producía análisis incorrectos en tiempos perfectos:
+
+| Antes | Ahora |
+|---|---|
+| *"He's eaten"* → `[V: is eaten]` (pasiva falsa) | `[V: has eaten]` |
+| *"I'd finished"* → `[V: would finished]` | `[V: had finished]` |
+
+**Regla de desambiguación:** `'s`/`'d` + **participio pasado** → has/had
+(perfecto); si no, is/would (copular/modal). Se usa un set de participios
+irregulares + heurístico `-ed`, **con denylist de adjetivos predicativos en
+-ed** (`tired, bored, married, interested…`) que fuerzan "is" (*"He's tired"*
+= is tired, no has tired). Los casos copulares/modales/progresivos que ya
+funcionaban (*"She's happy"*, *"I'd like"*, *"She's studying"*) se mantienen.
+
+Aplica en **ambos modos**: estructura (`expandContractions` context-aware) y
+POS (la píldora partida `'s`/`'d` se recolorea según lo que sigue). El
+posesivo (*"John's book"*) sigue sin expandirse.
