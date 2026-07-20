@@ -194,6 +194,19 @@ describe('POS palabra por palabra', () => {
     expect(posOf('I have three brothers.', 'three', 'Intermedio')).toBe('number');
     expect(posOf('I have three brothers.', 'three', 'Básico')).toBe('determiner');
   });
+  it('adverbios temporales "Date" no quedan como no reconocidos', () => {
+    const isUnrec = (s, w) => {
+      const t = tokenizeText(s, 'Básico').find(x => !x.isPunct && x.text.toLowerCase() === w.toLowerCase());
+      return !!(t && t.unrecognized);
+    };
+    expect(posOf('I turned off the lights yesterday.', 'yesterday')).toBe('adverb');
+    expect(isUnrec('I turned off the lights yesterday.', 'yesterday')).toBe(false);
+    expect(posOf('See you tomorrow.', 'tomorrow')).toBe('adverb');
+    expect(posOf('I am busy today.', 'today')).toBe('adverb');
+    // palabras de calendario con Noun NO deben volverse adverbio
+    expect(posOf('I work on Monday.', 'Monday', 'Intermedio')).toBe('noun');
+    expect(posOf('We met in January.', 'January', 'Intermedio')).toBe('noun');
+  });
 });
 
 // ── I1: falsos positivos de phrasal verbs ───────────────────────────────────

@@ -1440,6 +1440,11 @@ const POS_TAG_RULES = [
                    'Infinitive', 'Participle', 'Copula']],
   ['noun',        ['Noun', 'Plural', 'ProperNoun', 'Person',
                    'Place', 'Organization', 'Acronym']],
+  // `Date` last (after Noun): calendar words like "Monday"/"January"/"week"
+  // carry Noun and resolve above; only pure-Date temporal adverbs
+  // ("yesterday", "today", "tomorrow") fall through here → adverb, instead of
+  // being flagged as unrecognized words (Rule 11).
+  ['adverb',      ['Date']],
 ];
 
 function mapTagsToPos(tagObj) {
