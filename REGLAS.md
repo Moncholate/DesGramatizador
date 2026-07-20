@@ -483,3 +483,35 @@ NUM sigue las mismas reglas de bloque que DET — pertenece al bloque de su sust
 Noun / Verb / Adjective / Adverb / Pronoun / Wh- Word /
 Preposition / Conjunction / Determiner / Numeral / Modal / Auxiliary
 ```
+
+---
+
+## Mantenimiento — correcciones de julio 2026
+
+La lógica NLP se extrajo de `App.jsx` a **`src/nlp/analysis.js`** y ahora tiene
+suite de regresión en `src/nlp/analysis.test.js` (`npm test`, Vitest, 37 casos
+basados en los ejemplos de este documento).
+
+| Fix | Antes | Ahora |
+|---|---|---|
+| **C1** — búsqueda del verbo con límite de palabra | *"This is my book."* → `[S: Th]` ("is" se encontraba dentro de "This") | `[S: This] [V: is] [C: my book]` |
+| **C2** — Práctica Manual → Pintar Estructura | Toda respuesta se calificaba ✗ (comparaba contra un campo inexistente) | `buildStructureAnswerMap` alinea token↔bloque en orden, soporta contracciones, varias oraciones y deja las conjunciones sin calificar |
+| **C3** — preguntas copulares | *"Is she happy?"* → `[V: happy]` (adjetivo forzado a verbo) | `[V: Is] [S: she] [C: happy]`; solo se fuerza verbo tras do/does/did/modal o con evidencia de tags |
+| **C4** — negativas | *"She doesn't like coffee."* → `[V: does not] [C: like coffee]` | `[V: does not like] [C: coffee]`; con "be + not" el adjetivo sigue en C |
+| **C5** — detección de pregunta | *"Do your homework."* se analizaba como pregunta | `isQuestion` exige `?` (como ya documentaban las Reglas 12/13); imperativos → `[V] [C]` |
+| **I2** — tokenización por oración | Los pases de análisis cruzaban límites de oración (*"Is the food ready? Cooking..."* → "ready" = verbo) | Cada oración se tokeniza y post-procesa de forma independiente |
+
+Cambio de comportamiento a tener en cuenta: una pregunta **sin** signo `?` ya
+no activa la ruta de preguntas (antes bastaba empezar con Do/Is/Where…). Esto
+es intencional — el costo de leer imperativos como preguntas era mayor.
+
+### Segundo lote — I1 / I3 / I4
+
+| Fix | Antes | Ahora |
+|---|---|---|
+| **I1** — phrasal verbs vs verbo+preposición | *"came in the morning"*, *"went on holiday"* se marcaban como phrasal (color verbo + tooltip) | Partículas que también son preposiciones (in/on/at/into/after/to/for) no se marcan phrasal si encabezan un adverbial de tiempo/lugar (`ADVERBIAL_HEADS`) o un año; la forma separada se rechaza si la partícula va seguida de otro sustantivo (*"took the bus back home"*). Los phrasal legítimos (turn off, look at, get on the bus…) se mantienen |
+| **I3** — cópula *be* + adjetivo -ing | *"The movie is interesting"* → `is` = auxiliar | Se respeta la etiqueta de compromise: adjetivo predicativo -ing (interesting, boring, tiring) → `is` = verbo copular; progresivo real (running, studying) → auxiliar |
+| **nlpTags (bug raíz)** | `term.tags` de `doc.json()` es un **array** de nombres, pero el código hacía `Object.keys()` → índices numéricos; todo `nlpTags.includes('Participle'/'Gerund'/…)` devolvía `false` en silencio | Se maneja array/objeto correctamente. Bonus: la pasiva *"was built"* ahora se detecta como auxiliar |
+| **I4** — relativas de sujeto | *"The man who called is here."* → `[V: called] [C: is here]` (verbo de la relativa tratado como principal) | `[S: The man who called] [V: is] [C: here]`. Se activa solo cuando un pronombre relativo (who/which/that/whom/whose) aparece antes del primer verbo y hay ≥2 verbos; las relativas de objeto y los "that" complementantes no se ven afectados |
+
+Limitación conocida: si compromise etiqueta mal como sustantivo el verbo principal de una relativa (*"Students who study hard pass their exams."* → "pass" = noun), el verbo principal no se detecta. Es una limitación del tagger, no de la regla.
