@@ -8,6 +8,7 @@ import { isQuestion, tokenizeText, analyzeStructure, buildStructureAnswerMap } f
 const TRANSLATIONS = {
   es: {
     appTitle: 'DesGramatizador',
+    appSubtitle: 'Descubre el ADN de tus oraciones.',
     autoAnalysis: 'Análisis Automático',
     manualPractice: 'Práctica Manual',
     showStructure: 'Mostrar Estructura',
@@ -81,6 +82,37 @@ const TRANSLATIONS = {
     tipPhrasal: (pv) => `Phrasal verb — "${pv}" funciona como un solo verbo`,
     tipFormalSubject: 'Sujeto formal — el significado real está en el complemento (that…)',
     tipQuestion: 'Pregunta — el sujeto y el verbo están invertidos. Orden normal: [S] + [V] + [C]',
+    // Embedded clause note + mobile hints
+    embeddedNote: '📎 Esta oración contiene una cláusula subordinada sustantiva (embedded clause). Para un análisis más profundo, consulta con tu profesor.',
+    scrollHint: '← desliza para ver todas las categorías →',
+    bannerHide: 'toca para ocultar',
+    bannerShow: 'toca para ver instrucciones',
+    // Stats + manual results
+    wordsTagged: 'palabras etiquetadas:',
+    notRecognizedStat: (n) => `${n} palabra${n > 1 ? 's' : ''} no reconocida${n > 1 ? 's' : ''}`,
+    tagged: 'etiquetadas',
+    correctLabel: 'correctas',
+    unrecognizedWarn: 'Algunas palabras no se reconocieron. Revisa la ortografía antes de practicar.',
+    resultsLabel: 'Resultados:',
+    legendCorrect: 'Correcto',
+    legendIncorrect: 'Incorrecto',
+    legendUntagged: 'Sin etiquetar',
+    notRecognizedTip: 'Palabra no reconocida — revisa la ortografía',
+    clickToTag: 'Haz clic para etiquetar',
+    tipPhrasalTagVerb: (pv) => `Phrasal verb — "${pv}" — etiquétalo como Verbo`,
+    tipPhrasalPart: (word, pv) => `'${word}' en '${pv}' es parte de un phrasal verb — etiquétalo como Verbo`,
+    // Question educational message
+    q: {
+      title: 'Esta es una pregunta (Question)',
+      structureHeader: '📚 Estructura de las preguntas en inglés:',
+      structureBody: 'Las preguntas en inglés tienen una estructura invertida comparada con las oraciones declarativas. El verbo auxiliar o modal aparece antes del sujeto.',
+      yesNoTitle: 'Yes/No Questions',
+      yesNoDesc: 'Comienzan con auxiliar/modal + sujeto + verbo',
+      whTitle: 'Wh- Questions',
+      whDesc: 'Comienzan con palabra interrogativa + auxiliar/modal + sujeto',
+      noteLabel: 'Nota:',
+      noteBody: 'El análisis de POS (partes de la oración) funciona normalmente con preguntas. Sin embargo, el análisis de estructura (Sujeto-Verbo-Objeto) requiere una lógica diferente debido a la inversión del sujeto y el verbo.',
+    },
     // PWA banners
     installBannerMsg: '📲 Instala la app en tu celular para usarla sin internet',
     installBannerBtn: 'Instalar',
@@ -89,6 +121,7 @@ const TRANSLATIONS = {
   },
   en: {
     appTitle: 'DesGramatizador',
+    appSubtitle: 'Discover the DNA of your sentences.',
     autoAnalysis: 'Auto Analysis',
     manualPractice: 'Manual Practice',
     showStructure: 'Show Structure',
@@ -162,6 +195,37 @@ const TRANSLATIONS = {
     tipPhrasal: (pv) => `Phrasal verb — "${pv}" works as a single verb`,
     tipFormalSubject: 'Formal subject — the real meaning is in the complement (that…)',
     tipQuestion: 'Question — subject and verb are inverted. Normal order: [S] + [V] + [C]',
+    // Embedded clause note + mobile hints
+    embeddedNote: '📎 This sentence contains an embedded (noun) clause. For a deeper analysis, check with your teacher.',
+    scrollHint: '← swipe to see all categories →',
+    bannerHide: 'tap to hide',
+    bannerShow: 'tap to see instructions',
+    // Stats + manual results
+    wordsTagged: 'words tagged:',
+    notRecognizedStat: (n) => `${n} word${n > 1 ? 's' : ''} not recognized`,
+    tagged: 'tagged',
+    correctLabel: 'correct',
+    unrecognizedWarn: 'Some words were not recognized. Check spelling before practicing.',
+    resultsLabel: 'Results:',
+    legendCorrect: 'Correct',
+    legendIncorrect: 'Incorrect',
+    legendUntagged: 'Untagged',
+    notRecognizedTip: 'Word not recognized — check spelling',
+    clickToTag: 'Click to tag',
+    tipPhrasalTagVerb: (pv) => `Phrasal verb — "${pv}" — tag as Verb`,
+    tipPhrasalPart: (word, pv) => `'${word}' in '${pv}' is part of a phrasal verb — tag it as Verb`,
+    // Question educational message
+    q: {
+      title: 'This is a question',
+      structureHeader: '📚 Structure of questions in English:',
+      structureBody: 'Questions in English have an inverted structure compared with statements. The auxiliary or modal verb comes before the subject.',
+      yesNoTitle: 'Yes/No Questions',
+      yesNoDesc: 'Start with auxiliary/modal + subject + verb',
+      whTitle: 'Wh- Questions',
+      whDesc: 'Start with a wh- word + auxiliary/modal + subject',
+      noteLabel: 'Note:',
+      noteBody: 'POS (parts of speech) analysis works normally with questions. However, structure analysis (Subject-Verb-Object) needs different logic because of subject-verb inversion.',
+    },
     // PWA banners
     installBannerMsg: '📲 Install this app on your phone for offline use',
     installBannerBtn: 'Install',
@@ -356,7 +420,7 @@ function WordToken({ text, pos, isPunct, unlocked, showLabels, phrasalVerb, unre
   if (unrecognized) {
     return (
       <span
-        title="Word not recognized — check spelling"
+        title={t.notRecognizedTip}
         className="inline-block px-1.5 py-0.5 rounded cursor-default"
         style={{
           background: 'white',
@@ -421,7 +485,9 @@ function ManualWordPill({
   onClick,
   showAnswers,
   answerChecked,
+  lang = 'es',
 }) {
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.es;
   const { text, isPunct } = token;
 
   // Punctuation is not clickable
@@ -433,7 +499,7 @@ function ManualWordPill({
   if (token.unrecognized) {
     return (
       <span
-        title="Word not recognized — check spelling"
+        title={t.notRecognizedTip}
         className="inline-block px-2 py-1 rounded-lg cursor-not-allowed"
         style={{ background: 'white', color: '#EF4444', border: '2px dashed #EF4444' }}
       >
@@ -488,8 +554,8 @@ function ManualWordPill({
     return (
       <ruby title={
         showAnswers && correctTag
-          ? (token.isPhrasalParticle ? `Phrasal verb — "${token.phrasalVerb}" — tag as Verb` : POS[correctTag].name)
-          : (isIncorrect && token.isPhrasalParticle ? `'${token.text}' in '${token.phrasalVerb}' is part of a phrasal verb — tag it as Verb` : 'Click to tag')
+          ? (token.isPhrasalParticle ? t.tipPhrasalTagVerb(token.phrasalVerb) : POS[correctTag].name)
+          : (isIncorrect && token.isPhrasalParticle ? t.tipPhrasalPart(token.text, token.phrasalVerb) : t.clickToTag)
       }>
         <span
           role="button"
@@ -574,7 +640,7 @@ function ManualWordPill({
         borderBottom: `3px solid ${underlineColor}`,
         fontWeight: hasUserTag || showAnswers ? 600 : 400,
       }}
-      title={showAnswers && correctTag ? STRUCTURE[correctTag].name : 'Click to tag'}
+      title={showAnswers && correctTag ? STRUCTURE[correctTag].name : t.clickToTag}
     >
       {indicator && <span className="mr-1">{indicator}</span>}
       {text}
@@ -656,14 +722,16 @@ function StructurePalette({ level, selectedStructure, onSelectStructure, lang })
    QUESTION EDUCATIONAL MESSAGE
 ═══════════════════════════════════════════════════════════ */
 
-function QuestionMessage({ text }) {
+function QuestionMessage({ text, lang = 'es' }) {
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.es;
+  const q = t.q;
   return (
     <div className="mb-4 p-4 rounded-xl border-2 border-blue-300 bg-blue-50">
       <div className="flex items-start gap-3 mb-3">
         <div className="text-2xl">❓</div>
         <div>
           <div className="text-sm font-bold text-blue-900 mb-1">
-            Esta es una pregunta (Question)
+            {q.title}
           </div>
           <div className="text-sm text-blue-800 italic mb-2">
             "{text}"
@@ -673,11 +741,10 @@ function QuestionMessage({ text }) {
 
       <div className="bg-white rounded-lg p-3 mb-3">
         <div className="text-xs font-bold text-blue-900 mb-2">
-          📚 Estructura de las preguntas en inglés:
+          {q.structureHeader}
         </div>
         <div className="text-xs text-blue-800 leading-relaxed">
-          Las preguntas en inglés tienen una <strong>estructura invertida</strong> comparada con las oraciones declarativas.
-          El verbo auxiliar o modal aparece <strong>antes</strong> del sujeto.
+          {q.structureBody}
         </div>
       </div>
 
@@ -689,11 +756,11 @@ function QuestionMessage({ text }) {
               1
             </div>
             <div className="text-xs font-bold text-emerald-900">
-              Yes/No Questions
+              {q.yesNoTitle}
             </div>
           </div>
           <div className="text-xs text-emerald-800 mb-2">
-            Comienzan con auxiliar/modal + sujeto + verbo
+            {q.yesNoDesc}
           </div>
           <div className="bg-white rounded p-2 mb-1">
             <div className="text-xs text-emerald-700 font-mono">
@@ -719,11 +786,11 @@ function QuestionMessage({ text }) {
               2
             </div>
             <div className="text-xs font-bold text-purple-900">
-              Wh-Questions
+              {q.whTitle}
             </div>
           </div>
           <div className="text-xs text-purple-800 mb-2">
-            Comienzan con palabra interrogativa + auxiliar/modal + sujeto
+            {q.whDesc}
           </div>
           <div className="bg-white rounded p-2 mb-1">
             <div className="text-xs text-purple-700 font-mono">
@@ -747,8 +814,7 @@ function QuestionMessage({ text }) {
         <div className="flex items-start gap-2">
           <div className="text-sm">💡</div>
           <div className="text-xs text-yellow-900 leading-relaxed">
-            <strong>Nota:</strong> El análisis de POS (partes de la oración) funciona normalmente con preguntas.
-            Sin embargo, el análisis de estructura (Subject-Verb-Object) requiere lógica diferente debido a la inversión del sujeto y el verbo.
+            <strong>{q.noteLabel}</strong> {q.noteBody}
           </div>
         </div>
       </div>
@@ -901,7 +967,7 @@ function SentenceStructure({ sentence, lang = 'es' }) {
       </div>
       {sentence.hasEmbeddedClause && (
         <div className="mt-2 px-2 py-1.5 rounded bg-blue-50 border border-blue-200 text-xs text-blue-800">
-          📎 Esta oración contiene una cláusula subordinada sustantiva (embedded clause). Para un análisis más profundo, consulta con tu profesor.
+          {t.embeddedNote}
         </div>
       )}
     </div>
@@ -918,7 +984,8 @@ function SentenceStructure({ sentence, lang = 'es' }) {
    ANALYSIS STATS BAR
 ═══════════════════════════════════════════════════════════ */
 
-function AnalysisStats({ tokens, unlocked }) {
+function AnalysisStats({ tokens, unlocked, lang = 'es' }) {
+  const tr = TRANSLATIONS[lang] || TRANSLATIONS.es;
   const counts = {};
   tokens.forEach(t => {
     if (t.pos && !t.isPunct) counts[t.pos] = (counts[t.pos] || 0) + 1;
@@ -930,7 +997,7 @@ function AnalysisStats({ tokens, unlocked }) {
   return (
     <div className="mt-3.5 p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex flex-wrap gap-1.5 items-center">
       <span className="text-xs text-slate-600 font-semibold mr-0.5">
-        {tagged}/{wordCount} words tagged:
+        {tagged}/{wordCount} {tr.wordsTagged}
       </span>
       {POS_ORDER
         .filter(k => counts[k] > 0)
@@ -957,7 +1024,7 @@ function AnalysisStats({ tokens, unlocked }) {
           className="px-2.5 py-1 rounded-full text-xs font-bold border"
           style={{ background: '#FEF2F2', color: '#EF4444', borderColor: '#FECACA' }}
         >
-          ⚠️ {unrecognizedCount} word{unrecognizedCount > 1 ? 's' : ''} not recognized
+          ⚠️ {tr.notRecognizedStat(unrecognizedCount)}
         </span>
       )}
     </div>
@@ -1234,7 +1301,7 @@ function MobileBar({
           <div className="absolute top-0 right-0 h-full w-10 pointer-events-none" style={{background:'linear-gradient(to right, transparent, white)'}} />
         </div>
         {showScrollHint && (
-          <p className="text-xs text-gray-400 text-center mt-0.5 pb-1">← desliza para ver todas las categorías →</p>
+          <p className="text-xs text-gray-400 text-center mt-0.5 pb-1">{t.scrollHint}</p>
         )}
       </div>
     );
@@ -1281,7 +1348,7 @@ function MobileBar({
         <div className="absolute top-0 right-0 h-full w-10 pointer-events-none" style={{background:'linear-gradient(to right, transparent, white)'}} />
       </div>
       {showScrollHint && (
-        <p className="text-xs text-gray-400 text-center mt-0.5 pb-1">← desliza para ver todas las categorías →</p>
+        <p className="text-xs text-gray-400 text-center mt-0.5 pb-1">{t.scrollHint}</p>
       )}
     </div>
   );
@@ -1624,7 +1691,7 @@ function App() {
               <div className="text-lg md:text-base font-bold text-slate-800 leading-tight">
                 {t.appTitle}
               </div>
-              <div className="text-xs text-slate-400">Descubre el ADN de tus oraciones.</div>
+              <div className="text-xs text-slate-400">{t.appSubtitle}</div>
             </div>
           </div>
 
@@ -1797,7 +1864,7 @@ function App() {
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setBannerExpanded(v => !v); } }}
                   >
                     <div className="flex items-center justify-between">
-                      <span><strong>{bannerIcon} {bannerTitle}</strong> — toca para {bannerExpanded ? 'ocultar' : 'ver instrucciones'}</span>
+                      <span><strong>{bannerIcon} {bannerTitle}</strong> — {bannerExpanded ? t.bannerHide : t.bannerShow}</span>
                       <span className={`ml-2 transition-transform duration-200 ${bannerExpanded ? 'rotate-180' : ''}`}>▼</span>
                     </div>
                     {bannerExpanded && (
@@ -1915,14 +1982,14 @@ function App() {
                   </strong>
                   <span className="text-slate-300">/</span>
                   <strong className="text-slate-800 text-base">{score.total}</strong>
-                  <span>tagged</span>
+                  <span>{t.tagged}</span>
                   {answerChecked && (
                     <>
                       <span className="mx-1 text-slate-300">•</span>
                       <strong className="text-emerald-600 text-base">{score.correct}</strong>
                       <span className="text-slate-300">/</span>
                       <strong className="text-slate-800 text-base">{score.total}</strong>
-                      <span>correct</span>
+                      <span>{t.correctLabel}</span>
                     </>
                   )}
                 </div>
@@ -1942,7 +2009,7 @@ function App() {
               <div className="bg-white rounded-2xl border-[1.5px] border-slate-200 shadow-sm transition-all p-5">
                 {/* Question detection for structure mode */}
                 {manualView === 'structure' && isQuestion(text) ? (
-                  <QuestionMessage text={text} />
+                  <QuestionMessage text={text} lang={lang} />
                 ) : (
                   <div className="flex flex-col">
                     <div
@@ -1963,7 +2030,7 @@ function App() {
                             onClick={() => handleWordClick(t.id)}
                             showAnswers={showAnswers}
                             answerChecked={answerChecked}
-                            unlocked={unlocked}
+                            lang={lang}
                           />
                           {t.post && <span>{t.post}</span>}
                         </React.Fragment>
@@ -1973,7 +2040,7 @@ function App() {
                     {/* Unrecognized words warning */}
                     {manualTokens.some(t => t.unrecognized) && (
                       <div className="mt-3 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-800">
-                        ⚠️ Some words were not recognized. Check spelling before practicing.
+                        ⚠️ {t.unrecognizedWarn}
                       </div>
                     )}
 
@@ -1981,17 +2048,17 @@ function App() {
                     {answerChecked && (
                       <div className="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-xl">
                         <div className="text-sm font-bold text-slate-700 mb-2">
-                          Results: {score.correct} / {score.total} correct ({Math.round((score.correct / score.total) * 100)}%)
+                          {t.resultsLabel} {score.correct} / {score.total} {t.correctLabel} ({Math.round((score.correct / score.total) * 100)}%)
                         </div>
                         <div className="flex gap-2 text-xs">
                           <span className="px-2 py-1 rounded bg-emerald-100 text-emerald-700 border border-emerald-200 font-semibold">
-                            ✓ Correct
+                            ✓ {t.legendCorrect}
                           </span>
                           <span className="px-2 py-1 rounded bg-red-100 text-red-700 border border-red-200 font-semibold">
-                            ✗ Incorrect
+                            ✗ {t.legendIncorrect}
                           </span>
                           <span className="px-2 py-1 rounded bg-orange-100 text-orange-700 border border-orange-200 font-semibold">
-                            ? Untagged
+                            ? {t.legendUntagged}
                           </span>
                         </div>
                       </div>
@@ -2033,7 +2100,7 @@ function App() {
                         </React.Fragment>
                       ))}
                     </div>
-                    <AnalysisStats tokens={tokens} unlocked={unlocked} />
+                    <AnalysisStats tokens={tokens} unlocked={unlocked} lang={lang} />
                   </>
                 )}
 

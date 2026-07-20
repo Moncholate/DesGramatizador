@@ -589,3 +589,27 @@ funcionaban (*"She's happy"*, *"I'd like"*, *"She's studying"*) se mantienen.
 Aplica en **ambos modos**: estructura (`expandContractions` context-aware) y
 POS (la píldora partida `'s`/`'d` se recolorea según lo que sigue). El
 posesivo (*"John's book"*) sigue sin expandirse.
+
+### N5 — Internacionalización (es/en) completa
+
+Varios textos estaban hardcodeados en un idioma e ignoraban el toggle ES/EN.
+Todos los strings visibles ahora pasan por `TRANSLATIONS[lang]`:
+
+- **QuestionMessage** completo (título, explicación de estructura invertida,
+  Yes/No vs Wh-, nota final) → clave `q` con subclaves.
+- Nota de embedded clause (📎), hint de scroll (móvil), banner colapsable
+  ("toca para ver/ocultar").
+- Estaban en **inglés** hardcodeado (rompían el modo ES): barra de stats
+  ("words tagged", "not recognized"), contador de score ("tagged"/"correct"),
+  resultados de práctica ("Results:", "Correct/Incorrect/Untagged", aviso de
+  ortografía) y tooltips de `ManualWordPill`/`WordToken` ("Click to tag",
+  "Word not recognized", tooltips de phrasal en práctica).
+- Subtítulo del header.
+
+Se pasó `lang` a los componentes que no lo recibían (`QuestionMessage`,
+`AnalysisStats`, `ManualWordPill`).
+
+**Fuera de alcance (intencional):** los nombres de nivel (Básico/Elemental/
+Intermedio/Intermedio Alto) se muestran en español en ambos idiomas porque son
+las claves de `LEVELS` e identificadores app-wide; traducirlos requeriría
+refactor de la lógica de niveles.
