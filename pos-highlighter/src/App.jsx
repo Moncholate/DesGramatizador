@@ -1532,8 +1532,6 @@ function App() {
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-  const isMobileDevice = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
-
   // Grammar HUB: escuchar cambio de idioma y nivel vía postMessage
   useEffect(() => {
     const levelMap = {
@@ -1557,16 +1555,24 @@ function App() {
   }, []);
 
   useEffect(() => {
+    // userAgent is fixed for the session, so this is effect-local (no dependency)
+    const isMobileDevice = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
     const onBeforeInstall = e => {
       e.preventDefault();
       if (!isMobileDevice) return;
       setInstallPrompt(e);
       setShowInstallBanner(true);
     };
+    const onOnline  = () => setIsOnline(true);
+    const onOffline = () => setIsOnline(false);
     window.addEventListener('beforeinstallprompt', onBeforeInstall);
-    window.addEventListener('online',  () => setIsOnline(true));
-    window.addEventListener('offline', () => setIsOnline(false));
-    return () => window.removeEventListener('beforeinstallprompt', onBeforeInstall);
+    window.addEventListener('online',  onOnline);
+    window.addEventListener('offline', onOffline);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstall);
+      window.removeEventListener('online',  onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
   }, []);
 
   const handleInstall = async () => {
