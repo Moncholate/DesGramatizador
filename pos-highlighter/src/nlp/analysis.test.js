@@ -279,6 +279,49 @@ describe('estructura — relativas de sujeto (I4)', () => {
   });
 });
 
+// ── N1: contracciones 's / 'd ambiguas (is/has, would/had) ──────────────────
+describe("contracciones 's / 'd — estructura", () => {
+  const V = (s, l = 'Intermedio') => {
+    const c = (analyzeSentenceStructure(s, l).components || []).find(x => x.type === 'V');
+    return c ? c.text : '';
+  };
+  it("'s + participio → has (perfecto)", () => {
+    expect(V("He's eaten breakfast.")).toBe('has eaten');
+    expect(V("She's gone.").startsWith('has gone')).toBe(true);
+    expect(V("He's played football.")).toBe('has played');
+  });
+  it("'s + adjetivo/nombre → is (copular)", () => {
+    expect(V("She's happy.")).toBe('is');
+    expect(V("He's a doctor.")).toBe('is');
+    expect(V("He's tired.").startsWith('is')).toBe(true); // "tired" es adjetivo, no participio
+  });
+  it("'d + participio → had; 'd + infinitivo → would", () => {
+    expect(V("I'd finished before noon.")).toBe('had finished');
+    expect(V("I'd like a coffee.")).toBe('would like');
+  });
+  it('el posesivo no se expande', () => {
+    expect(blocks("John's book is here.", 'Básico')).toEqual(['S:John\'s book', 'V:is', 'C:here']);
+  });
+});
+
+describe("contracciones 's / 'd — POS (split part)", () => {
+  const partPos = (s, partText, l = 'Básico') => {
+    const tok = tokenizeText(s, l).find(x => x.splitParts);
+    const p = tok && tok.splitParts.find(pp => pp.text === partText);
+    return p ? p.pos : undefined;
+  };
+  it("'s copular vs auxiliar según el contexto", () => {
+    expect(partPos("He's happy.", "'s")).toBe('verb');
+    expect(partPos("He's eaten.", "'s")).toBe('auxiliary');
+    expect(partPos("She's studying.", "'s")).toBe('auxiliary');
+    expect(partPos("He's tired.", "'s")).toBe('verb');
+  });
+  it("'d modal vs auxiliar según el contexto", () => {
+    expect(partPos("I'd like coffee.", "'d")).toBe('modal');
+    expect(partPos("I'd finished.", "'d")).toBe('auxiliary');
+  });
+});
+
 // ── Mapa de respuestas para Práctica Manual → Estructura (C2) ───────────────
 describe('buildStructureAnswerMap', () => {
   it('mapea cada token a su bloque', () => {

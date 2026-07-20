@@ -568,3 +568,24 @@ sin respuesta conocida no se vuelven interactivos.
 **N4 (de paso).** Se eliminó código muerto que ensuciaba el lint: prop
 `phrasalAdjacent` sin usar, y variables `unlocked`/`showStructure`/`showPOS`
 sin usar. Lint queda en 0 errores.
+
+### N1 — Contracciones ambiguas 's / 'd (is/has, would/had)
+
+`'s` y `'d` se expandían siempre igual (`'s`→"is", `'d`→"would"), lo que
+producía análisis incorrectos en tiempos perfectos:
+
+| Antes | Ahora |
+|---|---|
+| *"He's eaten"* → `[V: is eaten]` (pasiva falsa) | `[V: has eaten]` |
+| *"I'd finished"* → `[V: would finished]` | `[V: had finished]` |
+
+**Regla de desambiguación:** `'s`/`'d` + **participio pasado** → has/had
+(perfecto); si no, is/would (copular/modal). Se usa un set de participios
+irregulares + heurístico `-ed`, **con denylist de adjetivos predicativos en
+-ed** (`tired, bored, married, interested…`) que fuerzan "is" (*"He's tired"*
+= is tired, no has tired). Los casos copulares/modales/progresivos que ya
+funcionaban (*"She's happy"*, *"I'd like"*, *"She's studying"*) se mantienen.
+
+Aplica en **ambos modos**: estructura (`expandContractions` context-aware) y
+POS (la píldora partida `'s`/`'d` se recolorea según lo que sigue). El
+posesivo (*"John's book"*) sigue sin expandirse.

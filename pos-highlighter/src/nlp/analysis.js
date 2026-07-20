@@ -23,21 +23,53 @@ function isQuestion(text) {
   return text.trim().endsWith('?');
 }
 
+// Common irregular past participles (AEF vocabulary) — used to tell apart
+// "'s"/"'d" = has/had (perfect) from = is/would (copula/modal). N1
+const PP_IRREGULAR = new Set([
+  'been','gone','done','eaten','seen','taken','given','written','spoken','broken',
+  'chosen','driven','known','grown','thrown','flown','drawn','worn','torn',
+  'forgotten','hidden','ridden','risen','fallen','beaten','bitten','become','come',
+  'run','begun','sung','swum','drunk','won','got','gotten','made','said','told',
+  'found','met','left','kept','held','brought','bought','taught','caught',
+  'sold','paid','built','sent','spent','lost','meant','slept','understood','stood',
+  'heard','thought','fought','read','put','cut','set','hit','let','shut','cost','hurt',
+]);
+
+// -ed words that are predicative ADJECTIVES after be, not perfect participles:
+// "He's tired" = "He is tired", NOT "He has tired". These force the "is" reading.
+const PREDICATIVE_ED_ADJ = new Set([
+  'tired','bored','interested','excited','worried','married','surprised','scared',
+  'confused','pleased','annoyed','embarrassed','exhausted','stressed','relaxed',
+  'involved','amazed','frightened','disappointed','satisfied','crowded','closed',
+  'divorced','dressed','prepared','qualified','experienced','worried','ashamed',
+]);
+
+// True when `word` right after 's/'d signals a PERFECT tense (→ has/had),
+// as opposed to a copular adjective/noun or a modal infinitive (→ is/would).
+function isPerfectParticiple(word) {
+  const w = (word || '').toLowerCase().replace(/[^a-zà-ÿ]/g, '');
+  if (!w) return false;
+  if (PREDICATIVE_ED_ADJ.has(w)) return false;
+  if (PP_IRREGULAR.has(w)) return true;
+  if (w.length > 3 && w.endsWith('ed')) return true; // worked, played, finished…
+  return false;
+}
+
 // Analyze sentence structure using compromise.js
 // Expand common contractions so NLP can parse verb phrases correctly
 function expandContractions(t) {
+  // Ambiguous "'s" → "has" before a perfect participle, else "is" (copula/progressive/passive).
+  // Only the listed subjects are expanded, so possessives ("John's book") are untouched.
+  t = t.replace(
+    /\b(what|where|who|how|when|that|there|here|it|he|she)'s\b(\s+([\wÀ-ÿ']+))?/gi,
+    (m, subj, tail, next) => `${subj} ${next && isPerfectParticiple(next) ? 'has' : 'is'}${tail || ''}`
+  );
+  // Ambiguous "'d" → "had" before a perfect participle, else "would" (modal).
+  t = t.replace(
+    /\b(i|you|he|she|we|they|it|that|who)'d\b(\s+([\wÀ-ÿ']+))?/gi,
+    (m, subj, tail, next) => `${subj} ${next && isPerfectParticiple(next) ? 'had' : 'would'}${tail || ''}`
+  );
   return t
-    .replace(/\bwhat's\b/gi,   'What is')
-    .replace(/\bwhere's\b/gi,  'Where is')
-    .replace(/\bwho's\b/gi,    'Who is')
-    .replace(/\bhow's\b/gi,    'How is')
-    .replace(/\bwhen's\b/gi,   'When is')
-    .replace(/\bthat's\b/gi,   'That is')
-    .replace(/\bthere's\b/gi,  'There is')
-    .replace(/\bhere's\b/gi,   'Here is')
-    .replace(/\bit's\b/gi,     'It is')
-    .replace(/\bhe's\b/gi,     'He is')
-    .replace(/\bshe's\b/gi,    'She is')
     .replace(/\bi'm\b/gi,      'I am')
     .replace(/\byou're\b/gi,   'You are')
     .replace(/\bwe're\b/gi,    'We are')
@@ -52,12 +84,6 @@ function expandContractions(t) {
     .replace(/\bshe'll\b/gi,   'She will')
     .replace(/\bwe'll\b/gi,    'We will')
     .replace(/\bthey'll\b/gi,  'They will')
-    .replace(/\bi'd\b/gi,      'I would')
-    .replace(/\byou'd\b/gi,    'You would')
-    .replace(/\bhe'd\b/gi,     'He would')
-    .replace(/\bshe'd\b/gi,    'She would')
-    .replace(/\bwe'd\b/gi,     'We would')
-    .replace(/\bthey'd\b/gi,   'They would')
     .replace(/\bisn't\b/gi,    'is not')
     .replace(/\baren't\b/gi,   'are not')
     .replace(/\bwasn't\b/gi,   'was not')
@@ -1529,10 +1555,34 @@ function tokenizeSentence(s, level) {
       // Use first part's POS as the token's own pos (for stats counting etc.)
       pos = split[0].pos;
       unrecognized = false;
-      return { id: i, text: t.text, pre: t.pre || '', post: t.post || '', pos, isPunct, unrecognized, splitParts: split, nlpTags };
+      // Clone so the shared CONTRACTION_SPLITS entries are never mutated by the
+      // context-aware 's/'d pass below.
+      const splitParts = split.map(p => ({ ...p }));
+      return { id: i, text: t.text, pre: t.pre || '', post: t.post || '', pos, isPunct, unrecognized, splitParts, nlpTags };
     }
     return { id: i, text: t.text, pre: t.pre || '', post: t.post || '', pos, isPunct, unrecognized, nlpTags };
   });
+
+  // ── Post-processing: contraction "'s"/"'d" split — copula/modal vs auxiliary (N1) ──
+  // The static CONTRACTION_SPLITS map can't know context: "He's happy" → 's = is
+  // (copular verb), "He's eaten" → 's = has (auxiliary). Same for 'd = would vs had.
+  for (let i = 0; i < tokens.length; i++) {
+    const tok = tokens[i];
+    if (tok.isPunct || !tok.splitParts) continue;
+    const part = tok.splitParts[1];
+    if (!part || (part.text !== "'s" && part.text !== "'d")) continue;
+    // Next content token (skip punctuation and adverbs: "he's just arrived")
+    let j = i + 1;
+    while (j < tokens.length && (tokens[j].isPunct || tokens[j].pos === 'adverb')) j++;
+    const next = j < tokens.length ? tokens[j] : null;
+    // Perfect participle → has/had: "he's eaten", "I'd finished" (isPerfectParticiple
+    // already excludes predicative -ed adjectives like "tired"). A progressive
+    // gerund → is: "she's studying" ('d has no progressive form).
+    const afterPerfect = !!next && isPerfectParticiple(next.text);
+    const afterGerund  = !!next && next.nlpTags.includes('Gerund');
+    if (part.text === "'s") part.pos = (afterPerfect || afterGerund) ? 'auxiliary' : 'verb';
+    else                    part.pos = afterPerfect ? 'auxiliary' : 'modal';
+  }
 
   // ── Post-processing: differentiate auxiliary vs. copular "be" verbs ──────────
   // be + V-ing (progressive) or be + V-participle (passive) → auxiliary
