@@ -335,7 +335,7 @@ function InfoTip({ content, children, wrapClassName = '', wrapStyle = {} }) {
         aria-label={content}
         aria-expanded={open}
         title={content}
-        className="cursor-help"
+        className="cursor-help select-none"
         onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(o => !o); }
@@ -564,7 +564,7 @@ function ManualWordPill({
           aria-label={`${text}${userTag ? ` — ${POS[userTag].name}` : ''}`}
           onClick={onClick}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
-          className="inline-block px-2 py-1 rounded-lg cursor-pointer border-2 transition-all hover:shadow-sm relative focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="inline-block px-2 py-1 rounded-lg cursor-pointer border-2 transition-all hover:shadow-sm relative focus:outline-none focus:ring-2 focus:ring-indigo-400 select-none"
           style={{
             background: bg,
             color: col,
@@ -634,7 +634,7 @@ function ManualWordPill({
       aria-label={`${text}${userTag ? ` — ${STRUCTURE[userTag].name}` : ''}`}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
-      className="inline-block px-1.5 py-1 cursor-pointer transition-all hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-indigo-400 rounded"
+      className="inline-block px-1.5 py-1 cursor-pointer transition-all hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-indigo-400 rounded select-none"
       style={{
         color: col,
         borderBottom: `3px solid ${underlineColor}`,
@@ -1057,7 +1057,7 @@ function LegendItem({ posKey, unlocked, isManual, isSelected, onSelect }) {
       {...interactiveProps}
       className={`flex items-start gap-2.5 p-2 rounded-lg border-2 transition-all ${
         isSelected ? 'border-current' : 'border-transparent'
-      } ${unlocked ? 'opacity-100' : 'opacity-40'} ${clickable ? 'cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-400' : 'cursor-default'}`}
+      } ${unlocked ? 'opacity-100' : 'opacity-40'} ${clickable ? 'cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-indigo-400' : 'cursor-default'}`}
       style={{
         borderColor: isSelected ? p.color : 'transparent',
         background: isSelected ? p.bg + 'BB' : 'transparent',
