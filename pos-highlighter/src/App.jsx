@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { isQuestion, tokenizeText, analyzeStructure, buildStructureAnswerMap } from './nlp/analysis';
+import { TOKENS } from './tokens.generated.js';
 
 /* ═══════════════════════════════════════════════════════════
    TRANSLATIONS
@@ -243,16 +244,16 @@ const TRANSLATIONS = {
 // identity. Ratios verified against each `bg` (see REGLAS.md, sección I5).
 const POS = {
   noun:         { color: '#B45309', bg: '#FEF3C7', label: 'N',    name: 'Noun',         def: 'person, place, thing, or idea', ex: 'dog, city, love'           },
-  verb:         { color: '#BE123C', bg: '#FFE4E6', label: 'V',    name: 'Verb',         def: 'action or state',               ex: 'run, is, think'            },
+  verb:         { color: TOKENS.verb.color, bg: TOKENS.verb.bg, label: 'V',    name: 'Verb',         def: 'action or state',               ex: 'run, is, think'            },
   adjective:    { color: '#0E7490', bg: '#CFFAFE', label: 'ADJ',  name: 'Adjective',    def: 'describes a noun',              ex: 'big, happy, red'           },
   adverb:       { color: '#A16207', bg: '#FEFCE8', label: 'ADV',  name: 'Adverb',       def: 'modifies verb or adjective',    ex: 'quickly, very, often'      },
   pronoun:      { color: '#A21CAF', bg: '#FAE8FF', label: 'PRO',  name: 'Pronoun',      def: 'replaces a noun',               ex: 'he, she, they, it'         },
   preposition:  { color: '#047857', bg: '#ECFDF5', label: 'PREP', name: 'Preposition',  def: 'shows relationship',            ex: 'in, on, at, with'          },
   conjunction:  { color: '#1D4ED8', bg: '#DBEAFE', label: 'CONJ', name: 'Conjunction',  def: 'connects clauses',              ex: 'and, but, because'         },
   determiner:   { color: '#475569', bg: '#F1F5F9', label: 'DET',  name: 'Determiner',   def: 'specifies a noun',              ex: 'the, a, this, my, some'    },
-  modal:        { color: '#4338CA', bg: '#E0E7FF', label: 'MOD',  name: 'Modal',        def: 'ability / possibility',         ex: 'can, should, must, might'  },
-  auxiliary:    { color: '#B91C1C', bg: '#FEE2E2', label: 'AUX',  name: 'Auxiliary',    def: 'helps the main verb',           ex: 'is, have, do, was'         },
-  wh:            { color: '#0F766E', bg: '#F0FDFA', label: 'WH',   name: 'Wh- Word',     def: 'introduces a question',         ex: 'what, where, when, why, how' },
+  modal:        { color: TOKENS.modal.color, bg: TOKENS.modal.bg, label: 'MOD',  name: 'Modal',        def: 'ability / possibility',         ex: 'can, should, must, might'  },
+  auxiliary:    { color: TOKENS.auxiliary.color, bg: TOKENS.auxiliary.bg, label: 'AUX',  name: 'Auxiliary',    def: 'helps the main verb',           ex: 'is, have, do, was'         },
+  wh:            { color: TOKENS.wh.color, bg: TOKENS.wh.bg, label: 'WH',   name: 'Wh- Word',     def: 'introduces a question',         ex: 'what, where, when, why, how' },
   number:       { color: '#4B5563', bg: '#F3F4F6', label: 'NUM',  name: 'Numeral',      def: 'expresses quantity or a number', ex: '2020, three, 42'           },
 };
 
@@ -263,10 +264,10 @@ const POS_ORDER = [
 
 // Text colours darkened for WCAG AA on their (unchanged) backgrounds — see POS above.
 const STRUCTURE = {
-  WH: { color: '#0F766E', bg: '#F0FDFA', label: 'WH', name: 'Wh- Word',   def: 'introduces the question' },
-  S:  { color: '#4F46E5', bg: '#EEF2FF', label: 'S',  name: 'Subject',    def: 'who or what does the action' },
-  V:  { color: '#BE123C', bg: '#FFF1F2', label: 'V',  name: 'Verb',       def: 'the action or state' },
-  C:  { color: '#047857', bg: '#ECFDF5', label: 'C',  name: 'Complement', def: 'everything else' },
+  WH: { color: TOKENS.wh.color, bg: TOKENS.wh.bg, label: 'WH', name: 'Wh- Word',   def: 'introduces the question' },
+  S:  { color: TOKENS.subject.color, bg: TOKENS.subject.bg, label: 'S',  name: 'Subject',    def: 'who or what does the action' },
+  V:  { color: TOKENS.verb.color, bg: TOKENS.verb.bg, label: 'V',  name: 'Verb',       def: 'the action or state' },
+  C:  { color: TOKENS.complement.color, bg: TOKENS.complement.bg, label: 'C',  name: 'Complement', def: 'everything else' },
   O:  { color: '#047857', bg: '#ECFDF5', label: 'O',  name: 'Object',     def: 'receives the action: what? / whom?' },
   A:  { color: '#B45309', bg: '#FFFBEB', label: 'A',  name: 'Adverbial',  def: 'when? / where? / how?' },
 };

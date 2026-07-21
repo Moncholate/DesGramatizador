@@ -549,6 +549,26 @@ prácticamente ilegible en proyector/celular).
 >
 > **Para alinear Grammar HUB:** usar los valores "ahora" de estas tablas.
 
+### I8 — Alineación de color Grammar Hub (jul 2026)
+
+Al unificar la paleta del hub (un color por rol, ver `Apps/design-tokens/`), el
+sistema verbal se separó **por luminosidad**: el **verbo principal** toma el rojo
+más grave y el **auxiliar** el rose más liviano. Como Desgramatizador pinta texto
+de color sobre tinte claro, el rose y el azul usan su variante `onTint` (más
+oscura) para no romper AA. Todos siguen cumpliendo ≥4.5:1.
+
+| Rol | I5 (antes) | Ahora (hub) | ratio sobre su tinte |
+|---|---|---|---|
+| verb · estructura V | `#BE123C` | `#B91C1C` | 5.31 sobre `#FEE2E2` |
+| auxiliary | `#B91C1C` | `#BE123C` | 5.23 sobre `#FFE4E6` |
+| modal | `#4338CA` | `#4F46E5` | 5.07 sobre `#E0E7FF` |
+| estructura S | `#4F46E5` | `#1D4ED8` (azul-700) | 5.49 sobre `#DBEAFE` |
+| estructura C | `#047857` | `#475569` (slate) | 6.92 sobre `#F1F5F9` |
+
+Los valores llegan vía `src/tokens.generated.js`, que produce `npm run sync`
+en `Apps/design-tokens/`. **No editar los colores a mano acá**: cambiarlos en
+`tokens.json` y re-sincronizar.
+
 ### I6 / I7 — Accesibilidad
 
 **I6 — Ayuda visible en táctil.** Las explicaciones educativas (phrasal verbs,
