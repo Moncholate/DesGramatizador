@@ -353,6 +353,12 @@ function analyzeSentenceStructure(sentenceText, level) {
           }
 
           if (mainVerbIndex !== -1) {
+            // Adverbs between the subject and the main verb (ever, never, just…)
+            // become adverbial instead of being dropped.
+            if (mainVerbIndex > subjectEnd) {
+              const advText = termPOS.slice(subjectEnd, mainVerbIndex).map(t => t.text).join(' ').trim();
+              if (advText) components.push({ type: 'A', text: advText, position: subjectEnd });
+            }
             // Check if main verb is followed by "to + verb" (infinitive phrase, part of verb)
             let verbEndIndex = mainVerbIndex;
             let verbText = termPOS[mainVerbIndex].text;
@@ -453,6 +459,12 @@ function analyzeSentenceStructure(sentenceText, level) {
         }
 
         if (mainVerbIndex !== -1) {
+          // Adverbs between the subject and the main verb (ever, never, just…)
+          // become adverbial instead of being dropped.
+          if (mainVerbIndex > subjectEnd) {
+            const advText = termPOS.slice(subjectEnd, mainVerbIndex).map(t => t.text).join(' ').trim();
+            if (advText) components.push({ type: 'A', text: advText, position: subjectEnd });
+          }
           // Check if main verb is followed by "to + verb" (infinitive phrase, part of verb)
           let verbEndIndex = mainVerbIndex;
           let verbText = termPOS[mainVerbIndex].text;
@@ -1221,33 +1233,45 @@ function buildClauseRows(text, level, inheritedSubject = null) {
 }
 
 // Analyze all sentences in the text — returns rows instead of flat components
-// Split a merged verb phrase into [auxiliary, main verb] using a lexicon of
-// auxiliaries/modals. Returns null when there's no leading auxiliary — a single
-// lexical verb ("works"), possessive/copular "be"/"have" sitting alone as the
-// main verb, or an unrecognized chunk ("used to play").
+// Split a verb phrase into [auxiliary, main verb]. Recognises primary
+// auxiliaries/modals AND semi-auxiliary units ("going to", "used to", "have to"):
+// the "to" belongs to the (semi-)auxiliary and the following main verb is in base
+// form. Returns null when there's no auxiliary prefix — a single lexical verb
+// ("works"), or copular "be"/possessive "have" sitting alone as the verb.
 const AUX_LEX = new Set([
   'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
   'have', 'has', 'had', 'having',
   'do', 'does', 'did',
   'will', 'would', 'shall', 'should', 'can', 'could', 'may', 'might', 'must', 'ought',
 ]);
+// Words that open a semi-auxiliary unit when immediately followed by "to"
+// (future "going to", past habit "used to" / "use to").
+const SEMI_AUX_STARTERS = new Set(['going', 'used', 'use']);
 function splitVerbPhrase(text) {
   const words = String(text).trim().split(/\s+/);
   if (words.length < 2) return null;
   const norm = w => w.toLowerCase().replace(/[.,;:!?]+$/, '');
-  const isAux = w => AUX_LEX.has(norm(w));
   const isNeg = w => { const x = norm(w); return x === 'not' || x === "n't" || x === 'n’t'; };
   let i = 0;
-  while (i < words.length - 1 && (isAux(words[i]) || (i > 0 && isNeg(words[i])))) i++;
-  if (i === 0) return null; // no leading auxiliary → don't split
+  while (i < words.length - 1) {
+    const w = norm(words[i]);
+    if (AUX_LEX.has(w)) { i++; continue; }                                              // primary auxiliary / modal
+    if (i > 0 && isNeg(w)) { i++; continue; }                                           // negative particle rides with the aux
+    if (SEMI_AUX_STARTERS.has(w) && norm(words[i + 1]) === 'to') { i += 2; continue; }  // "going to" / "used to"
+    if (w === 'to' && i > 0) { i++; continue; }                                        // the "to" of "have to" / "ought to"
+    break;
+  }
+  if (i === 0) return null;                     // no auxiliary prefix → don't split
+  if (i >= words.length) i = words.length - 1;  // always leave one word as the main verb
   return { auxText: words.slice(0, i).join(' '), mainText: words.slice(i).join(' ') };
 }
 
 // Give auxiliaries their own AUX block, distinct from the main verb (V), while
-// keeping them in the same "verb system" (rose vs deep red). Two cases:
-//  · questions already split the aux out (isAuxiliary) → relabel AUX, but only
-//    when a real main verb exists (copular "Is she a teacher?" → is stays V).
-//  · declaratives merge the verb phrase into one V → split it into AUX + V.
+// keeping them in the same "verb system" (rose vs deep red):
+//  · question auxiliaries are already split out (isAuxiliary) → relabel AUX, but
+//    only when a real main verb exists (copular "Is she a teacher?" → is stays V).
+//  · any other verb phrase → pull its leading (semi-)auxiliaries into an AUX block,
+//    leaving the base-form main verb as V.
 function markAuxiliaries(components) {
   if (!components || !components.length) return components;
   const hasMainVerb = components.some(c => c.isMainVerb);
@@ -1255,7 +1279,6 @@ function markAuxiliaries(components) {
   for (const c of components) {
     if (c.type !== 'V') { out.push(c); continue; }
     if (c.isAuxiliary) { out.push({ ...c, type: hasMainVerb ? 'AUX' : 'V' }); continue; }
-    if (c.isMainVerb) { out.push(c); continue; }
     const sp = splitVerbPhrase(c.text);
     if (sp) {
       out.push({ ...c, type: 'AUX', text: sp.auxText, isAuxiliary: true, isMainVerb: false });
@@ -1263,6 +1286,33 @@ function markAuxiliaries(components) {
     } else {
       out.push(c);
     }
+  }
+  return out;
+}
+
+// Common adverbs that sit in the verb region and should be their own adverbial
+// block, not hidden inside the verb (frequency / indefinite time / focus).
+const ADVERB_LEX = new Set([
+  'ever', 'never', 'always', 'often', 'sometimes', 'usually', 'rarely', 'seldom',
+  'just', 'already', 'still', 'also', 'really', 'generally', 'recently', 'frequently',
+  'occasionally', 'normally', 'hardly', 'barely', 'nearly', 'almost', 'even',
+]);
+// Pull leading adverbs out of a verb phrase into their own adverbial (A) block —
+// or Complement (C) at Básico/Elemental, where A doesn't exist.
+function extractAdverbs(components, isBasic) {
+  const out = [];
+  for (const c of components) {
+    if (c.type === 'V' && !c.isAuxiliary) {
+      const words = String(c.text).trim().split(/\s+/);
+      let k = 0;
+      while (k < words.length - 1 && ADVERB_LEX.has(words[k].toLowerCase().replace(/[.,;:!?]+$/, ''))) k++;
+      if (k > 0) {
+        out.push({ ...c, type: 'A', text: words.slice(0, k).join(' '), isMainVerb: false, isAuxiliary: false });
+        out.push({ ...c, type: 'V', text: words.slice(k).join(' '), isMainVerb: true });
+        continue;
+      }
+    }
+    out.push(c);
   }
   return out;
 }
@@ -1287,8 +1337,9 @@ function analyzeStructure(text, level) {
     // Split auxiliaries into their own AUX block (rose), distinct from the main
     // verb (V, deep red) — applied once here so both the display and the practice
     // answer map (buildStructureAnswerMap) stay consistent.
+    const isBasic = level === 'Básico' || level === 'Elemental';
     const rows = rawRows.map(row =>
-      row.components ? { ...row, components: markAuxiliaries(row.components) } : row
+      row.components ? { ...row, components: extractAdverbs(markAuxiliaries(row.components), isBasic) } : row
     );
 
     return {

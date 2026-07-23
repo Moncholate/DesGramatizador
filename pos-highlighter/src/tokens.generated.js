@@ -8,4 +8,5 @@ export const TOKENS = {
   verb: { color: "#B91C1C", bg: "#FEE2E2" },
   complement: { color: "#475569", bg: "#F1F5F9" },
   modal: { color: "#4F46E5", bg: "#E0E7FF" },
+  adverb: { color: "#A16207", bg: "#FEF3C7" },
 };

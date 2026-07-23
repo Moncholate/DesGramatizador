@@ -272,7 +272,7 @@ const STRUCTURE = {
   V:  { color: TOKENS.verb.color, bg: TOKENS.verb.bg, label: 'V',  name: 'Verb',       def: 'the action or state' },
   C:  { color: TOKENS.complement.color, bg: TOKENS.complement.bg, label: 'C',  name: 'Complement', def: 'everything else' },
   O:  { color: '#047857', bg: '#ECFDF5', label: 'O',  name: 'Object',     def: 'receives the action: what? / whom?' },
-  A:  { color: '#B45309', bg: '#FFFBEB', label: 'A',  name: 'Adverbial',  def: 'when? / where? / how?' },
+  A:  { color: TOKENS.adverb.color, bg: TOKENS.adverb.bg, label: 'A',  name: 'Adverbial',  def: 'when? / where? / how?' },
 };
 
 const LEVELS = {
@@ -659,7 +659,7 @@ function ManualWordPill({
 function StructurePalette({ level, selectedStructure, onSelectStructure, activeStruct, lang }) {
   const t = TRANSLATIONS[lang];
   const isBasic = level === 'Básico' || level === 'Elemental';
-  const items = isBasic ? ['WH', 'S', 'AUX', 'V', 'C'] : ['WH', 'S', 'AUX', 'V', 'O', 'A'];
+  const items = isBasic ? ['WH', 'S', 'AUX', 'V', 'A', 'C'] : ['WH', 'S', 'AUX', 'V', 'O', 'A'];
   const highlight = selectedStructure || activeStruct;
 
   return (
@@ -855,7 +855,13 @@ function StructureBlock({ type, text, isAuxiliary, isMainVerb, formal, showLabel
             </div>
           )}
           <span className="text-sm" style={{ color: s.color }}>
-            {text}
+            {type === 'AUX'
+              ? text.split(/\s+/).map((w, i) => {
+                  const bare = w.replace(/[.,;:!?]+$/, '').toLowerCase();
+                  const isNeg = bare === 'not' || bare === "n't" || bare === 'n’t';
+                  return <span key={i} style={isNeg ? { color: TOKENS.adverb.color } : undefined}>{i > 0 ? ' ' : ''}{w}</span>;
+                })
+              : text}
           </span>
         </div>
       </div>
@@ -1102,7 +1108,7 @@ function StructureLegend({ level, lang }) {
   const t = TRANSLATIONS[lang];
   const isBasic = level === 'Básico' || level === 'Elemental';
   const items = isBasic
-    ? ['WH', 'S', 'AUX', 'V', 'C']
+    ? ['WH', 'S', 'AUX', 'V', 'A', 'C']
     : ['WH', 'S', 'AUX', 'V', 'O', 'A'];
 
   return (
@@ -1281,7 +1287,7 @@ function MobileBar({
 
   if (showStructure) {
     const isBasic = level === 'Básico' || level === 'Elemental';
-    const items = isBasic ? ['WH', 'S', 'AUX', 'V', 'C'] : ['WH', 'S', 'AUX', 'V', 'O', 'A'];
+    const items = isBasic ? ['WH', 'S', 'AUX', 'V', 'A', 'C'] : ['WH', 'S', 'AUX', 'V', 'O', 'A'];
 
     return (
       <div className="md:hidden flex-shrink-0 bg-white border-t border-gray-200 z-30 shadow-[0_-2px_14px_rgba(0,0,0,0.08)]">
@@ -1548,7 +1554,7 @@ function App() {
       setActivePos(applied);
     } else if (manualView === 'structure') {
       const isBasic = level === 'Básico' || level === 'Elemental';
-      const cycle = isBasic ? ['WH', 'S', 'AUX', 'V', 'C'] : ['WH', 'S', 'AUX', 'V', 'O', 'A'];
+      const cycle = isBasic ? ['WH', 'S', 'AUX', 'V', 'A', 'C'] : ['WH', 'S', 'AUX', 'V', 'O', 'A'];
       const current = userStructureTags[tokenId];
       const applied = selectedStructure
         ? (current === selectedStructure ? null : selectedStructure)

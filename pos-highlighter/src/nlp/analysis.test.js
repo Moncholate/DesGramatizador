@@ -351,6 +351,42 @@ describe('buildStructureAnswerMap', () => {
     const d = answerMap('My name is Valentina.');
     expect(d.is).toBe('V');
   });
+  it('trata going to / used to / have to como unidad auxiliar (verbo principal en base)', () => {
+    const g = answerMap('She is going to travel.', 'Intermedio');
+    expect(g.is).toBe('AUX');
+    expect(g.going).toBe('AUX');
+    expect(g.to).toBe('AUX');
+    expect(g.travel).toBe('V');
+
+    const u = answerMap('She used to play football.', 'Intermedio');
+    expect(u.used).toBe('AUX');
+    expect(u.to).toBe('AUX');
+    expect(u.play).toBe('V');
+
+    // "have to" is grouped into a single token by POS (REGLA 16)
+    const h = answerMap('They have to study hard.', 'Intermedio');
+    expect(h['have to']).toBe('AUX');
+    expect(h.study).toBe('V');
+  });
+  it('captura adverbios (ever, never) como adverbial en vez de perderlos o meterlos al verbo', () => {
+    const q = answerMap('Have you ever visited Chiloe?', 'Intermedio');
+    expect(q.ever).toBe('A');
+    expect(q.visited).toBe('V');
+
+    // También en Básico: los adverbios de frecuencia se muestran (no caen en C)
+    const b = answerMap('Have you ever visited Chiloe?', 'Básico');
+    expect(b.ever).toBe('A');
+
+    const d = answerMap('She never eats meat.', 'Intermedio');
+    expect(d.never).toBe('A');
+    expect(d.eats).toBe('V');
+  });
+  it('la negación "not" se queda con el auxiliar', () => {
+    const m = answerMap('She does not like coffee.', 'Intermedio');
+    expect(m.does).toBe('AUX');
+    expect(m.not).toBe('AUX');
+    expect(m.like).toBe('V');
+  });
   it('conjunción entre cláusulas queda sin bloque (null)', () => {
     const m = answerMap('We walked slowly and took many photos.', 'Intermedio');
     expect(m.and).toBeNull();
