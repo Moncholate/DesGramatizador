@@ -329,12 +329,27 @@ describe('buildStructureAnswerMap', () => {
       My: 'S', name: 'S', is: 'V', Valentina: 'C',
     });
   });
-  it('alinea contracciones con el texto expandido', () => {
+  it('alinea contracciones y marca el auxiliar como AUX', () => {
     const m = answerMap("She doesn't like coffee.");
     expect(m.She).toBe('S');
-    expect(m["doesn't"]).toBe('V');
+    expect(m["doesn't"]).toBe('AUX');
     expect(m.like).toBe('V');
     expect(m.coffee).toBe('C');
+  });
+  it('separa el auxiliar (AUX) del verbo principal (V) en pregunta y declarativa', () => {
+    const q = answerMap('Does she work here?');
+    expect(q.Does).toBe('AUX');
+    expect(q.work).toBe('V');
+
+    const d = answerMap('She is working today.', 'Intermedio');
+    expect(d.is).toBe('AUX');
+    expect(d.working).toBe('V');
+  });
+  it('la cópula "be" sigue siendo verbo principal, no auxiliar', () => {
+    const q = answerMap('Is she a teacher?');
+    expect(q.Is).toBe('V');
+    const d = answerMap('My name is Valentina.');
+    expect(d.is).toBe('V');
   });
   it('conjunción entre cláusulas queda sin bloque (null)', () => {
     const m = answerMap('We walked slowly and took many photos.', 'Intermedio');

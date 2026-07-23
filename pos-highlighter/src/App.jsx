@@ -70,6 +70,7 @@ const TRANSLATIONS = {
     structureDef: {
       WH: 'introduce la pregunta',
       S: 'quién o qué hace la acción',
+      AUX: 'auxiliar — ayuda al verbo principal (van unidos)',
       V: 'la acción o estado',
       C: 'todo lo demás',
       O: 'recibe la acción: ¿qué? / ¿a quién?',
@@ -183,6 +184,7 @@ const TRANSLATIONS = {
     structureDef: {
       WH: 'introduces the question',
       S: 'who or what does the action',
+      AUX: 'auxiliary — helps the main verb (they go together)',
       V: 'the action or state',
       C: 'everything else',
       O: 'receives the action: what? / whom?',
@@ -266,6 +268,7 @@ const POS_ORDER = [
 const STRUCTURE = {
   WH: { color: TOKENS.wh.color, bg: TOKENS.wh.bg, label: 'WH', name: 'Wh- Word',   def: 'introduces the question' },
   S:  { color: TOKENS.subject.color, bg: TOKENS.subject.bg, label: 'S',  name: 'Subject',    def: 'who or what does the action' },
+  AUX:{ color: TOKENS.auxiliary.color, bg: TOKENS.auxiliary.bg, label: 'AUX', name: 'Auxiliary',  def: 'helps the main verb (bound to it)' },
   V:  { color: TOKENS.verb.color, bg: TOKENS.verb.bg, label: 'V',  name: 'Verb',       def: 'the action or state' },
   C:  { color: TOKENS.complement.color, bg: TOKENS.complement.bg, label: 'C',  name: 'Complement', def: 'everything else' },
   O:  { color: '#047857', bg: '#ECFDF5', label: 'O',  name: 'Object',     def: 'receives the action: what? / whom?' },
@@ -656,7 +659,7 @@ function ManualWordPill({
 function StructurePalette({ level, selectedStructure, onSelectStructure, activeStruct, lang }) {
   const t = TRANSLATIONS[lang];
   const isBasic = level === 'Básico' || level === 'Elemental';
-  const items = isBasic ? ['WH', 'S', 'V', 'C'] : ['WH', 'S', 'V', 'O', 'A'];
+  const items = isBasic ? ['WH', 'S', 'AUX', 'V', 'C'] : ['WH', 'S', 'AUX', 'V', 'O', 'A'];
   const highlight = selectedStructure || activeStruct;
 
   return (
@@ -682,7 +685,7 @@ function StructurePalette({ level, selectedStructure, onSelectStructure, activeS
               }}
             >
               <div
-                className="w-7 h-7 rounded flex items-center justify-center text-xs font-extrabold"
+                className="h-7 min-w-[1.75rem] px-1 rounded flex items-center justify-center text-xs font-extrabold"
                 style={{ background: s.bg, color: s.color }}
               >
                 {s.label}
@@ -828,7 +831,7 @@ function QuestionMessage({ text, lang = 'es' }) {
    STRUCTURE BLOCK COMPONENT
 ═══════════════════════════════════════════════════════════ */
 
-function StructureBlock({ type, text, isAuxiliary, isMainVerb, formal, lang = 'es' }) {
+function StructureBlock({ type, text, isAuxiliary, isMainVerb, formal, showLabels = true, lang = 'es' }) {
   const s = STRUCTURE[type];
   const t = TRANSLATIONS[lang] || TRANSLATIONS.es;
 
@@ -843,12 +846,14 @@ function StructureBlock({ type, text, isAuxiliary, isMainVerb, formal, lang = 'e
         }}
       >
         <div className="flex items-center gap-2">
-          <div
-            className="w-6 h-6 rounded flex items-center justify-center text-xs font-extrabold flex-shrink-0"
-            style={{ background: s.color, color: 'white' }}
-          >
-            {s.label}
-          </div>
+          {showLabels && (
+            <div
+              className="h-6 min-w-[1.5rem] px-1 rounded flex items-center justify-center text-xs font-extrabold flex-shrink-0"
+              style={{ background: s.color, color: 'white' }}
+            >
+              {s.label}
+            </div>
+          )}
           <span className="text-sm" style={{ color: s.color }}>
             {text}
           </span>
@@ -867,12 +872,14 @@ function StructureBlock({ type, text, isAuxiliary, isMainVerb, formal, lang = 'e
       }}
     >
       <div className="flex items-center gap-2">
-        <div
-          className="w-6 h-6 rounded flex items-center justify-center text-xs font-extrabold flex-shrink-0"
-          style={{ background: s.color, color: 'white' }}
-        >
-          {s.label}
-        </div>
+        {showLabels && (
+          <div
+            className="h-6 min-w-[1.5rem] px-1 rounded flex items-center justify-center text-xs font-extrabold flex-shrink-0"
+            style={{ background: s.color, color: 'white' }}
+          >
+            {s.label}
+          </div>
+        )}
         <span className="text-sm" style={{ color: s.color }}>
           {formal ? (
             <InfoTip content={t.tipFormalSubject}>
@@ -887,7 +894,7 @@ function StructureBlock({ type, text, isAuxiliary, isMainVerb, formal, lang = 'e
   );
 }
 
-function ClauseRow({ components, isQuestion, lang = 'es' }) {
+function ClauseRow({ components, isQuestion, showLabels = true, lang = 'es' }) {
   const t = TRANSLATIONS[lang] || TRANSLATIONS.es;
   return (
     <div className="flex flex-wrap items-center gap-1">
@@ -904,6 +911,7 @@ function ClauseRow({ components, isQuestion, lang = 'es' }) {
             isAuxiliary={comp.isAuxiliary}
             isMainVerb={comp.isMainVerb}
             formal={comp.formal}
+            showLabels={showLabels}
             lang={lang}
           />
         )
@@ -922,7 +930,7 @@ function ClauseRow({ components, isQuestion, lang = 'es' }) {
   );
 }
 
-function SentenceStructure({ sentence, lang = 'es' }) {
+function SentenceStructure({ sentence, showLabels = true, lang = 'es' }) {
   const t = TRANSLATIONS[lang] || TRANSLATIONS.es;
   const rows = sentence.rows || [{ components: sentence.components || [] }];
   const hasContent = rows.some(r => !r.isConjunction && r.components && r.components.length > 0);
@@ -963,7 +971,7 @@ function SentenceStructure({ sentence, lang = 'es' }) {
               </span>
             </div>
           ) : (
-            <ClauseRow key={i} components={row.components} isQuestion={sentence.isQuestion} lang={lang} />
+            <ClauseRow key={i} components={row.components} isQuestion={sentence.isQuestion} showLabels={showLabels} lang={lang} />
           )
         )}
       </div>
@@ -1094,8 +1102,8 @@ function StructureLegend({ level, lang }) {
   const t = TRANSLATIONS[lang];
   const isBasic = level === 'Básico' || level === 'Elemental';
   const items = isBasic
-    ? ['WH', 'S', 'V', 'C']
-    : ['WH', 'S', 'V', 'O', 'A'];
+    ? ['WH', 'S', 'AUX', 'V', 'C']
+    : ['WH', 'S', 'AUX', 'V', 'O', 'A'];
 
   return (
     <div className="mb-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
@@ -1273,7 +1281,7 @@ function MobileBar({
 
   if (showStructure) {
     const isBasic = level === 'Básico' || level === 'Elemental';
-    const items = isBasic ? ['WH', 'S', 'V', 'C'] : ['WH', 'S', 'V', 'O', 'A'];
+    const items = isBasic ? ['WH', 'S', 'AUX', 'V', 'C'] : ['WH', 'S', 'AUX', 'V', 'O', 'A'];
 
     return (
       <div className="md:hidden flex-shrink-0 bg-white border-t border-gray-200 z-30 shadow-[0_-2px_14px_rgba(0,0,0,0.08)]">
@@ -1540,7 +1548,7 @@ function App() {
       setActivePos(applied);
     } else if (manualView === 'structure') {
       const isBasic = level === 'Básico' || level === 'Elemental';
-      const cycle = isBasic ? ['WH', 'S', 'V', 'C'] : ['WH', 'S', 'V', 'O', 'A'];
+      const cycle = isBasic ? ['WH', 'S', 'AUX', 'V', 'C'] : ['WH', 'S', 'AUX', 'V', 'O', 'A'];
       const current = userStructureTags[tokenId];
       const applied = selectedStructure
         ? (current === selectedStructure ? null : selectedStructure)
@@ -2140,7 +2148,7 @@ function App() {
                 {(autoView === 'structure' || autoView === 'both') && structureData.length > 0 && (
                   <div>
                     {structureData.map(sentence => (
-                      <SentenceStructure key={sentence.id} sentence={sentence} lang={lang} />
+                      <SentenceStructure key={sentence.id} sentence={sentence} showLabels={showLabels} lang={lang} />
                     ))}
                   </div>
                 )}

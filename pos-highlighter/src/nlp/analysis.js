@@ -1221,6 +1221,52 @@ function buildClauseRows(text, level, inheritedSubject = null) {
 }
 
 // Analyze all sentences in the text — returns rows instead of flat components
+// Split a merged verb phrase into [auxiliary, main verb] using a lexicon of
+// auxiliaries/modals. Returns null when there's no leading auxiliary — a single
+// lexical verb ("works"), possessive/copular "be"/"have" sitting alone as the
+// main verb, or an unrecognized chunk ("used to play").
+const AUX_LEX = new Set([
+  'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+  'have', 'has', 'had', 'having',
+  'do', 'does', 'did',
+  'will', 'would', 'shall', 'should', 'can', 'could', 'may', 'might', 'must', 'ought',
+]);
+function splitVerbPhrase(text) {
+  const words = String(text).trim().split(/\s+/);
+  if (words.length < 2) return null;
+  const norm = w => w.toLowerCase().replace(/[.,;:!?]+$/, '');
+  const isAux = w => AUX_LEX.has(norm(w));
+  const isNeg = w => { const x = norm(w); return x === 'not' || x === "n't" || x === 'n’t'; };
+  let i = 0;
+  while (i < words.length - 1 && (isAux(words[i]) || (i > 0 && isNeg(words[i])))) i++;
+  if (i === 0) return null; // no leading auxiliary → don't split
+  return { auxText: words.slice(0, i).join(' '), mainText: words.slice(i).join(' ') };
+}
+
+// Give auxiliaries their own AUX block, distinct from the main verb (V), while
+// keeping them in the same "verb system" (rose vs deep red). Two cases:
+//  · questions already split the aux out (isAuxiliary) → relabel AUX, but only
+//    when a real main verb exists (copular "Is she a teacher?" → is stays V).
+//  · declaratives merge the verb phrase into one V → split it into AUX + V.
+function markAuxiliaries(components) {
+  if (!components || !components.length) return components;
+  const hasMainVerb = components.some(c => c.isMainVerb);
+  const out = [];
+  for (const c of components) {
+    if (c.type !== 'V') { out.push(c); continue; }
+    if (c.isAuxiliary) { out.push({ ...c, type: hasMainVerb ? 'AUX' : 'V' }); continue; }
+    if (c.isMainVerb) { out.push(c); continue; }
+    const sp = splitVerbPhrase(c.text);
+    if (sp) {
+      out.push({ ...c, type: 'AUX', text: sp.auxText, isAuxiliary: true, isMainVerb: false });
+      out.push({ ...c, type: 'V', text: sp.mainText, isMainVerb: true, isAuxiliary: false });
+    } else {
+      out.push(c);
+    }
+  }
+  return out;
+}
+
 function analyzeStructure(text, level) {
   const doc = nlp(text);
   const sentences = doc.sentences().json();
@@ -1235,9 +1281,15 @@ function analyzeStructure(text, level) {
     // instead of re-parsing inside buildClauseRows. For a no-split sentence at
     // top level buildClauseRows would return exactly [{ components }], so this
     // is behavior-preserving — it just drops the redundant second parse.
-    const rows = splitOnClauseConj(sentText)
+    const rawRows = splitOnClauseConj(sentText)
       ? buildClauseRows(sentText, level)
       : [{ components: base.components || [] }];
+    // Split auxiliaries into their own AUX block (rose), distinct from the main
+    // verb (V, deep red) — applied once here so both the display and the practice
+    // answer map (buildStructureAnswerMap) stay consistent.
+    const rows = rawRows.map(row =>
+      row.components ? { ...row, components: markAuxiliaries(row.components) } : row
+    );
 
     return {
       id: idx,
