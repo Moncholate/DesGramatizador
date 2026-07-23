@@ -610,6 +610,29 @@ Aplica en **ambos modos**: estructura (`expandContractions` context-aware) y
 POS (la píldora partida `'s`/`'d` se recolorea según lo que sigue). El
 posesivo (*"John's book"*) sigue sin expandirse.
 
+### N2 — Estructura: auxiliar vs verbo, semi-auxiliares, adverbios y negación (jul 2026)
+
+Alineación con el modelo gramatical compartido del Grammar Hub
+(`Grammar HUB/grammar-model.json`):
+
+- **AUX distinto de V.** El análisis por estructura separa el auxiliar (AUX, rose)
+  del verbo principal (V, rojo grave) — misma familia de color (son el sistema
+  verbal). La cópula "be" (sin un verbo que la siga) se queda como V.
+- **Semi-auxiliares como unidad.** "going to", "used to", "have to" se tratan como
+  unidad auxiliar: el "to" va con el (semi-)auxiliar y el verbo principal queda en
+  forma base — *is going to travel* → `AUX:"is going to"` · `V:"travel"`.
+- **Adverbios.** Los adverbios del área verbal (ever, never, always, often, just…)
+  son categoría propia: van a **A (adverbial, ámbar)** en **todos los niveles**, en
+  vez de perderse o pegarse al verbo. **Nivelación deliberada:** en Básico/Elemental
+  solo estos adverbios de frecuencia (conjunto cerrado) van a A; las **frases**
+  adverbiales (yesterday, at home) siguen en C hasta Intermedio, donde se introduce
+  la distinción O/A.
+- **Negación "not".** Se queda con el auxiliar (paralelo a "doesn't", que es un solo
+  token), pero se pinta en ámbar dentro del bloque AUX para señalar que es un
+  adverbio negativo.
+
+Consistente entre modo POS, estructura, y las apps Grammaster y Question Lab.
+
 ### N5 — Internacionalización (es/en) completa
 
 Varios textos estaban hardcodeados en un idioma e ignoraban el toggle ES/EN.
