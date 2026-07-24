@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { isQuestion, tokenizeText, analyzeStructure, buildStructureAnswerMap } from './nlp/analysis';
+import { loadProgress, saveProgress, recordAnalysis, evaluateBadges, BADGES } from './gamification.generated.js';
 import { TOKENS } from './tokens.generated.js';
 
 /* ═══════════════════════════════════════════════════════════
@@ -1413,6 +1414,7 @@ function App() {
   const [userStructureTags, setUserStructureTags] = useState({}); // { tokenId: 'S' | 'V' | 'C' | 'O' | 'A' }
   const [showAnswers, setShowAnswers] = useState(false);
   const [answerChecked, setAnswerChecked] = useState(false);
+  const [badgeToasts, setBadgeToasts] = useState([]);   // gamificación de suite
   const [highlightTextarea, setHighlightTextarea] = useState(false);
   const [bannerExpanded, setBannerExpanded] = useState(false);
 
@@ -1470,6 +1472,22 @@ function App() {
     e.target.value = '';
   };
 
+  // Gamificación de suite: cuenta el análisis en gh_progress + toasts de logro
+  const recordGameAnalysis = () => {
+    try {
+      const p = loadProgress(window.localStorage);
+      recordAnalysis(p, { app: 'desgramatizador' });
+      const { newly } = evaluateBadges(p, BADGES);
+      saveProgress(window.localStorage, p);
+      if (newly.length) setBadgeToasts(prev => [...prev, ...newly]);
+    } catch (e) {}
+  };
+  useEffect(() => {
+    if (!badgeToasts.length) return;
+    const timer = setTimeout(() => setBadgeToasts(prev => prev.slice(1)), 3800);
+    return () => clearTimeout(timer);
+  }, [badgeToasts]);
+
   const handleAnalyze = () => {
     if (!canAnalyze) return;
     setNlpError(null);
@@ -1487,6 +1505,7 @@ function App() {
       }
 
       setAnalyzed(true);
+      recordGameAnalysis();
     } catch (err) {
       console.error('NLP analysis error:', err);
       setNlpError('Analysis failed. Please check your text and try again.');
@@ -1691,6 +1710,24 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen bg-[#f5f6fb]">
+      {badgeToasts.length > 0 && (
+        <div className="fixed left-0 right-0 bottom-4 z-50 flex flex-col items-center gap-2 px-4 pointer-events-none" aria-live="polite">
+          {badgeToasts.map((key, i) => {
+            const ci = key.indexOf(':'); const bid = ci < 0 ? key : key.slice(0, ci); const tid = ci < 0 ? '' : key.slice(ci + 1);
+            const b = BADGES.find(x => x.id === bid); if (!b) return null;
+            const name = (lang === 'es' ? b.name.es : b.name.en).replace('{tense}', tid);
+            return (
+              <div key={key + i} role="status" className="pointer-events-auto flex items-center gap-2.5 max-w-sm px-3.5 py-2.5 rounded-xl text-white shadow-lg bg-gradient-to-br from-rose-500 to-amber-400">
+                <span className="text-2xl leading-none">{b.icon}</span>
+                <span className="flex flex-col leading-tight">
+                  <b className="text-[0.68rem] uppercase tracking-wide opacity-90 font-extrabold">{lang === 'es' ? '¡Logro!' : 'Achievement!'}</b>
+                  <span className="text-sm font-semibold">{name}</span>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
       {/* ── PWA: Android install banner ── */}
       {showInstallBanner && (
         <div className="flex-shrink-0 bg-indigo-600 text-white px-4 py-2 flex items-center justify-between text-sm z-50">
