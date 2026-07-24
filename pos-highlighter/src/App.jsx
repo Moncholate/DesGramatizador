@@ -568,6 +568,10 @@ function ManualWordPill({
       borderColor = '#F59E0B';
     }
 
+    // Etiqueta del rol sobre la palabra: la correcta al mostrar respuestas,
+    // la del usuario mientras etiqueta — canal redundante para daltonismo.
+    const labelTag = (showAnswers && correctTag) ? correctTag : (hasUserTag ? userTag : null);
+
     return (
       <ruby title={
         showAnswers && correctTag
@@ -601,9 +605,9 @@ function ManualWordPill({
           )}
           {text}
         </span>
-        {showAnswers && correctTag && (
-          <rt style={{ fontSize: 9, color: col, fontWeight: 800 }}>
-            {POS[correctTag].label}
+        {labelTag && (
+          <rt style={{ fontSize: 9, color: POS[labelTag].color, fontWeight: 800 }}>
+            {POS[labelTag].label}
           </rt>
         )}
       </ruby>
@@ -1598,6 +1602,7 @@ function App() {
         console.error('Structure analysis error:', structErr);
         // Don't fail the whole preparation if structure analysis fails
       }
+      setAnalysisTick(t => t + 1);   // centra la práctica al iniciarla (móvil)
     } catch (err) {
       console.error('Tokenization error:', err);
       setNlpError('Failed to prepare text. Please try again.');
@@ -2145,7 +2150,7 @@ function App() {
             {/* ══ OUTPUT / RESULT AREA ══════════════════════ */}
             {/* ── MANUAL PRACTICE MODE ── */}
             {isManual && analyzed && manualTokens.length > 0 && (
-              <div className="bg-white rounded-2xl border-[1.5px] border-slate-200 shadow-sm transition-all p-5">
+              <div ref={analysisRef} className="bg-white rounded-2xl border-[1.5px] border-slate-200 shadow-sm transition-all p-5 scroll-mt-4">
                 {/* Question detection for structure mode */}
                 {manualView === 'structure' && isQuestion(text) ? (
                   <QuestionMessage text={text} lang={lang} />
