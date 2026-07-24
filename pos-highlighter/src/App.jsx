@@ -1499,6 +1499,15 @@ function App() {
     } catch (e) {}
   };
 
+  // Centrar la vista en el análisis al generarlo (queda escondido en móvil)
+  const analysisRef = useRef(null);
+  const [analysisTick, setAnalysisTick] = useState(0);
+  useEffect(() => {
+    if (!analysisTick || !analysisRef.current) return;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    analysisRef.current.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  }, [analysisTick]);
+
   const handleAnalyze = () => {
     if (!canAnalyze) return;
     setNlpError(null);
@@ -1517,6 +1526,7 @@ function App() {
 
       setAnalyzed(true);
       recordGameAnalysis();
+      setAnalysisTick(t => t + 1);   // dispara el scroll al análisis
     } catch (err) {
       console.error('NLP analysis error:', err);
       setNlpError('Analysis failed. Please check your text and try again.');
@@ -2163,7 +2173,7 @@ function App() {
 
             {/* ── AUTO ANALYSIS MODE ── */}
             {analyzed && !isManual && (
-              <div className="bg-white rounded-2xl border-[1.5px] border-slate-200 shadow-sm transition-all p-5">
+              <div ref={analysisRef} className="bg-white rounded-2xl border-[1.5px] border-slate-200 shadow-sm transition-all p-5 scroll-mt-4">
                 {/* Show POS tokens */}
                 {(autoView === 'pos' || autoView === 'both') && tokens.length > 0 && (
                   <>
