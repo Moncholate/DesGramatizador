@@ -1,7 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Lexend', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
 html, body, #root {
@@ -11,7 +12,7 @@ html, body, #root {
 }
 
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Lexend', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
 select {
@@ -25,6 +26,8 @@ textarea:focus {
 /* Ruby labels above words */
 ruby {
   ruby-align: center;
+  /* palabras en inglés analizadas → Atkinson Hyperlegible (DUA) */
+  font-family: 'Atkinson Hyperlegible', system-ui, sans-serif;
 }
 
 rt {
