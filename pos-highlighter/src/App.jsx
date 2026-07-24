@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { isQuestion, tokenizeText, analyzeStructure, buildStructureAnswerMap } from './nlp/analysis';
-import { loadProgress, saveProgress, recordAnalysis, evaluateBadges, BADGES } from './gamification.generated.js';
+import { loadProgress, saveProgress, recordAnalysis, recordAttempt, evaluateBadges, BADGES } from './gamification.generated.js';
 import { TOKENS } from './tokens.generated.js';
 
 /* ═══════════════════════════════════════════════════════════
@@ -1488,6 +1488,17 @@ function App() {
     return () => clearTimeout(timer);
   }, [badgeToasts]);
 
+  // Práctica calificada → cuenta como intento en el progreso compartido
+  const recordGamePractice = (correct) => {
+    try {
+      const p = loadProgress(window.localStorage);
+      recordAttempt(p, { app: 'desgramatizador', correct });
+      const { newly } = evaluateBadges(p, BADGES);
+      saveProgress(window.localStorage, p);
+      if (newly.length) setBadgeToasts(prev => [...prev, ...newly]);
+    } catch (e) {}
+  };
+
   const handleAnalyze = () => {
     if (!canAnalyze) return;
     setNlpError(null);
@@ -1585,6 +1596,10 @@ function App() {
 
   const handleCheckAnswers = () => {
     if (!canAnalyze || manualTokens.length === 0) return;
+    if (!answerChecked) {              // una vez por ronda (se resetea al limpiar/preparar)
+      const s = calculateScore();
+      recordGamePractice(s.total > 0 && s.correct === s.total);
+    }
     setAnswerChecked(true);
   };
 
@@ -1717,7 +1732,7 @@ function App() {
             const b = BADGES.find(x => x.id === bid); if (!b) return null;
             const name = (lang === 'es' ? b.name.es : b.name.en).replace('{tense}', tid);
             return (
-              <div key={key + i} role="status" className="pointer-events-auto flex items-center gap-2.5 max-w-sm px-3.5 py-2.5 rounded-xl text-white shadow-lg bg-gradient-to-br from-rose-500 to-amber-400">
+              <div key={key + i} role="status" className="gtoast-in pointer-events-auto flex items-center gap-2.5 max-w-sm px-3.5 py-2.5 rounded-xl text-white shadow-lg bg-gradient-to-br from-rose-500 to-amber-400">
                 <span className="text-2xl leading-none">{b.icon}</span>
                 <span className="flex flex-col leading-tight">
                   <b className="text-[0.68rem] uppercase tracking-wide opacity-90 font-extrabold">{lang === 'es' ? '¡Logro!' : 'Achievement!'}</b>
