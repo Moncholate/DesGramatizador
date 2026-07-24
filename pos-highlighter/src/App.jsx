@@ -1690,7 +1690,7 @@ function App() {
   const [showIOSHint, setShowIOSHint] = useState(isIOS && !isStandalone);
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50">
+    <div className="flex flex-col h-screen bg-[#f5f6fb]">
       {/* ── PWA: Android install banner ── */}
       {showInstallBanner && (
         <div className="flex-shrink-0 bg-indigo-600 text-white px-4 py-2 flex items-center justify-between text-sm z-50">
