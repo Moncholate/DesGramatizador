@@ -3,7 +3,13 @@ import { isQuestion, tokenizeText, analyzeStructure, buildStructureAnswerMap } f
 import { loadProgress, saveProgress, recordAnalysis, recordAttempt, evaluateBadges, BADGES } from './gamification.generated.js';
 import { TOKENS as TOKENS_LIGHT, TOKENS_DARK } from './tokens.generated.js';
 // Elige colores de rol según el tema del SO al cargar (modo oscuro dark-aware)
-const TOKENS = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? TOKENS_DARK : TOKENS_LIGHT;
+const IS_DARK = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+const TOKENS = IS_DARK ? TOKENS_DARK : TOKENS_LIGHT;
+// Neutros por defecto (casilla bloqueada / palabra sin reconocer / superficie / fundido de scroll)
+// sensibles al tema — los estilos inline no los alcanza el override CSS de modo oscuro.
+const NEUTRAL = IS_DARK
+  ? { lockBg: '#1d2233', lockText: '#8b93a7', lockBorder: '#2a3042', surface: '#141826', fade: '#141826', warnBg: '#3a1720', warnText: '#f28b82', warnBorder: '#5c2b2b' }
+  : { lockBg: '#F1F5F9', lockText: '#94A3B8', lockBorder: '#E2E8F0', surface: 'white',   fade: 'white',   warnBg: '#FEF2F2', warnText: '#EF4444', warnBorder: '#FECACA' };
 
 /* ═══════════════════════════════════════════════════════════
    TRANSLATIONS
@@ -247,19 +253,23 @@ const TRANSLATIONS = {
 // Text colours darkened to Tailwind 700/600 shades so every text/bg pair
 // clears WCAG AA (≥4.5:1); backgrounds kept unchanged to preserve the palette
 // identity. Ratios verified against each `bg` (see REGLAS.md, sección I5).
+// Las categorías POS que no vienen de TOKENS (noun, adjective, …) traen su par
+// claro y su par oscuro; `pc` elige según el tema del SO para no quedar con
+// tintes claros en modo oscuro (verb/modal/auxiliary/wh ya son dark-aware vía TOKENS).
+const pc = (light, lbg, dark, dbg) => IS_DARK ? { color: dark, bg: dbg } : { color: light, bg: lbg };
 const POS = {
-  noun:         { color: '#B45309', bg: '#FEF3C7', label: 'N',    name: 'Noun',         def: 'person, place, thing, or idea', ex: 'dog, city, love'           },
+  noun:         { ...pc('#B45309', '#FEF3C7', '#fbbf24', '#2e2410'), label: 'N',    name: 'Noun',         def: 'person, place, thing, or idea', ex: 'dog, city, love'           },
   verb:         { color: TOKENS.verb.color, bg: TOKENS.verb.bg, label: 'V',    name: 'Verb',         def: 'action or state',               ex: 'run, is, think'            },
-  adjective:    { color: '#0E7490', bg: '#CFFAFE', label: 'ADJ',  name: 'Adjective',    def: 'describes a noun',              ex: 'big, happy, red'           },
-  adverb:       { color: '#A16207', bg: '#FEFCE8', label: 'ADV',  name: 'Adverb',       def: 'modifies verb or adjective',    ex: 'quickly, very, often'      },
-  pronoun:      { color: '#A21CAF', bg: '#FAE8FF', label: 'PRO',  name: 'Pronoun',      def: 'replaces a noun',               ex: 'he, she, they, it'         },
-  preposition:  { color: '#047857', bg: '#ECFDF5', label: 'PREP', name: 'Preposition',  def: 'shows relationship',            ex: 'in, on, at, with'          },
-  conjunction:  { color: '#1D4ED8', bg: '#DBEAFE', label: 'CONJ', name: 'Conjunction',  def: 'connects clauses',              ex: 'and, but, because'         },
-  determiner:   { color: '#475569', bg: '#F1F5F9', label: 'DET',  name: 'Determiner',   def: 'specifies a noun',              ex: 'the, a, this, my, some'    },
+  adjective:    { ...pc('#0E7490', '#CFFAFE', '#22d3ee', '#0e2a30'), label: 'ADJ',  name: 'Adjective',    def: 'describes a noun',              ex: 'big, happy, red'           },
+  adverb:       { ...pc('#A16207', '#FEFCE8', '#fde047', '#2c2910'), label: 'ADV',  name: 'Adverb',       def: 'modifies verb or adjective',    ex: 'quickly, very, often'      },
+  pronoun:      { ...pc('#A21CAF', '#FAE8FF', '#e879f9', '#2a1633'), label: 'PRO',  name: 'Pronoun',      def: 'replaces a noun',               ex: 'he, she, they, it'         },
+  preposition:  { ...pc('#047857', '#ECFDF5', '#34d399', '#123024'), label: 'PREP', name: 'Preposition',  def: 'shows relationship',            ex: 'in, on, at, with'          },
+  conjunction:  { ...pc('#1D4ED8', '#DBEAFE', '#60a5fa', '#1a2036'), label: 'CONJ', name: 'Conjunction',  def: 'connects clauses',              ex: 'and, but, because'         },
+  determiner:   { ...pc('#475569', '#F1F5F9', '#94a3b8', '#1d2233'), label: 'DET',  name: 'Determiner',   def: 'specifies a noun',              ex: 'the, a, this, my, some'    },
   modal:        { color: TOKENS.modal.color, bg: TOKENS.modal.bg, label: 'MOD',  name: 'Modal',        def: 'ability / possibility',         ex: 'can, should, must, might'  },
   auxiliary:    { color: TOKENS.auxiliary.color, bg: TOKENS.auxiliary.bg, label: 'AUX',  name: 'Auxiliary',    def: 'helps the main verb',           ex: 'is, have, do, was'         },
   wh:            { color: TOKENS.wh.color, bg: TOKENS.wh.bg, label: 'WH',   name: 'Wh- Word',     def: 'introduces a question',         ex: 'what, where, when, why, how' },
-  number:       { color: '#4B5563', bg: '#F3F4F6', label: 'NUM',  name: 'Numeral',      def: 'expresses quantity or a number', ex: '2020, three, 42'           },
+  number:       { ...pc('#4B5563', '#F3F4F6', '#9ca3af', '#1f2430'), label: 'NUM',  name: 'Numeral',      def: 'expresses quantity or a number', ex: '2020, three, 42'           },
 };
 
 const POS_ORDER = [
@@ -399,8 +409,8 @@ function WordToken({ text, pos, isPunct, unlocked, showLabels, phrasalVerb, unre
           {splitParts.map((part, idx) => {
             const cfg = POS[part.pos];
             const ok = unlocked.includes(part.pos);
-            const bg  = ok ? cfg.bg    : '#F1F5F9';
-            const col = ok ? cfg.color : '#94A3B8';
+            const bg  = ok ? cfg.bg    : NEUTRAL.lockBg;
+            const col = ok ? cfg.color : NEUTRAL.lockText;
             return (
               <ruby key={idx} title={ok ? cfg.name : t.tipLocked}>
                 <span
@@ -408,7 +418,7 @@ function WordToken({ text, pos, isPunct, unlocked, showLabels, phrasalVerb, unre
                   style={{
                     background: bg, color: col, fontWeight: ok ? 500 : 400,
                     borderRadius: idx === 0 ? '4px 0 0 4px' : '0 4px 4px 0',
-                    borderRight: idx === 0 ? `1px solid ${ok ? col + '55' : '#CBD5E1'}` : 'none',
+                    borderRight: idx === 0 ? `1px solid ${ok ? col + '55' : NEUTRAL.lockBorder}` : 'none',
                   }}
                 >
                   {part.text}
@@ -430,9 +440,9 @@ function WordToken({ text, pos, isPunct, unlocked, showLabels, phrasalVerb, unre
         title={t.notRecognizedTip}
         className="inline-block px-1.5 py-0.5 rounded cursor-default"
         style={{
-          background: 'white',
-          color: '#EF4444',
-          border: '2px dashed #EF4444',
+          background: NEUTRAL.surface,
+          color: NEUTRAL.warnText,
+          border: `2px dashed ${NEUTRAL.warnText}`,
         }}
       >
         {text}
@@ -446,8 +456,8 @@ function WordToken({ text, pos, isPunct, unlocked, showLabels, phrasalVerb, unre
 
   const cfg = POS[pos];
   const ok = unlocked.includes(pos);
-  const bg = ok ? cfg.bg : '#F1F5F9';
-  const col = ok ? cfg.color : '#94A3B8';
+  const bg = ok ? cfg.bg : NEUTRAL.lockBg;
+  const col = ok ? cfg.color : NEUTRAL.lockText;
 
   const ruby = (
     <ruby title={ok && !phrasalVerb ? cfg.name : undefined}>
@@ -508,7 +518,7 @@ function ManualWordPill({
       <span
         title={t.notRecognizedTip}
         className="inline-block px-2 py-1 rounded-lg cursor-not-allowed"
-        style={{ background: 'white', color: '#EF4444', border: '2px dashed #EF4444' }}
+        style={{ background: NEUTRAL.surface, color: NEUTRAL.warnText, border: `2px dashed ${NEUTRAL.warnText}` }}
       >
         {text}
       </span>
@@ -1028,9 +1038,9 @@ function AnalysisStats({ tokens, unlocked, lang = 'es' }) {
               key={key}
               className="px-2.5 py-1 rounded-full text-xs font-bold border"
               style={{
-                background: ok ? p.bg : '#F1F5F9',
-                color: ok ? p.color : '#94A3B8',
-                borderColor: ok ? p.color + '33' : '#E2E8F0',
+                background: ok ? p.bg : NEUTRAL.lockBg,
+                color: ok ? p.color : NEUTRAL.lockText,
+                borderColor: ok ? p.color + '33' : NEUTRAL.lockBorder,
               }}
             >
               {p.label} × {counts[key]}
@@ -1041,7 +1051,7 @@ function AnalysisStats({ tokens, unlocked, lang = 'es' }) {
       {unrecognizedCount > 0 && (
         <span
           className="px-2.5 py-1 rounded-full text-xs font-bold border"
-          style={{ background: '#FEF2F2', color: '#EF4444', borderColor: '#FECACA' }}
+          style={{ background: NEUTRAL.warnBg, color: NEUTRAL.warnText, borderColor: NEUTRAL.warnBorder }}
         >
           ⚠️ {tr.notRecognizedStat(unrecognizedCount)}
         </span>
@@ -1084,8 +1094,8 @@ function LegendItem({ posKey, unlocked, isManual, isSelected, onSelect }) {
       <div
         className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-xs font-extrabold mt-0.5"
         style={{
-          background: unlocked ? p.bg : '#F1F5F9',
-          color: unlocked ? p.color : '#94A3B8',
+          background: unlocked ? p.bg : NEUTRAL.lockBg,
+          color: unlocked ? p.color : NEUTRAL.lockText,
         }}
       >
         {unlocked ? p.label : '🔒'}
@@ -1328,7 +1338,7 @@ function MobileBar({
               );
             })}
           </div>
-          <div className="absolute top-0 right-0 h-full w-10 pointer-events-none" style={{background:'linear-gradient(to right, transparent, white)'}} />
+          <div className="absolute top-0 right-0 h-full w-10 pointer-events-none" style={{background:`linear-gradient(to right, transparent, ${NEUTRAL.fade})`}} />
         </div>
         {showScrollHint && (
           <p className="text-xs text-gray-400 text-center mt-0.5 pb-1">{t.scrollHint}</p>
@@ -1362,8 +1372,8 @@ function MobileBar({
                 onClick={() => ok && isManual && onSelectPos(key)}
                 className="flex-shrink-0 flex flex-col items-center py-1.5 px-2.5 rounded-xl border-2 transition-all min-w-[50px]"
                 style={{
-                  background: ok ? p.bg : '#F1F5F9',
-                  color: ok ? p.color : '#94A3B8',
+                  background: ok ? p.bg : NEUTRAL.lockBg,
+                  color: ok ? p.color : NEUTRAL.lockText,
                   borderColor: sel ? p.color : 'transparent',
                   cursor: ok && isManual ? 'pointer' : 'default',
                   opacity: ok ? 1 : 0.5,
@@ -1375,7 +1385,7 @@ function MobileBar({
             );
           })}
         </div>
-        <div className="absolute top-0 right-0 h-full w-10 pointer-events-none" style={{background:'linear-gradient(to right, transparent, white)'}} />
+        <div className="absolute top-0 right-0 h-full w-10 pointer-events-none" style={{background:`linear-gradient(to right, transparent, ${NEUTRAL.fade})`}} />
       </div>
       {showScrollHint && (
         <p className="text-xs text-gray-400 text-center mt-0.5 pb-1">{t.scrollHint}</p>
