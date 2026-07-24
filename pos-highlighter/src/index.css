@@ -1,5 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
+
+@font-face{font-family:'Lexend';font-style:normal;font-weight:400 700;font-display:swap;src:url('./fonts/Lexend.woff2') format('woff2');}
+@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:400;font-display:swap;src:url('./fonts/AtkinsonHyperlegible-Regular.woff2') format('woff2');}
+@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:700;font-display:swap;src:url('./fonts/AtkinsonHyperlegible-Bold.woff2') format('woff2');}
 
 :root {
   font-family: 'Lexend', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
