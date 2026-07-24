@@ -8,8 +8,8 @@ const TOKENS = IS_DARK ? TOKENS_DARK : TOKENS_LIGHT;
 // Neutros por defecto (casilla bloqueada / palabra sin reconocer / superficie / fundido de scroll)
 // sensibles al tema — los estilos inline no los alcanza el override CSS de modo oscuro.
 const NEUTRAL = IS_DARK
-  ? { lockBg: '#1d2233', lockText: '#8b93a7', lockBorder: '#2a3042', surface: '#141826', fade: '#141826', warnBg: '#3a1720', warnText: '#f28b82', warnBorder: '#5c2b2b', pillBg: '#1d2233', pillText: '#9aa2b6', pillBorder: '#2a3042' }
-  : { lockBg: '#F1F5F9', lockText: '#94A3B8', lockBorder: '#E2E8F0', surface: 'white',   fade: 'white',   warnBg: '#FEF2F2', warnText: '#EF4444', warnBorder: '#FECACA', pillBg: '#F8FAFC', pillText: '#64748B', pillBorder: '#E2E8F0' };
+  ? { lockBg: '#1d2233', lockText: '#8b93a7', lockBorder: '#2a3042', surface: '#141826', fade: '#141826', warnBg: '#3a1720', warnText: '#f28b82', warnBorder: '#5c2b2b', pillBg: '#1d2233', pillText: '#9aa2b6', pillBorder: '#2a3042', text: '#eceff8' }
+  : { lockBg: '#F1F5F9', lockText: '#94A3B8', lockBorder: '#E2E8F0', surface: 'white',   fade: 'white',   warnBg: '#FEF2F2', warnText: '#EF4444', warnBorder: '#FECACA', pillBg: '#F8FAFC', pillText: '#64748B', pillBorder: '#E2E8F0', text: '#1e293b' };
 
 /* ═══════════════════════════════════════════════════════════
    TRANSLATIONS
@@ -618,18 +618,16 @@ function ManualWordPill({
   const isIncorrect = answerChecked && gradable && userTag && userTag !== correctTag;
   const isUntagged = answerChecked && gradable && !userTag;
 
+  // DUA: el texto de la palabra se lee siempre a alto contraste; el rol lo
+  // comunica el subrayado de color (+ la etiqueta), no el color del texto.
   let underlineColor = 'transparent';
-  let col = NEUTRAL.pillText;
+  let col = NEUTRAL.text;
   let indicator = '';
 
   if (showAnswers && correctTag) {
-    const cfg = STRUCTURE[correctTag];
-    underlineColor = cfg.color;
-    col = cfg.color;
+    underlineColor = STRUCTURE[correctTag].color;
   } else if (hasUserTag) {
-    const cfg = STRUCTURE[userTag];
-    underlineColor = cfg.color;
-    col = cfg.color;
+    underlineColor = STRUCTURE[userTag].color;
 
     if (answerChecked) {
       if (isCorrect) {
