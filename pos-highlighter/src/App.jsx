@@ -641,25 +641,36 @@ function ManualWordPill({
     indicator = '?';
   }
 
+  // Etiqueta del rol (S/V/C…) sobre la palabra — canal redundante al subrayado
+  // para daltonismo: la del usuario al etiquetar, la correcta al mostrar respuestas.
+  const labelTag = (showAnswers && correctTag) ? correctTag : (hasUserTag ? userTag : null);
+
   return (
-    <span
-      role="button"
-      tabIndex={0}
-      aria-pressed={hasUserTag}
-      aria-label={`${text}${userTag ? ` — ${STRUCTURE[userTag].name}` : ''}`}
-      onClick={onClick}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
-      className="inline-block px-1.5 py-1 cursor-pointer transition-all hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-indigo-400 rounded select-none"
-      style={{
-        color: col,
-        borderBottom: `3px solid ${underlineColor}`,
-        fontWeight: hasUserTag || showAnswers ? 600 : 400,
-      }}
-      title={showAnswers && correctTag ? STRUCTURE[correctTag].name : t.clickToTag}
-    >
-      {indicator && <span className="mr-1">{indicator}</span>}
-      {text}
-    </span>
+    <ruby>
+      <span
+        role="button"
+        tabIndex={0}
+        aria-pressed={hasUserTag}
+        aria-label={`${text}${userTag ? ` — ${STRUCTURE[userTag].name}` : ''}`}
+        onClick={onClick}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
+        className="inline-block px-1.5 py-1 cursor-pointer transition-all hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-indigo-400 rounded select-none"
+        style={{
+          color: col,
+          borderBottom: `3px solid ${underlineColor}`,
+          fontWeight: hasUserTag || showAnswers ? 600 : 400,
+        }}
+        title={showAnswers && correctTag ? STRUCTURE[correctTag].name : t.clickToTag}
+      >
+        {indicator && <span className="mr-1">{indicator}</span>}
+        {text}
+      </span>
+      {labelTag && (
+        <rt style={{ fontSize: 9, color: STRUCTURE[labelTag].color, fontWeight: 800 }}>
+          {STRUCTURE[labelTag].label}
+        </rt>
+      )}
+    </ruby>
   );
 }
 
@@ -1293,6 +1304,19 @@ function MobileBar({
     }
   };
 
+  // Móvil: al seleccionar categoría o tocar/rotar una palabra, centra el botón
+  // activo en la tira horizontal para que no se pierda fuera de pantalla.
+  const stripRef = useRef(null);
+  const activeBtnRef = useRef(null);
+  useEffect(() => {
+    const el = activeBtnRef.current, box = stripRef.current;
+    if (!el || !box) return;
+    const reduce = typeof window !== 'undefined' && window.matchMedia
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const target = el.offsetLeft - (box.clientWidth - el.clientWidth) / 2;
+    box.scrollTo({ left: Math.max(0, target), behavior: reduce ? 'auto' : 'smooth' });
+  }, [highlightPos, highlightStruct]);
+
   const showStructure = (isManual && manualView === 'structure')
     || (!isManual && (autoView === 'structure' || (isBoth && bothTab === 'structure')));
 
@@ -1314,13 +1338,14 @@ function MobileBar({
           </div>
         )}
         <div className="relative">
-          <div className="flex gap-1.5 px-3 pt-1.5 pb-2.5 overflow-x-auto" onScroll={handleLegendScroll}>
+          <div ref={stripRef} className="flex gap-1.5 px-3 pt-1.5 pb-2.5 overflow-x-auto" onScroll={handleLegendScroll}>
             {items.map(key => {
               const s = STRUCTURE[key];
               const sel = highlightStruct === key;
               return (
                 <button
                   key={key}
+                  ref={sel ? activeBtnRef : null}
                   onClick={() => isManual && onSelectStructure(key)}
                   className="flex-shrink-0 flex flex-col items-center py-1.5 px-2.5 rounded-xl border-2 transition-all min-w-[50px]"
                   style={{
@@ -1359,7 +1384,7 @@ function MobileBar({
         </div>
       )}
       <div className="relative">
-        <div className="flex gap-1.5 px-3 pt-1.5 pb-2.5 overflow-x-auto" onScroll={handleLegendScroll}>
+        <div ref={stripRef} className="flex gap-1.5 px-3 pt-1.5 pb-2.5 overflow-x-auto" onScroll={handleLegendScroll}>
           {POS_ORDER.map(key => {
             const p = POS[key];
             const ok = unlocked.includes(key);
@@ -1367,6 +1392,7 @@ function MobileBar({
             return (
               <button
                 key={key}
+                ref={sel ? activeBtnRef : null}
                 onClick={() => ok && isManual && onSelectPos(key)}
                 className="flex-shrink-0 flex flex-col items-center py-1.5 px-2.5 rounded-xl border-2 transition-all min-w-[50px]"
                 style={{
