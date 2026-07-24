@@ -15,7 +15,7 @@ export const TOKENS_DARK = {
   subject: { color: "#60A5FA", bg: "#1f2d46" },
   auxiliary: { color: "#FB7185", bg: "#372534" },
   verb: { color: "#EF4444", bg: "#351f2b" },
-  complement: { color: "#94A3B8", bg: "#272d3c" },
+  complement: { color: "#CBD5E1", bg: "#2f3442" },
   modal: { color: "#A5B4FC", bg: "#2a2f46" },
   adverb: { color: "#FBBF24", bg: "#373126" },
 };
