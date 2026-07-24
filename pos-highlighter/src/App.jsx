@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { isQuestion, tokenizeText, analyzeStructure, buildStructureAnswerMap } from './nlp/analysis';
 import { loadProgress, saveProgress, recordAnalysis, recordAttempt, evaluateBadges, BADGES } from './gamification.generated.js';
-import { TOKENS } from './tokens.generated.js';
+import { TOKENS as TOKENS_LIGHT, TOKENS_DARK } from './tokens.generated.js';
+// Elige colores de rol según el tema del SO al cargar (modo oscuro dark-aware)
+const TOKENS = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? TOKENS_DARK : TOKENS_LIGHT;
 
 /* ═══════════════════════════════════════════════════════════
    TRANSLATIONS

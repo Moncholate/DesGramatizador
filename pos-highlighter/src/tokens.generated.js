@@ -10,3 +10,12 @@ export const TOKENS = {
   modal: { color: "#4F46E5", bg: "#E0E7FF" },
   adverb: { color: "#A16207", bg: "#FEF3C7" },
 };
+export const TOKENS_DARK = {
+  wh: { color: "#2DD4BF", bg: "#18343d" },
+  subject: { color: "#60A5FA", bg: "#1f2d46" },
+  auxiliary: { color: "#FB7185", bg: "#372534" },
+  verb: { color: "#EF4444", bg: "#351f2b" },
+  complement: { color: "#94A3B8", bg: "#272d3c" },
+  modal: { color: "#A5B4FC", bg: "#2a2f46" },
+  adverb: { color: "#FBBF24", bg: "#373126" },
+};
