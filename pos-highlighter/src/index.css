@@ -7,6 +7,20 @@
 @keyframes gtoastIn { from { transform: translateY(14px) scale(.96); opacity: 0; } }
 @media (prefers-reduced-motion: no-preference) { .gtoast-in { animation: gtoastIn .35s cubic-bezier(.2,.8,.2,1); } }
 
+/* ── Modo oscuro (1ª pasada · override de superficies sobre los neutros del sistema) ── */
+@media (prefers-color-scheme: dark) {
+  html, body { background-color: #0c0e15; color: #eceff8; }
+  .bg-white { background-color: #141826 !important; }
+  .bg-\[\#f5f6fb\] { background-color: #0c0e15 !important; }
+  .bg-gray-50, .bg-slate-50 { background-color: #1a1f2e !important; }
+  .bg-gray-100, .bg-slate-100 { background-color: #222839 !important; }
+  .bg-gray-200, .bg-slate-200 { background-color: #2a3042 !important; }
+  .text-gray-900, .text-gray-800, .text-slate-900, .text-slate-800, .text-black { color: #eceff8 !important; }
+  .text-gray-700, .text-gray-600, .text-slate-700, .text-slate-600 { color: #c7cdda !important; }
+  .text-gray-500, .text-gray-400, .text-slate-500, .text-slate-400 { color: #9aa2b6 !important; }
+  .border-gray-100, .border-gray-200, .border-slate-100, .border-slate-200, .border-slate-300 { border-color: #2a3042 !important; }
+}
+
 :root {
   font-family: 'Lexend', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
