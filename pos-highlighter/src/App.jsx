@@ -1988,9 +1988,9 @@ function App() {
 
             {/* ── Hint banner ── */}
             {(() => {
-              const bannerColor = isManual
-                ? 'bg-orange-50 border-orange-200 text-orange-900'
-                : 'bg-blue-50 border-blue-200 text-blue-900';
+              // Mismo azul para ambos modos (limpio en claro y oscuro); la
+              // distinción de modo la dan el ícono y el título, no el color.
+              const bannerColor = 'bg-blue-50 border-blue-200 text-blue-900';
               const bannerIcon = isManual ? '✏️' : '⚡';
               const bannerTitle = isManual ? t.manualPractice : t.autoAnalysis;
               const bannerFull = isManual
