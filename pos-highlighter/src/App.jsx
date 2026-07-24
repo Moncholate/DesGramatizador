@@ -2159,7 +2159,9 @@ function App() {
                     <div
                       className="text-base"
                       style={{
-                        lineHeight: 2.5,
+                        // Más interlineado: las etiquetas de rol (rt) van siempre visibles
+                        // sobre cada palabra y no deben chocar con la fila superior.
+                        lineHeight: 3.2,
                         wordSpacing: '2px',
                       }}
                     >
