@@ -30,6 +30,10 @@
   .from-purple-50 { --tw-gradient-from: #241b3c !important; } .to-purple-100 { --tw-gradient-to: #2e2350 !important; }
   .from-rose-50 { --tw-gradient-from: #3a1720 !important; } .to-rose-100 { --tw-gradient-to: #4a1d29 !important; }
   .from-amber-50 { --tw-gradient-from: #2e2410 !important; } .to-amber-100 { --tw-gradient-to: #41310f !important; }
+  .bg-orange-50 { background-color: #2e2410 !important; }
+  .border-orange-200, .border-amber-300 { border-color: #3a3320 !important; }
+  /* texto de estado (banners) que quedaba oscuro → claro */
+  .text-blue-900, .text-blue-800, .text-orange-900, .text-emerald-800, .text-emerald-900, .text-indigo-800, .text-amber-800, .text-purple-800, .text-teal-800 { color: #dfe4f0 !important; }
 }
 
 :root {
