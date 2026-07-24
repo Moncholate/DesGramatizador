@@ -8,8 +8,8 @@ const TOKENS = IS_DARK ? TOKENS_DARK : TOKENS_LIGHT;
 // Neutros por defecto (casilla bloqueada / palabra sin reconocer / superficie / fundido de scroll)
 // sensibles al tema — los estilos inline no los alcanza el override CSS de modo oscuro.
 const NEUTRAL = IS_DARK
-  ? { lockBg: '#1d2233', lockText: '#8b93a7', lockBorder: '#2a3042', surface: '#141826', fade: '#141826', warnBg: '#3a1720', warnText: '#f28b82', warnBorder: '#5c2b2b' }
-  : { lockBg: '#F1F5F9', lockText: '#94A3B8', lockBorder: '#E2E8F0', surface: 'white',   fade: 'white',   warnBg: '#FEF2F2', warnText: '#EF4444', warnBorder: '#FECACA' };
+  ? { lockBg: '#1d2233', lockText: '#8b93a7', lockBorder: '#2a3042', surface: '#141826', fade: '#141826', warnBg: '#3a1720', warnText: '#f28b82', warnBorder: '#5c2b2b', pillBg: '#1d2233', pillText: '#9aa2b6', pillBorder: '#2a3042' }
+  : { lockBg: '#F1F5F9', lockText: '#94A3B8', lockBorder: '#E2E8F0', surface: 'white',   fade: 'white',   warnBg: '#FEF2F2', warnText: '#EF4444', warnBorder: '#FECACA', pillBg: '#F8FAFC', pillText: '#64748B', pillBorder: '#E2E8F0' };
 
 /* ═══════════════════════════════════════════════════════════
    TRANSLATIONS
@@ -538,9 +538,9 @@ function ManualWordPill({
     const isIncorrect = answerChecked && gradable && userTag && !isCorrect;
     const isUntagged = answerChecked && gradable && !userTag;
 
-    let bg = '#F8FAFC';
-    let col = '#64748B';
-    let borderColor = '#E2E8F0';
+    let bg = NEUTRAL.pillBg;
+    let col = NEUTRAL.pillText;
+    let borderColor = NEUTRAL.pillBorder;
     let indicator = '';
 
     if (showAnswers && correctTag) {
@@ -619,7 +619,7 @@ function ManualWordPill({
   const isUntagged = answerChecked && gradable && !userTag;
 
   let underlineColor = 'transparent';
-  let col = '#64748B';
+  let col = NEUTRAL.pillText;
   let indicator = '';
 
   if (showAnswers && correctTag) {
