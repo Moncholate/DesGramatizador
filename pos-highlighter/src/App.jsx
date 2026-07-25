@@ -168,6 +168,7 @@ const TRANSLATIONS = {
     iosHintMsg: '📲 iPhone: toca Compartir → Agregar a pantalla de inicio',
     offlineMsg: '⚠️ Sin conexión — la app sigue funcionando con el contenido cargado',
     newVersion: '✨ Hay una versión nueva disponible',
+    newVersionHub: '✨ Hay una versión nueva. Vuelve al inicio y abre la app de nuevo para actualizarla.',
     updateBtn: 'Actualizar',
   },
   en: {
@@ -288,6 +289,7 @@ const TRANSLATIONS = {
     iosHintMsg: '📲 iPhone: tap Share → Add to Home Screen to install',
     offlineMsg: '⚠️ You are offline — the app still works with previously loaded content',
     newVersion: '✨ A new version is available',
+    newVersionHub: '✨ A new version is available. Go back to the menu and reopen the app to update it.',
     updateBtn: 'Update',
   },
 };
@@ -2012,13 +2014,16 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen bg-[#f5f6fb]">
-      {/* PWA: aviso de versión nueva */}
+      {/* PWA: aviso de versión nueva. Embebida en el Hub (iframe) no se puede
+          actualizar desde dentro → se guía a volver al inicio y reabrir. */}
       {needRefresh && (
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 max-w-[92vw] px-4 py-2.5 rounded-xl bg-indigo-600 text-white shadow-lg" role="status" aria-live="polite">
-          <span className="text-sm font-medium">{t.newVersion}</span>
-          <button onClick={() => updateServiceWorker(true)} className="flex-shrink-0 px-3 py-1 rounded-lg bg-white text-indigo-600 text-sm font-bold hover:bg-indigo-50 transition-colors">
-            {t.updateBtn}
-          </button>
+          <span className="text-sm font-medium">{fromHub ? t.newVersionHub : t.newVersion}</span>
+          {!fromHub && (
+            <button onClick={() => updateServiceWorker(true)} className="flex-shrink-0 px-3 py-1 rounded-lg bg-white text-indigo-600 text-sm font-bold hover:bg-indigo-50 transition-colors">
+              {t.updateBtn}
+            </button>
+          )}
           <button onClick={() => setNeedRefresh(false)} aria-label="✕" className="flex-shrink-0 opacity-80 hover:opacity-100 px-1">✕</button>
         </div>
       )}
