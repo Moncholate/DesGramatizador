@@ -130,6 +130,7 @@ const TRANSLATIONS = {
     // Embedded clause note + mobile hints
     embeddedNote: '📎 Esta oración contiene una cláusula subordinada sustantiva (embedded clause). Para un análisis más profundo, consulta con tu profesor.',
     fragmentNote: '🧩 Esto parece un fragmento, no una oración completa: no encuentro un verbo principal. Toda oración necesita al menos un verbo.',
+    gapVerb: '⟦ falta: verbo ⟧',
     imperativeNote: '💡 Sin sujeto explícito: probablemente un imperativo (una orden o instrucción) — el sujeto «you» está implícito.',
     scrollHint: '← desliza para ver todas las categorías →',
     bannerHide: 'toca para ocultar',
@@ -247,6 +248,7 @@ const TRANSLATIONS = {
     // Embedded clause note + mobile hints
     embeddedNote: '📎 This sentence contains an embedded (noun) clause. For a deeper analysis, check with your teacher.',
     fragmentNote: '🧩 This looks like a fragment, not a full sentence: I can\'t find a main verb. Every sentence needs at least a verb.',
+    gapVerb: '⟦ missing: verb ⟧',
     imperativeNote: '💡 No explicit subject: likely an imperative (a command or instruction) — the subject "you" is implied.',
     scrollHint: '← swipe to see all categories →',
     bannerHide: 'tap to hide',
@@ -1031,7 +1033,22 @@ function SentenceStructure({ sentence, showLabels = true, lang = 'es' }) {
     return (
       <div className="mb-4 p-3 rounded-lg border-2 border-slate-300 bg-slate-50">
         <div className="text-sm text-slate-500 italic">{sentence.text}</div>
-        <div className="mt-2 text-xs text-slate-500">{sentence.isQuestion ? `⚠️ ${sentence.error}` : t.fragmentNote}</div>
+        {sentence.isQuestion ? (
+          <div className="mt-2 text-xs text-slate-500">⚠️ {sentence.error}</div>
+        ) : (
+          <>
+            {/* Chip de hueco del verbo (estilo bloque de estructura, punteado) — como en Question Lab */}
+            <div className="mt-2">
+              <span
+                className="inline-flex items-center px-3 py-1.5 rounded-lg border-2 border-dashed text-sm font-bold"
+                style={{ borderColor: STRUCTURE.V.color, color: STRUCTURE.V.color }}
+              >
+                {t.gapVerb}
+              </span>
+            </div>
+            <div className="mt-2 text-xs text-slate-500">{t.fragmentNote}</div>
+          </>
+        )}
       </div>
     );
   }
