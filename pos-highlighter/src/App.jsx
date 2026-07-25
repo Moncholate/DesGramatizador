@@ -96,6 +96,8 @@ const TRANSLATIONS = {
     tipQuestion: 'Pregunta — el sujeto y el verbo están invertidos. Orden normal: [S] + [V] + [C]',
     // Embedded clause note + mobile hints
     embeddedNote: '📎 Esta oración contiene una cláusula subordinada sustantiva (embedded clause). Para un análisis más profundo, consulta con tu profesor.',
+    fragmentNote: '🧩 Esto parece un fragmento, no una oración completa: no encuentro un verbo principal. Toda oración necesita al menos un verbo.',
+    imperativeNote: '💡 Sin sujeto explícito: probablemente un imperativo (una orden o instrucción) — el sujeto «you» está implícito.',
     scrollHint: '← desliza para ver todas las categorías →',
     bannerHide: 'toca para ocultar',
     bannerShow: 'toca para ver instrucciones',
@@ -210,6 +212,8 @@ const TRANSLATIONS = {
     tipQuestion: 'Question — subject and verb are inverted. Normal order: [S] + [V] + [C]',
     // Embedded clause note + mobile hints
     embeddedNote: '📎 This sentence contains an embedded (noun) clause. For a deeper analysis, check with your teacher.',
+    fragmentNote: '🧩 This looks like a fragment, not a full sentence: I can\'t find a main verb. Every sentence needs at least a verb.',
+    imperativeNote: '💡 No explicit subject: likely an imperative (a command or instruction) — the subject "you" is implied.',
     scrollHint: '← swipe to see all categories →',
     bannerHide: 'tap to hide',
     bannerShow: 'tap to see instructions',
@@ -978,15 +982,19 @@ function SentenceStructure({ sentence, showLabels = true, lang = 'es' }) {
     );
   }
 
-  // Error with no content
+  // Sin contenido: fragmento (falta el verbo) para declarativas; error crudo para el resto
   if (sentence.error && !hasContent) {
     return (
       <div className="mb-4 p-3 rounded-lg border-2 border-slate-300 bg-slate-50">
         <div className="text-sm text-slate-500 italic">{sentence.text}</div>
-        <div className="mt-2 text-xs text-slate-400">⚠️ {sentence.error}</div>
+        <div className="mt-2 text-xs text-slate-500">{sentence.isQuestion ? `⚠️ ${sentence.error}` : t.fragmentNote}</div>
       </div>
     );
   }
+
+  // Sin sujeto explícito pero con verbo (y no es pregunta) → probable imperativo
+  const allTypes = rows.flatMap(r => (r.components || []).map(c => c.type));
+  const looksImperative = !sentence.isQuestion && allTypes.includes('V') && !allTypes.includes('S') && !allTypes.includes('WH');
 
   const inner = (
     <div className="mb-4 p-3 rounded-lg border border-slate-200 bg-white">
@@ -1008,6 +1016,11 @@ function SentenceStructure({ sentence, showLabels = true, lang = 'es' }) {
           )
         )}
       </div>
+      {looksImperative && (
+        <div className="mt-2 px-2 py-1.5 rounded bg-emerald-50 border border-emerald-200 text-xs text-emerald-800">
+          {t.imperativeNote}
+        </div>
+      )}
       {sentence.hasEmbeddedClause && (
         <div className="mt-2 px-2 py-1.5 rounded bg-blue-50 border border-blue-200 text-xs text-blue-800">
           {t.embeddedNote}
