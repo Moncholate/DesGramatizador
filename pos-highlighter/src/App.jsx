@@ -12,6 +12,36 @@ const NEUTRAL = IS_DARK
   ? { lockBg: '#1d2233', lockText: '#8b93a7', lockBorder: '#2a3042', surface: '#141826', fade: '#141826', warnBg: '#3a1720', warnText: '#f28b82', warnBorder: '#5c2b2b', pillBg: '#1d2233', pillText: '#9aa2b6', pillBorder: '#2a3042', text: '#eceff8' }
   : { lockBg: '#F1F5F9', lockText: '#94A3B8', lockBorder: '#E2E8F0', surface: 'white',   fade: 'white',   warnBg: '#FEF2F2', warnText: '#EF4444', warnBorder: '#FECACA', pillBg: '#F8FAFC', pillText: '#64748B', pillBorder: '#E2E8F0', text: '#1e293b' };
 
+/* Toggle de tema de la suite (auto→claro→oscuro por SO; toggle binario que ofrece
+   el modo destino). Usa window.ghTheme, sincronizado same-origin entre las 4 apps. */
+function ThemeToggle({ lang = 'es' }) {
+  const [eff, setEff] = useState(() => (typeof window !== 'undefined' && window.ghTheme ? window.ghTheme.effective() : 'light'));
+  useEffect(() => {
+    if (!window.ghTheme) return;
+    const sync = () => setEff(window.ghTheme.effective());
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    mq.addEventListener ? mq.addEventListener('change', sync) : mq.addListener(sync);
+    const onStorage = (e) => { if (e.key === 'gh_theme') sync(); };
+    window.addEventListener('storage', onStorage);
+    return () => {
+      mq.removeEventListener ? mq.removeEventListener('change', sync) : mq.removeListener(sync);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
+  const target = eff === 'dark' ? 'light' : 'dark';
+  const name = { es: { light: 'claro', dark: 'oscuro' }, en: { light: 'light', dark: 'dark' } }[lang][target];
+  return (
+    <button
+      onClick={() => window.ghTheme && setEff(window.ghTheme.toggle())}
+      className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-lg leading-none"
+      title={`${lang === 'es' ? 'Cambiar a modo' : 'Switch to'} ${name}`}
+      aria-label={`${lang === 'es' ? 'Cambiar a modo' : 'Switch to'} ${name}`}
+    >
+      {target === 'dark' ? '🌙' : '☀️'}
+    </button>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════
    TRANSLATIONS
 ═══════════════════════════════════════════════════════════ */
@@ -47,6 +77,7 @@ const TRANSLATIONS = {
     showLabels: 'Mostrar Etiquetas',
     hideLabels: 'Ocultar Etiquetas',
     clearAll: 'Limpiar Todo',
+    clearText: 'Borrar texto',
     englishText: 'Texto en Inglés',
     analyzed: 'Analizado',
     paintPOS: 'Pintar POS',
@@ -163,6 +194,7 @@ const TRANSLATIONS = {
     showLabels: 'Show Labels',
     hideLabels: 'Hide Labels',
     clearAll: 'Clear All',
+    clearText: 'Clear text',
     englishText: 'English Text',
     analyzed: 'Analyzed',
     paintPOS: 'Paint POS',
@@ -1509,6 +1541,22 @@ function App() {
     setNlpError(null);
   };
 
+  // Borrado: vacía el texto y reinicia todo el análisis / práctica manual
+  const handleClearText = () => {
+    setText('');
+    setAnalyzed(false);
+    setTokens([]);
+    setStructureData([]);
+    setManualTokens([]);
+    setUserPOSTags({});
+    setUserStructureTags({});
+    setActivePos(null);
+    setActiveStruct(null);
+    setShowAnswers(false);
+    setAnswerChecked(false);
+    setNlpError(null);
+  };
+
   const loadExample = e => {
     if (e.target.value !== '') {
       const example = EXAMPLES[+e.target.value];
@@ -1849,20 +1897,23 @@ function App() {
             </div>
           </div>
 
-          {/* Controls: inline on md+, hidden on mobile */}
-          {!fromHub && (
-            <div className="hidden md:flex items-center gap-1.5">
-              <select value={level} onChange={e => setLevel(e.target.value)} className="px-1.5 py-1 border border-slate-200 rounded-lg text-xs font-medium text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer" title={t.levelLabel}>
-                {['Básico', 'Elemental', 'Intermedio', 'Intermedio Alto'].map(l => (
-                  <option key={l} value={l}>{l}</option>
-                ))}
-              </select>
-              <div className="flex bg-slate-100 border border-slate-200 rounded-lg p-0.5">
-                <button onClick={() => setLang('es')} className={`px-2 py-0.5 rounded text-xs font-bold transition-all ${lang === 'es' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`} title="Español">ES</button>
-                <button onClick={() => setLang('en')} className={`px-2 py-0.5 rounded text-xs font-bold transition-all ${lang === 'en' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`} title="English">EN</button>
+          {/* Controls: level/lang inline on md+; theme toggle always visible */}
+          <div className="flex items-center gap-1.5">
+            {!fromHub && (
+              <div className="hidden md:flex items-center gap-1.5">
+                <select value={level} onChange={e => setLevel(e.target.value)} className="px-1.5 py-1 border border-slate-200 rounded-lg text-xs font-medium text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer" title={t.levelLabel}>
+                  {['Básico', 'Elemental', 'Intermedio', 'Intermedio Alto'].map(l => (
+                    <option key={l} value={l}>{l}</option>
+                  ))}
+                </select>
+                <div className="flex bg-slate-100 border border-slate-200 rounded-lg p-0.5">
+                  <button onClick={() => setLang('es')} className={`px-2 py-0.5 rounded text-xs font-bold transition-all ${lang === 'es' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`} title="Español">ES</button>
+                  <button onClick={() => setLang('en')} className={`px-2 py-0.5 rounded text-xs font-bold transition-all ${lang === 'en' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`} title="English">EN</button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+            <ThemeToggle lang={lang} />
+          </div>
         </div>
 
         {/* Row 2: controls on mobile only */}
@@ -2049,7 +2100,19 @@ function App() {
                     </span>
                   )}
                 </div>
-                <span className="text-xs text-slate-400">{text.length} {t.charsCount}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400">{text.length} {t.charsCount}</span>
+                  {(text || analyzed) && (
+                    <button
+                      onClick={handleClearText}
+                      title={t.clearText}
+                      aria-label={t.clearText}
+                      className="shrink-0 flex items-center px-2 py-1 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg border border-gray-200 hover:border-red-200 transition-all"
+                    >
+                      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                  )}
+                </div>
               </div>
               <textarea
                 value={text}
