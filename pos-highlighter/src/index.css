@@ -8,33 +8,36 @@
 @media (prefers-reduced-motion: no-preference) { .gtoast-in { animation: gtoastIn .35s cubic-bezier(.2,.8,.2,1); } }
 
 /* ── Modo oscuro (1ª pasada · override de superficies sobre los neutros del sistema) ── */
-@media (prefers-color-scheme: dark) {
-  html, body { background-color: #0c0e15; color: #eceff8; }
-  .bg-white { background-color: #141826 !important; }
-  .bg-\[\#f5f6fb\] { background-color: #0c0e15 !important; }
-  .bg-gray-50, .bg-slate-50 { background-color: #1a1f2e !important; }
-  .bg-gray-100, .bg-slate-100 { background-color: #222839 !important; }
-  .bg-gray-200, .bg-slate-200 { background-color: #2a3042 !important; }
-  .text-gray-900, .text-gray-800, .text-slate-900, .text-slate-800, .text-black { color: #eceff8 !important; }
-  .text-gray-700, .text-gray-600, .text-slate-700, .text-slate-600 { color: #c7cdda !important; }
-  .text-gray-500, .text-gray-400, .text-slate-500, .text-slate-400 { color: #9aa2b6 !important; }
-  .border-gray-100, .border-gray-200, .border-slate-100, .border-slate-200, .border-slate-300 { border-color: #2a3042 !important; }
-  input, textarea, select { background-color: #141826 !important; color: #eceff8 !important; }
-  input::placeholder, textarea::placeholder { color: #6c7488 !important; }
-  .bg-red-50 { background-color: #2e1618 !important; }
-  .bg-amber-50 { background-color: #2e2410 !important; }
-  .bg-emerald-50, .bg-green-50 { background-color: #123024 !important; }
-  .bg-blue-50, .bg-indigo-50, .bg-purple-50 { background-color: #1a2036 !important; }
-  .border-blue-200, .border-blue-300, .border-indigo-200, .border-emerald-200, .border-purple-200 { border-color: #2a3350 !important; }
-  .from-emerald-50 { --tw-gradient-from: #123024 !important; } .to-emerald-100 { --tw-gradient-to: #16432f !important; }
-  .from-purple-50 { --tw-gradient-from: #241b3c !important; } .to-purple-100 { --tw-gradient-to: #2e2350 !important; }
-  .from-rose-50 { --tw-gradient-from: #3a1720 !important; } .to-rose-100 { --tw-gradient-to: #4a1d29 !important; }
-  .from-amber-50 { --tw-gradient-from: #2e2410 !important; } .to-amber-100 { --tw-gradient-to: #41310f !important; }
-  .bg-orange-50 { background-color: #2e2410 !important; }
-  .border-orange-200, .border-amber-300 { border-color: #3a3320 !important; }
-  /* texto de estado (banners) que quedaba oscuro → claro */
-  .text-blue-900, .text-blue-800, .text-orange-900, .text-emerald-800, .text-emerald-900, .text-indigo-800, .text-amber-800, .text-purple-800, .text-teal-800 { color: #dfe4f0 !important; }
-}
+/* Modo oscuro (disparado por data-theme; el resolver del <head> lo fija) */
+:root[data-theme="dark"], :root[data-theme="dark"] body { background-color: #0c0e15; color: #eceff8; }
+:root[data-theme="dark"] .bg-white { background-color: #141826 !important; }
+:root[data-theme="dark"] .bg-\[\#f5f6fb\] { background-color: #0c0e15 !important; }
+:root[data-theme="dark"] .bg-gray-50, :root[data-theme="dark"] .bg-slate-50 { background-color: #1a1f2e !important; }
+:root[data-theme="dark"] .bg-gray-100, :root[data-theme="dark"] .bg-slate-100 { background-color: #222839 !important; }
+:root[data-theme="dark"] .bg-gray-200, :root[data-theme="dark"] .bg-slate-200 { background-color: #2a3042 !important; }
+:root[data-theme="dark"] .text-gray-900, :root[data-theme="dark"] .text-gray-800, :root[data-theme="dark"] .text-slate-900, :root[data-theme="dark"] .text-slate-800, :root[data-theme="dark"] .text-black { color: #eceff8 !important; }
+:root[data-theme="dark"] .text-gray-700, :root[data-theme="dark"] .text-gray-600, :root[data-theme="dark"] .text-slate-700, :root[data-theme="dark"] .text-slate-600 { color: #c7cdda !important; }
+:root[data-theme="dark"] .text-gray-500, :root[data-theme="dark"] .text-gray-400, :root[data-theme="dark"] .text-slate-500, :root[data-theme="dark"] .text-slate-400 { color: #9aa2b6 !important; }
+:root[data-theme="dark"] .border-gray-100, :root[data-theme="dark"] .border-gray-200, :root[data-theme="dark"] .border-slate-100, :root[data-theme="dark"] .border-slate-200, :root[data-theme="dark"] .border-slate-300 { border-color: #2a3042 !important; }
+:root[data-theme="dark"] input, :root[data-theme="dark"] textarea, :root[data-theme="dark"] select { background-color: #141826 !important; color: #eceff8 !important; }
+:root[data-theme="dark"] input::placeholder, :root[data-theme="dark"] textarea::placeholder { color: #6c7488 !important; }
+:root[data-theme="dark"] .bg-red-50 { background-color: #2e1618 !important; }
+:root[data-theme="dark"] .bg-amber-50 { background-color: #2e2410 !important; }
+:root[data-theme="dark"] .bg-emerald-50, :root[data-theme="dark"] .bg-green-50 { background-color: #123024 !important; }
+:root[data-theme="dark"] .bg-blue-50, :root[data-theme="dark"] .bg-indigo-50, :root[data-theme="dark"] .bg-purple-50 { background-color: #1a2036 !important; }
+:root[data-theme="dark"] .border-blue-200, :root[data-theme="dark"] .border-blue-300, :root[data-theme="dark"] .border-indigo-200, :root[data-theme="dark"] .border-emerald-200, :root[data-theme="dark"] .border-purple-200 { border-color: #2a3350 !important; }
+:root[data-theme="dark"] .from-emerald-50 { --tw-gradient-from: #123024 !important; }
+:root[data-theme="dark"] .to-emerald-100 { --tw-gradient-to: #16432f !important; }
+:root[data-theme="dark"] .from-purple-50 { --tw-gradient-from: #241b3c !important; }
+:root[data-theme="dark"] .to-purple-100 { --tw-gradient-to: #2e2350 !important; }
+:root[data-theme="dark"] .from-rose-50 { --tw-gradient-from: #3a1720 !important; }
+:root[data-theme="dark"] .to-rose-100 { --tw-gradient-to: #4a1d29 !important; }
+:root[data-theme="dark"] .from-amber-50 { --tw-gradient-from: #2e2410 !important; }
+:root[data-theme="dark"] .to-amber-100 { --tw-gradient-to: #41310f !important; }
+:root[data-theme="dark"] .bg-orange-50 { background-color: #2e2410 !important; }
+:root[data-theme="dark"] .border-orange-200, :root[data-theme="dark"] .border-amber-300 { border-color: #3a3320 !important; }
+/* texto de estado (banners) que quedaba oscuro → claro */
+:root[data-theme="dark"] .text-blue-900, :root[data-theme="dark"] .text-blue-800, :root[data-theme="dark"] .text-orange-900, :root[data-theme="dark"] .text-emerald-800, :root[data-theme="dark"] .text-emerald-900, :root[data-theme="dark"] .text-indigo-800, :root[data-theme="dark"] .text-amber-800, :root[data-theme="dark"] .text-purple-800, :root[data-theme="dark"] .text-teal-800 { color: #dfe4f0 !important; }
 
 :root {
   font-family: 'Lexend', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;

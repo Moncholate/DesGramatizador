@@ -2,8 +2,9 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { isQuestion, tokenizeText, analyzeStructure, buildStructureAnswerMap } from './nlp/analysis';
 import { loadProgress, saveProgress, recordAnalysis, recordAttempt, evaluateBadges, BADGES } from './gamification.generated.js';
 import { TOKENS as TOKENS_LIGHT, TOKENS_DARK } from './tokens.generated.js';
-// Elige colores de rol según el tema del SO al cargar (modo oscuro dark-aware)
-const IS_DARK = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+// Elige colores de rol según el tema resuelto (data-theme, fijado por el
+// resolver del <head> a partir de gh_theme auto/claro/oscuro) al cargar.
+const IS_DARK = (typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'dark');
 const TOKENS = IS_DARK ? TOKENS_DARK : TOKENS_LIGHT;
 // Neutros por defecto (casilla bloqueada / palabra sin reconocer / superficie / fundido de scroll)
 // sensibles al tema — los estilos inline no los alcanza el override CSS de modo oscuro.
