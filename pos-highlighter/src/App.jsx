@@ -2,15 +2,16 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { isQuestion, tokenizeText, analyzeStructure, buildStructureAnswerMap } from './nlp/analysis';
 import { loadProgress, saveProgress, recordAnalysis, recordAttempt, evaluateBadges, BADGES } from './gamification.generated.js';
 import { TOKENS as TOKENS_LIGHT, TOKENS_DARK } from './tokens.generated.js';
-// Elige colores de rol según el tema resuelto (data-theme, fijado por el
-// resolver del <head> a partir de gh_theme auto/claro/oscuro) al cargar.
-const IS_DARK = (typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'dark');
-const TOKENS = IS_DARK ? TOKENS_DARK : TOKENS_LIGHT;
+// Colores de rol según el tema resuelto (data-theme). Se (re)construyen en
+// refreshTheme() para que cambien EN VIVO al alternar el tema, sin recargar.
+let IS_DARK, TOKENS, NEUTRAL, POS, STRUCTURE;
 // Neutros por defecto (casilla bloqueada / palabra sin reconocer / superficie / fundido de scroll)
 // sensibles al tema — los estilos inline no los alcanza el override CSS de modo oscuro.
-const NEUTRAL = IS_DARK
-  ? { lockBg: '#1d2233', lockText: '#8b93a7', lockBorder: '#2a3042', surface: '#141826', fade: '#141826', warnBg: '#3a1720', warnText: '#f28b82', warnBorder: '#5c2b2b', pillBg: '#1d2233', pillText: '#9aa2b6', pillBorder: '#2a3042', text: '#eceff8' }
-  : { lockBg: '#F1F5F9', lockText: '#94A3B8', lockBorder: '#E2E8F0', surface: 'white',   fade: 'white',   warnBg: '#FEF2F2', warnText: '#EF4444', warnBorder: '#FECACA', pillBg: '#F8FAFC', pillText: '#64748B', pillBorder: '#E2E8F0', text: '#1e293b' };
+function buildNeutral(d){
+  return d
+    ? { lockBg: '#1d2233', lockText: '#8b93a7', lockBorder: '#2a3042', surface: '#141826', fade: '#141826', warnBg: '#3a1720', warnText: '#f28b82', warnBorder: '#5c2b2b', pillBg: '#1d2233', pillText: '#9aa2b6', pillBorder: '#2a3042', text: '#eceff8' }
+    : { lockBg: '#F1F5F9', lockText: '#94A3B8', lockBorder: '#E2E8F0', surface: 'white',   fade: 'white',   warnBg: '#FEF2F2', warnText: '#EF4444', warnBorder: '#FECACA', pillBg: '#F8FAFC', pillText: '#64748B', pillBorder: '#E2E8F0', text: '#1e293b' };
+}
 
 /* Toggle de tema de la suite (auto→claro→oscuro por SO; toggle binario que ofrece
    el modo destino). Usa window.ghTheme, sincronizado same-origin entre las 4 apps. */
@@ -294,7 +295,7 @@ const TRANSLATIONS = {
 // claro y su par oscuro; `pc` elige según el tema del SO para no quedar con
 // tintes claros en modo oscuro (verb/modal/auxiliary/wh ya son dark-aware vía TOKENS).
 const pc = (light, lbg, dark, dbg) => IS_DARK ? { color: dark, bg: dbg } : { color: light, bg: lbg };
-const POS = {
+function buildPOS(){ return {
   noun:         { ...pc('#B45309', '#FEF3C7', '#fbbf24', '#2e2410'), label: 'N',    name: 'Noun',         def: 'person, place, thing, or idea', ex: 'dog, city, love'           },
   verb:         { color: TOKENS.verb.color, bg: TOKENS.verb.bg, label: 'V',    name: 'Verb',         def: 'action or state',               ex: 'run, is, think'            },
   adjective:    { ...pc('#0E7490', '#CFFAFE', '#22d3ee', '#0e2a30'), label: 'ADJ',  name: 'Adjective',    def: 'describes a noun',              ex: 'big, happy, red'           },
@@ -307,7 +308,7 @@ const POS = {
   auxiliary:    { color: TOKENS.auxiliary.color, bg: TOKENS.auxiliary.bg, label: 'AUX',  name: 'Auxiliary',    def: 'helps the main verb',           ex: 'is, have, do, was'         },
   wh:            { color: TOKENS.wh.color, bg: TOKENS.wh.bg, label: 'WH',   name: 'Wh- Word',     def: 'introduces a question',         ex: 'what, where, when, why, how' },
   number:       { ...pc('#4B5563', '#F3F4F6', '#9ca3af', '#1f2430'), label: 'NUM',  name: 'Numeral',      def: 'expresses quantity or a number', ex: '2020, three, 42'           },
-};
+}; }
 
 const POS_ORDER = [
   'noun', 'verb', 'adjective', 'adverb', 'pronoun', 'wh',
@@ -315,15 +316,25 @@ const POS_ORDER = [
 ];
 
 // Text colours darkened for WCAG AA on their (unchanged) backgrounds — see POS above.
-const STRUCTURE = {
+function buildSTRUCTURE(){ return {
   WH: { color: TOKENS.wh.color, bg: TOKENS.wh.bg, label: 'WH', name: 'Wh- Word',   def: 'introduces the question' },
   S:  { color: TOKENS.subject.color, bg: TOKENS.subject.bg, label: 'S',  name: 'Subject',    def: 'who or what does the action' },
   AUX:{ color: TOKENS.auxiliary.color, bg: TOKENS.auxiliary.bg, label: 'AUX', name: 'Auxiliary',  def: 'helps the main verb (bound to it)' },
   V:  { color: TOKENS.verb.color, bg: TOKENS.verb.bg, label: 'V',  name: 'Verb',       def: 'the action or state' },
   C:  { color: TOKENS.complement.color, bg: TOKENS.complement.bg, label: 'C',  name: 'Complement', def: 'everything else' },
-  O:  { color: '#047857', bg: '#ECFDF5', label: 'O',  name: 'Object',     def: 'receives the action: what? / whom?' },
+  O:  { ...pc('#047857', '#ECFDF5', '#34d399', '#123024'), label: 'O',  name: 'Object',     def: 'receives the action: what? / whom?' },
   A:  { color: TOKENS.adverb.color, bg: TOKENS.adverb.bg, label: 'A',  name: 'Adverbial',  def: 'when? / where? / how?' },
-};
+}; }
+
+// (Re)construye todos los mapas de color según el data-theme actual.
+function refreshTheme(){
+  IS_DARK = (typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'dark');
+  TOKENS = IS_DARK ? TOKENS_DARK : TOKENS_LIGHT;
+  NEUTRAL = buildNeutral(IS_DARK);
+  POS = buildPOS();
+  STRUCTURE = buildSTRUCTURE();
+}
+refreshTheme();
 
 const LEVELS = {
   'Básico':          ['noun', 'verb', 'adjective', 'determiner', 'pronoun', 'wh', 'preposition', 'adverb', 'modal', 'auxiliary'],
@@ -1474,6 +1485,16 @@ function MobileBar({
 
 function App() {
   const [lang, setLang] = useState('es'); // 'es' | 'en'
+  // Recolorea en vivo al cambiar el tema: el resolver del <head> actualiza
+  // data-theme (toggle, otra pestaña, o cambio de SO); reconstruimos los mapas
+  // de color y forzamos re-render sin recargar.
+  const [, setThemeTick] = useState(0);
+  useEffect(() => {
+    const html = document.documentElement;
+    const obs = new MutationObserver(() => { refreshTheme(); setThemeTick(v => v + 1); });
+    obs.observe(html, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => obs.disconnect();
+  }, []);
   const [fromHub, setFromHub] = useState(() => window.self !== window.top);
   const [level, setLevel] = useState('Básico');
   const [mode, setMode] = useState('auto');
