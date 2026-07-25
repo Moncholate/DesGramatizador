@@ -1615,6 +1615,13 @@ function App() {
     e.target.value = '';
   };
 
+  // Cada toast lleva su id y su propio temporizador (3.8s = duración de la
+  // animación de ciclo de vida entra→mantiene→sale), así calza aunque se apilen.
+  const pushBadgeToasts = (keys) => {
+    const items = keys.map(k => ({ id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, key: k }));
+    setBadgeToasts(prev => [...prev, ...items]);
+    items.forEach(it => setTimeout(() => setBadgeToasts(prev => prev.filter(x => x.id !== it.id)), 3800));
+  };
   // Gamificación de suite: cuenta el análisis en gh_progress + toasts de logro
   const recordGameAnalysis = () => {
     try {
@@ -1622,14 +1629,9 @@ function App() {
       recordAnalysis(p, { app: 'desgramatizador' });
       const { newly } = evaluateBadges(p, BADGES);
       saveProgress(window.localStorage, p);
-      if (newly.length) setBadgeToasts(prev => [...prev, ...newly]);
+      if (newly.length) pushBadgeToasts(newly);
     } catch (e) {}
   };
-  useEffect(() => {
-    if (!badgeToasts.length) return;
-    const timer = setTimeout(() => setBadgeToasts(prev => prev.slice(1)), 3800);
-    return () => clearTimeout(timer);
-  }, [badgeToasts]);
 
   // Práctica calificada → cuenta como intento en el progreso compartido
   const recordGamePractice = (correct) => {
@@ -1638,7 +1640,7 @@ function App() {
       recordAttempt(p, { app: 'desgramatizador', correct });
       const { newly } = evaluateBadges(p, BADGES);
       saveProgress(window.localStorage, p);
-      if (newly.length) setBadgeToasts(prev => [...prev, ...newly]);
+      if (newly.length) pushBadgeToasts(newly);
     } catch (e) {}
   };
 
@@ -1883,12 +1885,12 @@ function App() {
     <div className="flex flex-col h-screen bg-[#f5f6fb]">
       {badgeToasts.length > 0 && (
         <div className="fixed left-0 right-0 bottom-4 z-50 flex flex-col items-center gap-2 px-4 pointer-events-none" aria-live="polite">
-          {badgeToasts.map((key, i) => {
+          {badgeToasts.map(({ id, key }) => {
             const ci = key.indexOf(':'); const bid = ci < 0 ? key : key.slice(0, ci); const tid = ci < 0 ? '' : key.slice(ci + 1);
             const b = BADGES.find(x => x.id === bid); if (!b) return null;
             const name = (lang === 'es' ? b.name.es : b.name.en).replace('{tense}', tid);
             return (
-              <div key={key + i} role="status" className="gtoast-in pointer-events-auto flex items-center gap-2.5 max-w-sm px-3.5 py-2.5 rounded-xl text-white shadow-lg bg-gradient-to-br from-rose-500 to-amber-400">
+              <div key={id} role="status" className="gtoast-in pointer-events-auto flex items-center gap-2.5 max-w-sm px-3.5 py-2.5 rounded-xl text-white shadow-lg bg-gradient-to-br from-rose-500 to-amber-500">
                 <span className="text-2xl leading-none">{b.icon}</span>
                 <span className="flex flex-col leading-tight">
                   <b className="text-[0.68rem] uppercase tracking-wide opacity-90 font-extrabold">{lang === 'es' ? '¡Logro!' : 'Achievement!'}</b>
@@ -2240,7 +2242,7 @@ function App() {
 
               {/* Racha de rondas 100% correctas (inline) */}
               {isManual && analyzed && answerStreak > 0 && (
-                <span className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold text-white bg-gradient-to-br from-rose-500 to-amber-400 shadow-sm shadow-rose-500/25">
+                <span className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold text-white bg-gradient-to-br from-rose-500 to-amber-500 shadow-sm shadow-rose-500/25">
                   🔥 {lang === 'es' ? 'Racha' : 'Streak'}: {answerStreak}
                 </span>
               )}

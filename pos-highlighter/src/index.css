@@ -4,8 +4,15 @@
 @font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:400;font-display:swap;src:url('./fonts/AtkinsonHyperlegible-Regular.woff2') format('woff2');}
 @font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:700;font-display:swap;src:url('./fonts/AtkinsonHyperlegible-Bold.woff2') format('woff2');}
 
-@keyframes gtoastIn { from { transform: translateY(14px) scale(.96); opacity: 0; } }
-@media (prefers-reduced-motion: no-preference) { .gtoast-in { animation: gtoastIn .35s cubic-bezier(.2,.8,.2,1); } }
+/* Toast: ciclo de vida completo (entra → se mantiene → sale) en 3.8s, sincronizado
+   con el temporizador de removal por toast. */
+@keyframes gtoastLife {
+  0%   { transform: translateY(14px) scale(.96); opacity: 0; }
+  6%   { transform: translateY(0) scale(1); opacity: 1; }
+  90%  { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(10px) scale(.97); opacity: 0; }
+}
+@media (prefers-reduced-motion: no-preference) { .gtoast-in { animation: gtoastLife 3.8s ease forwards; } }
 
 /* ── Modo oscuro (1ª pasada · override de superficies sobre los neutros del sistema) ── */
 /* Modo oscuro (disparado por data-theme; el resolver del <head> lo fija) */
