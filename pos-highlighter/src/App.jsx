@@ -1539,6 +1539,7 @@ function App() {
   const [userStructureTags, setUserStructureTags] = useState({}); // { tokenId: 'S' | 'V' | 'C' | 'O' | 'A' }
   const [showAnswers, setShowAnswers] = useState(false);
   const [answerChecked, setAnswerChecked] = useState(false);
+  const [answerStreak, setAnswerStreak] = useState(0);   // rondas 100% correctas seguidas (inline)
   const [badgeToasts, setBadgeToasts] = useState([]);   // gamificación de suite
   const [highlightTextarea, setHighlightTextarea] = useState(false);
   const [bannerExpanded, setBannerExpanded] = useState(false);
@@ -1593,6 +1594,7 @@ function App() {
     setActiveStruct(null);
     setShowAnswers(false);
     setAnswerChecked(false);
+    setAnswerStreak(0);
     setNlpError(null);
   };
 
@@ -1750,7 +1752,9 @@ function App() {
     if (!canAnalyze || manualTokens.length === 0) return;
     if (!answerChecked) {              // una vez por ronda (se resetea al limpiar/preparar)
       const s = calculateScore();
-      recordGamePractice(s.total > 0 && s.correct === s.total);
+      const allOk = s.total > 0 && s.correct === s.total;
+      recordGamePractice(allOk);
+      setAnswerStreak(st => allOk ? st + 1 : 0);
     }
     setAnswerChecked(true);
   };
@@ -2234,9 +2238,15 @@ function App() {
                 </>
               )}
 
+              {/* Racha de rondas 100% correctas (inline) */}
+              {isManual && analyzed && answerStreak > 0 && (
+                <span className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold text-white bg-gradient-to-br from-rose-500 to-amber-400 shadow-sm shadow-rose-500/25">
+                  🔥 {lang === 'es' ? 'Racha' : 'Streak'}: {answerStreak}
+                </span>
+              )}
               {/* Score counter — manual mode */}
               {isManual && analyzed && (
-                <div className="ml-auto bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm text-slate-600 flex items-center gap-1.5">
+                <div className={`${answerStreak > 0 ? '' : 'ml-auto'} bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm text-slate-600 flex items-center gap-1.5`}>
                   <strong className="text-slate-800 text-base">
                     {manualView === 'pos' ? Object.keys(userPOSTags).length : Object.keys(userStructureTags).length}
                   </strong>
