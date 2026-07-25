@@ -30,6 +30,10 @@ export default defineConfig({
         ]
       },
       workbox: {
+        // El SW nuevo toma control de inmediato (no queda "en espera"): así el
+        // cambio se ve al primer refresh, sin tener que cerrar y reabrir la app.
+        skipWaiting: true,
+        clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
