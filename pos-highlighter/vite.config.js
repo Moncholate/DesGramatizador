@@ -11,7 +11,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.ico', 'favicon.svg', 'favicon-96x96.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'DesGramatizador',
@@ -30,10 +30,8 @@ export default defineConfig({
         ]
       },
       workbox: {
-        // El SW nuevo toma control de inmediato (no queda "en espera"): así el
-        // cambio se ve al primer refresh, sin tener que cerrar y reabrir la app.
-        skipWaiting: true,
-        clientsClaim: true,
+        // registerType 'prompt': el SW nuevo espera hasta que el usuario toca
+        // "Actualizar" (updateServiceWorker(true) hace skipWaiting + recarga).
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { isQuestion, tokenizeText, analyzeStructure, buildStructureAnswerMap } from './nlp/analysis';
 import { loadProgress, saveProgress, recordAnalysis, recordAttempt, evaluateBadges, BADGES } from './gamification.generated.js';
 import { TOKENS as TOKENS_LIGHT, TOKENS_DARK } from './tokens.generated.js';
+import { useRegisterSW } from 'virtual:pwa-register/react';
 // Colores de rol según el tema resuelto (data-theme). Se (re)construyen en
 // refreshTheme() para que cambien EN VIVO al alternar el tema, sin recargar.
 let IS_DARK, TOKENS, NEUTRAL, POS, STRUCTURE;
@@ -166,6 +167,8 @@ const TRANSLATIONS = {
     installBannerBtn: 'Instalar',
     iosHintMsg: '📲 iPhone: toca Compartir → Agregar a pantalla de inicio',
     offlineMsg: '⚠️ Sin conexión — la app sigue funcionando con el contenido cargado',
+    newVersion: '✨ Hay una versión nueva disponible',
+    updateBtn: 'Actualizar',
   },
   en: {
     appTitle: 'DesGramatizador',
@@ -284,6 +287,8 @@ const TRANSLATIONS = {
     installBannerBtn: 'Install',
     iosHintMsg: '📲 iPhone: tap Share → Add to Home Screen to install',
     offlineMsg: '⚠️ You are offline — the app still works with previously loaded content',
+    newVersion: '✨ A new version is available',
+    updateBtn: 'Update',
   },
 };
 
@@ -1628,6 +1633,8 @@ function App() {
   const [level, setLevel] = useState('Básico');
   const [mode, setMode] = useState('auto');
   const [panel, setPanel] = useState(null); // null = workspace (Análisis/Práctica) · 'guide' · 'progress'
+  // PWA: aviso de "nueva versión disponible" (registerType 'prompt')
+  const { needRefresh: [needRefresh, setNeedRefresh], updateServiceWorker } = useRegisterSW();
   const [autoView, setAutoView] = useState('structure'); // 'pos' | 'structure' | 'both'
   const [manualView, setManualView] = useState('structure'); // 'pos' | 'structure'
   const [text, setText] = useState(() => new URLSearchParams(window.location.search).get('texto') || '');
@@ -2005,6 +2012,16 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen bg-[#f5f6fb]">
+      {/* PWA: aviso de versión nueva */}
+      {needRefresh && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 max-w-[92vw] px-4 py-2.5 rounded-xl bg-indigo-600 text-white shadow-lg" role="status" aria-live="polite">
+          <span className="text-sm font-medium">{t.newVersion}</span>
+          <button onClick={() => updateServiceWorker(true)} className="flex-shrink-0 px-3 py-1 rounded-lg bg-white text-indigo-600 text-sm font-bold hover:bg-indigo-50 transition-colors">
+            {t.updateBtn}
+          </button>
+          <button onClick={() => setNeedRefresh(false)} aria-label="✕" className="flex-shrink-0 opacity-80 hover:opacity-100 px-1">✕</button>
+        </div>
+      )}
       {badgeToasts.length > 0 && (
         <div className="fixed left-0 right-0 bottom-4 z-50 flex flex-col items-center gap-2 px-4 pointer-events-none" aria-live="polite">
           {badgeToasts.map(({ id, key }) => {
