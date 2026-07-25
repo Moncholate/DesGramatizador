@@ -1498,6 +1498,117 @@ function MobileBar({
 }
 
 /* ═══════════════════════════════════════════════════════════
+   SECCIONES: Guía · Progreso · barra de navegación inferior
+   (modelo de pestañas homogéneo con QL / Grammaster)
+═══════════════════════════════════════════════════════════ */
+
+function GuidePanel({ lang }) {
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.es;
+  const es = lang === 'es';
+  const structKeys = ['WH', 'S', 'AUX', 'V', 'O', 'C', 'A'];
+  const Row = ({ label, color, bg, name, def }) => (
+    <div className="flex items-start gap-3 p-2 rounded-lg">
+      <span className="h-7 min-w-[1.9rem] px-1 rounded flex items-center justify-center text-xs font-extrabold flex-shrink-0" style={{ background: bg, color }}>{label}</span>
+      <div className="min-w-0">
+        <div className="text-sm font-bold" style={{ color }}>{name}</div>
+        <div className="text-xs text-slate-500 leading-snug">{def}</div>
+      </div>
+    </div>
+  );
+  return (
+    <div className="flex-1 overflow-y-auto px-4 py-5 md:px-6">
+      <div className="max-w-2xl mx-auto space-y-5 pb-4">
+        <h2 className="font-bold text-xl text-slate-800">{es ? '📖 Guía de uso' : '📖 Usage guide'}</h2>
+        <div className="space-y-3">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <p className="font-bold text-blue-900 mb-1">⚡ {t.autoAnalysis}</p>
+            <p className="text-sm text-blue-900">{t.hintAutoAnalysis}</p>
+          </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <p className="font-bold text-blue-900 mb-1">✏️ {t.manualPractice}</p>
+            <p className="text-sm text-blue-900">{es ? 'Pinta cada palabra con su categoría y verifica tus respuestas.' : 'Paint each word with its category and check your answers.'}</p>
+          </div>
+        </div>
+        <div>
+          <h3 className="font-bold text-slate-700 mb-2">{t.partsOfSpeech}</h3>
+          <div className="space-y-1">
+            {POS_ORDER.map(k => { const p = POS[k]; return (
+              <Row key={k} label={p.label} color={p.color} bg={p.bg} name={p.name}
+                def={<>{(t.posDef && t.posDef[k]) || p.def} <span className="italic text-slate-400">({p.ex})</span></>} />
+            ); })}
+          </div>
+        </div>
+        <div>
+          <h3 className="font-bold text-slate-700 mb-2">{t.sentenceStructure}</h3>
+          <div className="space-y-1">
+            {structKeys.map(k => { const s = STRUCTURE[k]; return (
+              <Row key={k} label={s.label} color={s.color} bg={s.bg} name={s.name}
+                def={(t.structureDef && t.structureDef[k]) || s.def} />
+            ); })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProgressPanel({ lang }) {
+  const es = lang === 'es';
+  const p = loadProgress(window.localStorage);
+  const streak = (p.dayStreak && p.dayStreak.count) || 0, best = (p.dayStreak && p.dayStreak.best) || 0;
+  const bmap = p.badges || {};
+  const isOn = b => b.perTense ? Object.keys(bmap).some(k => k.startsWith(b.id + ':')) : !!bmap[b.id];
+  const unlocked = BADGES.filter(isOn).length;
+  return (
+    <div className="flex-1 overflow-y-auto px-4 py-5 md:px-6">
+      <div className="max-w-2xl mx-auto space-y-4 pb-4">
+        <h2 className="font-bold text-xl text-slate-800">{es ? '📊 Progreso' : '📊 Progress'}</h2>
+        <div className={`rounded-xl p-4 flex items-center gap-4 ${streak > 0 ? 'bg-gradient-to-br from-rose-500 to-amber-500 shadow-lg shadow-rose-500/25' : 'bg-slate-50 border border-slate-200'}`}>
+          <span className="text-4xl">{streak > 0 ? '🔥' : '💤'}</span>
+          <div>
+            <p className={`text-2xl font-bold ${streak > 0 ? 'text-white' : 'text-slate-500'}`}>{streak} {es ? 'días de racha' : 'day streak'}</p>
+            <p className={`text-xs ${streak > 0 ? 'text-white/90' : 'text-slate-400'}`}>{es ? 'Mejor' : 'Best'}: {best}</p>
+          </div>
+        </div>
+        <p className="text-sm font-bold text-slate-700">{es ? 'Insignias' : 'Badges'} — {unlocked}/{BADGES.length}</p>
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+          {BADGES.map(b => { const on = isOn(b); const name = (es ? b.name.es : b.name.en).replace('{tense}', '…');
+            return (
+              <div key={b.id} title={name} className={`flex flex-col items-center text-center gap-1 p-2.5 rounded-xl border ${on ? 'bg-white border-rose-200' : 'bg-slate-50 border-slate-200 opacity-50'}`}>
+                <span className="text-2xl leading-none">{on ? b.icon : '🔒'}</span>
+                <span className="text-[0.6rem] text-slate-500 leading-tight">{name}</span>
+              </div>
+            ); })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BottomNav({ section, onSelect, lang }) {
+  const es = lang === 'es';
+  const items = [
+    { key: 'analyze', icon: '🔍', label: es ? 'Análisis' : 'Analysis' },
+    { key: 'guide', icon: '📖', label: es ? 'Guía' : 'Guide' },
+    { key: 'practice', icon: '✏️', label: es ? 'Práctica' : 'Practice' },
+    { key: 'progress', icon: '📊', label: es ? 'Progreso' : 'Progress' },
+  ];
+  return (
+    <nav className="flex-shrink-0 bg-white border-t border-gray-200 shadow-lg z-30" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0)' }}>
+      <div className="flex items-stretch max-w-2xl mx-auto">
+        {items.map(({ key, icon, label }) => (
+          <button key={key} onClick={() => onSelect(key)} aria-pressed={section === key}
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-colors ${section === key ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}>
+            <span className="text-xl leading-none">{icon}</span>
+            <span className="text-[10px] font-bold leading-tight">{label}</span>
+          </button>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
    APP
 ═══════════════════════════════════════════════════════════ */
 
@@ -1516,6 +1627,7 @@ function App() {
   const [fromHub, setFromHub] = useState(() => window.self !== window.top);
   const [level, setLevel] = useState('Básico');
   const [mode, setMode] = useState('auto');
+  const [panel, setPanel] = useState(null); // null = workspace (Análisis/Práctica) · 'guide' · 'progress'
   const [autoView, setAutoView] = useState('structure'); // 'pos' | 'structure' | 'both'
   const [manualView, setManualView] = useState('structure'); // 'pos' | 'structure'
   const [text, setText] = useState(() => new URLSearchParams(window.location.search).get('texto') || '');
@@ -1565,6 +1677,16 @@ function App() {
     setShowAnswers(false);
     setAnswerChecked(false);
     setNlpError(null);
+  };
+
+  // Sección activa (para el nav) + navegación entre secciones
+  const section = panel === 'guide' ? 'guide' : panel === 'progress' ? 'progress' : (mode === 'auto' ? 'analyze' : 'practice');
+  const selectSection = key => {
+    if (key === 'guide') { setPanel('guide'); return; }
+    if (key === 'progress') { setPanel('progress'); return; }
+    const wantMode = key === 'analyze' ? 'auto' : 'manual';
+    setPanel(null);
+    if (mode !== wantMode) switchMode(wantMode);   // solo limpia si cambia de modo
   };
 
   const togglePos = k => setSelectedPos(p => (p === k ? null : k));
@@ -1977,7 +2099,9 @@ function App() {
         )}
       </header>
 
-      {/* ══ BODY ════════════════════════════════════════════ */}
+      {/* ══ BODY / SECCIÓN ACTIVA ═══════════════════════════ */}
+      {panel === null ? (
+      <>
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <Sidebar
@@ -2001,29 +2125,7 @@ function App() {
           <div className="px-4 pt-5 pb-6 md:px-6 md:pt-6 md:pb-10">
             {/* ── Top controls row ── */}
             <div className="flex flex-wrap items-center justify-between gap-2.5 mb-4">
-              {/* Mode toggle */}
-              <div className="flex bg-slate-100 rounded-xl p-1 gap-0.5">
-                {[
-                  { key: 'auto', icon: '⚡', label: t.autoAnalysis },
-                  { key: 'manual', icon: '✏️', label: t.manualPractice },
-                ].map(({ key, icon, label }) => {
-                  const active = mode === key;
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => switchMode(key)}
-                      className={`px-4 py-2 rounded-lg border-none text-sm transition-all ${
-                        active
-                          ? 'bg-white text-indigo-600 shadow-md font-semibold'
-                          : 'bg-transparent text-gray-500 font-medium'
-                      }`}
-                    >
-                      {icon} {label}
-                    </button>
-                  );
-                })}
-              </div>
-
+              {/* (El toggle Análisis/Práctica ahora vive en la barra inferior) */}
               {/* Example loader */}
               <select
                 onChange={loadExample}
@@ -2412,6 +2514,15 @@ function App() {
         level={level}
         lang={lang}
       />
+      </>
+      ) : panel === 'guide' ? (
+        <GuidePanel lang={lang} />
+      ) : (
+        <ProgressPanel lang={lang} />
+      )}
+
+      {/* ══ NAVEGACIÓN INFERIOR (persistente) ═══════════════ */}
+      <BottomNav section={section} onSelect={selectSection} lang={lang} />
     </div>
   );
 }
