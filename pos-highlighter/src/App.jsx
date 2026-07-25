@@ -30,15 +30,16 @@ function ThemeToggle({ lang = 'es' }) {
     };
   }, []);
   const target = eff === 'dark' ? 'light' : 'dark';
-  const name = { es: { light: 'claro', dark: 'oscuro' }, en: { light: 'light', dark: 'dark' } }[lang][target];
+  const name = { es: { light: 'Claro', dark: 'Oscuro' }, en: { light: 'Light', dark: 'Dark' } }[lang][target];
   return (
     <button
       onClick={() => window.ghTheme && setEff(window.ghTheme.toggle())}
-      className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-lg leading-none"
-      title={`${lang === 'es' ? 'Cambiar a modo' : 'Switch to'} ${name}`}
-      aria-label={`${lang === 'es' ? 'Cambiar a modo' : 'Switch to'} ${name}`}
+      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 text-sm font-bold text-gray-600 transition-colors"
+      title={`${lang === 'es' ? 'Cambiar a modo' : 'Switch to'} ${name.toLowerCase()}`}
+      aria-label={`${lang === 'es' ? 'Cambiar a modo' : 'Switch to'} ${name.toLowerCase()}`}
     >
-      {target === 'dark' ? '🌙' : '☀️'}
+      <span className="text-base leading-none">{target === 'dark' ? '🌙' : '☀️'}</span>
+      <span>{name}</span>
     </button>
   );
 }
