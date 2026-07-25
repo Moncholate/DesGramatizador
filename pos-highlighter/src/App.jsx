@@ -34,7 +34,7 @@ function ThemeToggle({ lang = 'es' }) {
   return (
     <button
       onClick={() => window.ghTheme && setEff(window.ghTheme.toggle())}
-      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 text-sm font-bold text-gray-600 transition-colors"
+      className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-bold bg-slate-100 border border-slate-300 text-slate-600 hover:bg-slate-50 transition-all"
       title={`${lang === 'es' ? 'Cambiar a modo' : 'Switch to'} ${name.toLowerCase()}`}
       aria-label={`${lang === 'es' ? 'Cambiar a modo' : 'Switch to'} ${name.toLowerCase()}`}
     >
