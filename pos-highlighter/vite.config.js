@@ -14,8 +14,8 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['favicon.ico', 'favicon.svg', 'favicon-96x96.png', 'apple-touch-icon.png'],
       manifest: {
-        name: 'DesGramatizador',
-        short_name: 'DesGramatizador',
+        name: 'Desgramatizador',
+        short_name: 'Desgramatizador',
         description: 'Identificador de Partes de la Oración para estudiantes de inglés',
         theme_color: '#4F46E5',
         background_color: '#ffffff',

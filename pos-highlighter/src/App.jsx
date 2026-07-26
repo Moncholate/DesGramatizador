@@ -51,7 +51,7 @@ function ThemeToggle({ lang = 'es' }) {
 
 const TRANSLATIONS = {
   es: {
-    appTitle: 'DesGramatizador',
+    appTitle: 'Desgramatizador',
     appSubtitle: 'Descubre el ADN de tus oraciones.',
     autoAnalysis: 'Análisis Automático',
     manualPractice: 'Práctica Manual',
@@ -172,7 +172,7 @@ const TRANSLATIONS = {
     updateBtn: 'Actualizar',
   },
   en: {
-    appTitle: 'DesGramatizador',
+    appTitle: 'Desgramatizador',
     appSubtitle: 'Discover the DNA of your sentences.',
     autoAnalysis: 'Auto Analysis',
     manualPractice: 'Manual Practice',
@@ -2075,7 +2075,7 @@ function App() {
           <div className="flex items-center gap-3">
             <img
               src={`${import.meta.env.BASE_URL}web-app-manifest-192x192.png`}
-              alt="DesGramatizador"
+              alt="Desgramatizador"
               className="w-11 h-11 md:w-9 md:h-9 rounded-[22%] flex-shrink-0"
             />
             <div>
