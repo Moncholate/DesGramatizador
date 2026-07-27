@@ -2074,7 +2074,7 @@ function App() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
-              src={`${import.meta.env.BASE_URL}web-app-manifest-192x192.png`}
+              src={`${import.meta.env.BASE_URL}logo.svg`}
               alt="Desgramatizador"
               className="w-11 h-11 md:w-9 md:h-9 rounded-[22%] flex-shrink-0"
             />
