@@ -87,7 +87,9 @@ rt {
    - píldora (POS): la palabra es una caja con borde; acercar la etiqueta la
      mete DENTRO del borde, así que hay que separarla. */
 rt.rt-underline { transform: translateY(3px); }
-rt.rt-pill      { transform: translateY(-3px); }
+/* -5 y no -3: además del borde de 2px, el anillo de foco por teclado se dibuja
+   otros 2px hacia afuera. Con -3 lo tocaba. */
+rt.rt-pill      { transform: translateY(-5px); }
 
 /* Yellow highlight animation for textarea when example loads */
 @keyframes highlightFlash {

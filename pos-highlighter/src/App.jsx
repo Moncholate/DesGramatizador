@@ -656,7 +656,11 @@ function ManualWordPill({
           aria-label={`${text}${userTag ? ` — ${POS[userTag].name}` : ''}`}
           onClick={onClick}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
-          className="inline-block px-2 py-1 rounded-lg cursor-pointer border-2 transition-all hover:shadow-sm relative focus:outline-none focus:ring-2 focus:ring-indigo-400 select-none"
+          /* focus-visible y no focus: el anillo se dibuja POR FUERA de la caja y,
+             sumado al borde, invadía la etiqueta de arriba al hacer clic. Con
+             focus-visible solo aparece navegando por teclado, que es donde hace
+             falta para saber dónde estás; con el mouse ya lo sabes. */
+          className="inline-block px-2 py-1 rounded-lg cursor-pointer border-2 transition-all hover:shadow-sm relative focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 select-none"
           style={{
             background: bg,
             color: col,
@@ -730,7 +734,7 @@ function ManualWordPill({
         aria-label={`${text}${userTag ? ` — ${STRUCTURE[userTag].name}` : ''}`}
         onClick={onClick}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
-        className="inline-block px-1.5 pt-0.5 pb-1 cursor-pointer transition-all hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-indigo-400 rounded select-none"
+        className="inline-block px-1.5 pt-0.5 pb-1 cursor-pointer transition-all hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded select-none"
         style={{
           color: col,
           borderBottom: `3px solid ${underlineColor}`,
