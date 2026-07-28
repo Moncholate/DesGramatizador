@@ -121,7 +121,7 @@ const TRANSLATIONS = {
       A: '¿cuándo? / ¿dónde? / ¿cómo?',
     },
     // Structure warnings
-    complexWarning: 'Oración compleja (múltiples cláusulas o más de 15 palabras)',
+    complexWarning: 'Oración compleja (múltiples cláusulas o más de 15 palabras). El análisis puede no ser exacto: consulta con tu docente.',
     questionNotAvailable: 'Pregunta — análisis de estructura no disponible para este tipo de oración.',
     // Educational hints (shown via InfoTip on hover/tap)
     tipLocked: 'Categoría bloqueada en este nivel',
@@ -242,7 +242,7 @@ const TRANSLATIONS = {
       A: 'when? / where? / how?',
     },
     // Structure warnings
-    complexWarning: 'Complex sentence (multiple clauses or 15+ words)',
+    complexWarning: 'Complex sentence (multiple clauses or 15+ words). The analysis may not be exact: check with your teacher.',
     questionNotAvailable: 'Question — structure analysis not available for this sentence type.',
     // Educational hints (shown via InfoTip on hover/tap)
     tipLocked: 'Category locked for this level',
