@@ -79,6 +79,9 @@ rt {
   font-weight: 800;
   letter-spacing: 0.03em;
   line-height: 1.1;
+  /* Pega la etiqueta a su palabra: sin esto el navegador la deja centrada en el
+     hueco que abre el interlineado de fila y parece flotar suelta. */
+  transform: translateY(3px);
 }
 
 /* Yellow highlight animation for textarea when example loads */

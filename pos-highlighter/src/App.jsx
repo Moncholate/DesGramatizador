@@ -495,7 +495,7 @@ function WordToken({ text, pos, isPunct, unlocked, showLabels, phrasalVerb, unre
                   {part.text}
                 </span>
                 {showLabels && ok && (
-                  <rt style={{ fontSize: 9, color: col }}>{cfg.label}</rt>
+                  <rt style={{ fontSize: 11, color: col }}>{cfg.label}</rt>
                 )}
               </ruby>
             );
@@ -543,7 +543,7 @@ function WordToken({ text, pos, isPunct, unlocked, showLabels, phrasalVerb, unre
         {text}
       </span>
       {showLabels && ok && (
-        <rt style={{ fontSize: 9, color: col }}>
+        <rt style={{ fontSize: 11, color: col }}>
           {cfg.label}
         </rt>
       )}
@@ -662,6 +662,7 @@ function ManualWordPill({
             color: col,
             borderColor: borderColor,
             fontWeight: hasUserTag || showAnswers ? 600 : 400,
+            lineHeight: 1.3,   // no heredar el interlineado de fila (ver structure)
           }}
         >
           {indicator && (
@@ -677,7 +678,7 @@ function ManualWordPill({
           {text}
         </span>
         {labelTag && (
-          <rt style={{ fontSize: 9, color: POS[labelTag].color, fontWeight: 800 }}>
+          <rt style={{ fontSize: 11, color: POS[labelTag].color, fontWeight: 800 }}>
             {POS[labelTag].label}
           </rt>
         )}
@@ -729,11 +730,15 @@ function ManualWordPill({
         aria-label={`${text}${userTag ? ` — ${STRUCTURE[userTag].name}` : ''}`}
         onClick={onClick}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
-        className="inline-block px-1.5 py-1 cursor-pointer transition-all hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-indigo-400 rounded select-none"
+        className="inline-block px-1.5 pt-0.5 pb-1 cursor-pointer transition-all hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-indigo-400 rounded select-none"
         style={{
           color: col,
           borderBottom: `3px solid ${underlineColor}`,
           fontWeight: hasUserTag || showAnswers ? 600 : 400,
+          // Interlineado propio: al ser inline-block heredaba el del contenedor
+          // (pensado para separar filas) y eso estiraba su caja, dejando el
+          // subrayado flotando muy por debajo de la palabra.
+          lineHeight: 1.3,
         }}
         title={showAnswers && correctTag ? STRUCTURE[correctTag].name : t.clickToTag}
       >
@@ -741,7 +746,7 @@ function ManualWordPill({
         {text}
       </span>
       {labelTag && (
-        <rt style={{ fontSize: 9, color: STRUCTURE[labelTag].color, fontWeight: 800 }}>
+        <rt style={{ fontSize: 11, color: STRUCTURE[labelTag].color, fontWeight: 800 }}>
           {STRUCTURE[labelTag].label}
         </rt>
       )}
@@ -2618,9 +2623,10 @@ function App() {
                     <div
                       className="text-base"
                       style={{
-                        // Más interlineado: las etiquetas de rol (rt) van siempre visibles
-                        // sobre cada palabra y no deben chocar con la fila superior.
-                        lineHeight: 3.2,
+                        // Separa las FILAS, para que la etiqueta de rol (rt) de una
+                        // no choque con la de arriba. Cada palabra fija su propio
+                        // interlineado, así que esto ya no aleja el subrayado.
+                        lineHeight: 2.4,
                         wordSpacing: '2px',
                       }}
                     >
