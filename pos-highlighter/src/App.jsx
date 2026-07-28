@@ -2623,10 +2623,13 @@ function App() {
                     <div
                       className="text-base"
                       style={{
-                        // Separa las FILAS, para que la etiqueta de rol (rt) de una
-                        // no choque con la de arriba. Cada palabra fija su propio
-                        // interlineado, así que esto ya no aleja el subrayado.
-                        lineHeight: 2.4,
+                        // Separa las FILAS. Cada palabra fija su propio interlineado,
+                        // así que este valor ya NO aleja el subrayado del texto: solo
+                        // decide cuánto espacio hay entre una fila y la siguiente.
+                        // Una fila ocupa ~45px (palabra 30 + etiqueta 15), así que
+                        // por debajo de 2.9 el subrayado de una fila pisa las
+                        // etiquetas de la de abajo.
+                        lineHeight: 3.4,
                         wordSpacing: '2px',
                       }}
                     >
@@ -2688,8 +2691,10 @@ function App() {
                     <div
                       className="text-base"
                       style={{
-                        // Extra line-height when labels are visible so rt text doesn't collide
-                        lineHeight: showLabels ? 3.0 : 2.0,
+                        // Con etiquetas visibles hace falta más aire entre filas: la
+                        // etiqueta (rt) de una fila cae junto a la píldora de la de
+                        // arriba. Mismo cálculo que en práctica.
+                        lineHeight: showLabels ? 3.4 : 2.0,
                         wordSpacing: '1px',
                       }}
                     >
