@@ -1025,6 +1025,56 @@ function StructureBlock({ type, text, isAuxiliary, isMainVerb, formal, showLabel
   );
 }
 
+/**
+ * Recupera los signos de puntuación para el análisis de estructura.
+ *
+ * El analizador los recorta en una quincena de sitios (para comparar palabras,
+ * partir cláusulas en la coma, etc.), así que en vez de tocar esa lógica —que es
+ * delicada y está cubierta por tests— se vuelve a leer del texto ORIGINAL: se
+ * recorre en orden buscando el texto de cada componente y se anota el signo que
+ * viene justo detrás.
+ *
+ * Los signos NO se meten dentro de los bloques a propósito: la puntuación no es
+ * un constituyente de la oración, y guardarla dentro del bloque C enseñaría que
+ * el punto forma parte del complemento. Se dibuja suelta, entre bloques.
+ */
+function withPunctuation(sentence) {
+  const text = sentence.text || '';
+  const rows = sentence.rows || [{ components: sentence.components || [] }];
+  let cursor = 0;
+
+  // Consume el texto dado y devuelve la puntuación inmediatamente posterior
+  const eat = (chunk) => {
+    if (!chunk) return '';
+    const i = text.indexOf(chunk, cursor);
+    if (i < 0) return '';
+    cursor = i + chunk.length;
+    const m = text.slice(cursor).match(/^\s*([.,;:!?…]+)/);
+    if (!m) return '';
+    cursor += m[0].length;
+    return m[1];
+  };
+
+  // A veces el analizador deja el signo DENTRO del texto del componente
+  // ("Every morning,") y otras lo recorta. Se saca siempre, para que el signo
+  // quede fuera del bloque en los dos casos.
+  const split = (raw) => {
+    const own = (raw.match(/([.,;:!?…]+)$/) || ['', ''])[1];
+    const after = eat(raw);                       // busca con el texto original
+    return { text: own ? raw.slice(0, -own.length) : raw, trailing: own + after };
+  };
+
+  return rows.map(row => {
+    if (row.isConjunction) return { ...row, ...split(row.text) };
+    return {
+      ...row,
+      components: (row.components || []).map(c =>
+        (c.implied || !c.text) ? c : { ...c, ...split(c.text) }
+      ),
+    };
+  });
+}
+
 function ClauseRow({ components, isQuestion, showLabels = true, lang = 'es' }) {
   const t = TRANSLATIONS[lang] || TRANSLATIONS.es;
   return (
@@ -1035,16 +1085,27 @@ function ClauseRow({ components, isQuestion, showLabels = true, lang = 'es' }) {
             [{comp.type}: ({comp.text})]
           </span>
         ) : (
-          <StructureBlock
-            key={idx}
-            type={comp.type}
-            text={comp.text}
-            isAuxiliary={comp.isAuxiliary}
-            isMainVerb={comp.isMainVerb}
-            formal={comp.formal}
-            showLabels={showLabels}
-            lang={lang}
-          />
+          <React.Fragment key={idx}>
+            <StructureBlock
+              type={comp.type}
+              text={comp.text}
+              isAuxiliary={comp.isAuxiliary}
+              isMainVerb={comp.isMainVerb}
+              formal={comp.formal}
+              showLabels={showLabels}
+              lang={lang}
+            />
+            {/* El "?" final lo cubre la insignia con su explicación de inversión */}
+            {comp.trailing && !(isQuestion && comp.trailing === '?') && (
+              <span
+                className="text-lg font-bold -ml-1.5 mr-1 mb-2 self-center"
+                style={{ color: NEUTRAL.pillText }}
+                aria-hidden="true"
+              >
+                {comp.trailing}
+              </span>
+            )}
+          </React.Fragment>
         )
       )}
       {isQuestion && (
@@ -1063,7 +1124,7 @@ function ClauseRow({ components, isQuestion, showLabels = true, lang = 'es' }) {
 
 function SentenceStructure({ sentence, showLabels = true, lang = 'es' }) {
   const t = TRANSLATIONS[lang] || TRANSLATIONS.es;
-  const rows = sentence.rows || [{ components: sentence.components || [] }];
+  const rows = withPunctuation(sentence);
   const hasContent = rows.some(r => !r.isConjunction && r.components && r.components.length > 0);
 
   // Questions with no parseable content: still show QuestionMessage
@@ -1119,6 +1180,11 @@ function SentenceStructure({ sentence, showLabels = true, lang = 'es' }) {
               <span className="text-xs font-bold uppercase tracking-wide text-slate-400 border border-slate-300 rounded px-1.5 py-0.5 bg-slate-50">
                 {row.text}
               </span>
+              {row.trailing && (
+                <span className="text-lg font-bold" style={{ color: NEUTRAL.pillText }} aria-hidden="true">
+                  {row.trailing}
+                </span>
+              )}
             </div>
           ) : (
             <ClauseRow key={i} components={row.components} isQuestion={sentence.isQuestion} showLabels={showLabels} lang={lang} />
