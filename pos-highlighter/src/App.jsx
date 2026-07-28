@@ -353,6 +353,19 @@ const LEVELS = {
   'Intermedio Alto': ['noun', 'verb', 'adjective', 'determiner', 'pronoun', 'wh', 'preposition', 'adverb', 'modal', 'auxiliary', 'conjunction', 'number'],
 };
 
+/* Persistencia compartida con la suite (mismo origen => mismo localStorage).
+   El idioma usa gh_lang, común a las 4 apps. El nivel de Desgram son 4 bandas
+   (no los 7 ids de la suite), así que guarda su propio dg_level y usa gh_level
+   mapeado solo como punto de partida la primera vez. */
+const HUB_LEVEL_MAP = {
+  basico1: 'Básico', basico2: 'Básico',
+  elemental1: 'Elemental', elemental2: 'Elemental',
+  intermedio1: 'Intermedio', intermedio2: 'Intermedio',
+  avanzado: 'Intermedio Alto',
+};
+const readStored = key => { try { return localStorage.getItem(key); } catch { return null; } };
+const writeStored = (key, v) => { try { localStorage.setItem(key, v); } catch { /* modo privado */ } };
+
 const EXAMPLES = [
   {
     label: 'Básico — Daily Life in Santiago',
@@ -904,6 +917,34 @@ function QuestionMessage({ text, lang = 'es' }) {
           <div className="text-sm">💡</div>
           <div className="text-xs text-yellow-900 leading-relaxed">
             <strong>{q.noteLabel}</strong> {q.noteBody}
+          </div>
+        </div>
+      </div>
+
+      {/* Puente de suite: la app especializada en preguntas (teal = su identidad).
+          Embebida en el Hub no se puede navegar el iframe → se indica el camino. */}
+      <div className="mt-2 bg-teal-50 border border-teal-200 rounded-lg p-2.5">
+        <div className="flex items-start gap-2">
+          <div className="text-sm">🧪</div>
+          <div className="text-xs text-teal-900 leading-relaxed">
+            <strong>Question Lab</strong>{' '}
+            {lang === 'es'
+              ? 'es la app de la suite especializada en preguntas: te muestra cómo se arma esta, pieza por pieza.'
+              : 'is the suite app that specializes in questions: it shows you how this one is built, piece by piece.'}{' '}
+            {window.self === window.top ? (
+              <a
+                href="https://moncholate.github.io/Question-Lab/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold underline text-teal-700 hover:text-teal-800"
+              >
+                {lang === 'es' ? 'Abrir Question Lab →' : 'Open Question Lab →'}
+              </a>
+            ) : (
+              <span className="font-semibold">
+                {lang === 'es' ? 'La encuentras en el inicio del Hub.' : 'Find it on the Hub home screen.'}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -1566,6 +1607,22 @@ function ProgressPanel({ lang }) {
   const bmap = p.badges || {};
   const isOn = b => b.perTense ? Object.keys(bmap).some(k => k.startsWith(b.id + ':')) : !!bmap[b.id];
   const unlocked = BADGES.filter(isOn).length;
+
+  // Estadísticas locales de práctica manual (dg_stats)
+  let dg = { rounds: 0, cats: {} };
+  try {
+    const raw = JSON.parse(localStorage.getItem('dg_stats') || '{}');
+    dg = { rounds: raw.rounds || 0, cats: raw.cats || {} };
+  } catch { /* sin datos */ }
+  const totals = Object.values(dg.cats).reduce((a, c) => ({ ok: a.ok + c.ok, total: a.total + c.total }), { ok: 0, total: 0 });
+  const acc = totals.total ? Math.round(100 * totals.ok / totals.total) : null;
+  // Categorías más falladas: mínimo 4 intentos para que el dato signifique algo
+  const hardest = Object.entries(dg.cats)
+    .filter(([, c]) => c.total >= 4)
+    .map(([k, c]) => ({ k, pct: Math.round(100 * c.ok / c.total) }))
+    .sort((a, b) => a.pct - b.pct)
+    .slice(0, 3);
+
   return (
     <div className="flex-1 overflow-y-auto px-4 py-5 md:px-6">
       <div className="max-w-2xl mx-auto space-y-4 pb-4">
@@ -1577,6 +1634,44 @@ function ProgressPanel({ lang }) {
             <p className={`text-xs ${streak > 0 ? 'text-white/90' : 'text-slate-400'}`}>{es ? 'Mejor' : 'Best'}: {best}</p>
           </div>
         </div>
+        {/* Práctica manual: rondas, precisión y lo que más cuesta */}
+        {dg.rounds > 0 && (
+          <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3 text-center">
+              <div>
+                <p className="text-2xl font-bold text-indigo-600">{dg.rounds}</p>
+                <p className="text-xs text-slate-500">{es ? 'Rondas verificadas' : 'Rounds checked'}</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-emerald-600">{acc}%</p>
+                <p className="text-xs text-slate-500">{es ? 'Precisión total' : 'Overall accuracy'}</p>
+              </div>
+            </div>
+            {hardest.length > 0 && (
+              <div>
+                <p className="text-xs font-bold text-slate-600 mb-1.5">{es ? '🎯 Lo que más te cuesta' : '🎯 Your hardest categories'}</p>
+                <div className="space-y-1.5">
+                  {hardest.map(h => {
+                    const [kind, key] = h.k.split(':');
+                    const meta = kind === 'pos' ? POS[key] : STRUCTURE[key];
+                    if (!meta) return null;
+                    return (
+                      <div key={h.k} className="flex items-center gap-2">
+                        <span className="h-6 min-w-[1.9rem] px-1 rounded flex items-center justify-center text-[10px] font-extrabold flex-shrink-0" style={{ background: meta.bg, color: meta.color }}>{meta.label}</span>
+                        <span className="text-xs text-slate-600 w-24 truncate">{meta.name}</span>
+                        <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full" style={{ width: `${h.pct}%`, background: meta.color }} />
+                        </div>
+                        <span className="text-xs text-slate-500 w-9 text-right">{h.pct}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <p className="text-sm font-bold text-slate-700">{es ? 'Insignias' : 'Badges'} — {unlocked}/{BADGES.length}</p>
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
           {BADGES.map(b => { const on = isOn(b); const name = (es ? b.name.es : b.name.en).replace('{tense}', '…');
@@ -1620,7 +1715,11 @@ function BottomNav({ section, onSelect, lang }) {
 ═══════════════════════════════════════════════════════════ */
 
 function App() {
-  const [lang, setLang] = useState('es'); // 'es' | 'en'
+  const [lang, setLangState] = useState(() => {
+    const v = readStored('gh_lang');
+    return v === 'es' || v === 'en' ? v : 'es';
+  });
+  const setLang = v => { setLangState(v); writeStored('gh_lang', v); };
   // Recolorea en vivo al cambiar el tema: el resolver del <head> actualiza
   // data-theme (toggle, otra pestaña, o cambio de SO); reconstruimos los mapas
   // de color y forzamos re-render sin recargar.
@@ -1632,7 +1731,12 @@ function App() {
     return () => obs.disconnect();
   }, []);
   const [fromHub, setFromHub] = useState(() => window.self !== window.top);
-  const [level, setLevel] = useState('Básico');
+  const [level, setLevelState] = useState(() => {
+    const own = readStored('dg_level');
+    if (own && LEVELS[own]) return own;
+    return HUB_LEVEL_MAP[readStored('gh_level')] || 'Básico';
+  });
+  const setLevel = v => { setLevelState(v); writeStored('dg_level', v); };
   const [mode, setMode] = useState('auto');
   const [panel, setPanel] = useState(null); // null = workspace (Análisis/Práctica) · 'guide' · 'progress'
   // PWA: aviso de "nueva versión disponible" (registerType 'prompt')
@@ -1732,6 +1836,9 @@ function App() {
   const loadExample = e => {
     if (e.target.value !== '') {
       const example = EXAMPLES[+e.target.value];
+      // Volver al placeholder: si queda "pegado" en la opción elegida, recargar
+      // el mismo ejemplo exige pasar por otro primero (onChange no dispara).
+      e.target.value = '';
       setText(example.text);
       setLevel(example.level);
       setAnalyzed(false);
@@ -1881,12 +1988,42 @@ function App() {
     }
   };
 
+  // Estadísticas locales por categoría (dg_stats): la verificación ya sabe qué
+  // acertó y qué no el alumno, pero ese detalle se descartaba. Ahora alimenta
+  // el panel de Progreso ("lo que más te cuesta").
+  const recordLocalStats = () => {
+    try {
+      const raw = JSON.parse(localStorage.getItem('dg_stats') || '{}');
+      const stats = { rounds: raw.rounds || 0, cats: raw.cats || {} };
+      stats.rounds += 1;
+      manualTokens.filter(tk => !tk.isPunct).forEach(tk => {
+        let key, ok;
+        if (manualView === 'pos') {
+          if (!tk.pos) return;
+          key = 'pos:' + tk.pos;
+          ok = userPOSTags[tk.id] === tk.pos;
+        } else {
+          const correctTag = getCorrectAnswer(tk, 'structure');
+          if (!correctTag) return;
+          key = 'struct:' + correctTag;
+          ok = userStructureTags[tk.id] === correctTag;
+        }
+        const c = stats.cats[key] || { ok: 0, total: 0 };
+        c.total += 1;
+        if (ok) c.ok += 1;
+        stats.cats[key] = c;
+      });
+      localStorage.setItem('dg_stats', JSON.stringify(stats));
+    } catch { /* modo privado */ }
+  };
+
   const handleCheckAnswers = () => {
     if (!canAnalyze || manualTokens.length === 0) return;
     if (!answerChecked) {              // una vez por ronda (se resetea al limpiar/preparar)
       const s = calculateScore();
       const allOk = s.total > 0 && s.correct === s.total;
       recordGamePractice(allOk);
+      recordLocalStats();
       setAnswerStreak(st => allOk ? st + 1 : 0);
     }
     setAnswerChecked(true);
@@ -1961,19 +2098,13 @@ function App() {
 
   // Grammar HUB: escuchar cambio de idioma y nivel vía postMessage
   useEffect(() => {
-    const levelMap = {
-      basico1: 'Básico', basico2: 'Básico',
-      elemental1: 'Elemental', elemental2: 'Elemental',
-      intermedio1: 'Intermedio', intermedio2: 'Intermedio',
-      avanzado: 'Intermedio Alto',
-    };
     const handler = (e) => {
       if (e.data?.type === 'GRAMMAR_HUB_LANG' && (e.data.lang === 'es' || e.data.lang === 'en')) {
         setLang(e.data.lang);
         setFromHub(true);
       }
-      if (e.data?.type === 'GRAMMAR_HUB_LEVEL' && levelMap[e.data.level]) {
-        setLevel(levelMap[e.data.level]);
+      if (e.data?.type === 'GRAMMAR_HUB_LEVEL' && HUB_LEVEL_MAP[e.data.level]) {
+        setLevel(HUB_LEVEL_MAP[e.data.level]);
         setFromHub(true);
       }
     };
@@ -1985,8 +2116,10 @@ function App() {
     // userAgent is fixed for the session, so this is effect-local (no dependency)
     const isMobileDevice = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
     const onBeforeInstall = e => {
-      e.preventDefault();
+      // En escritorio NO se intercepta: preventDefault sin ofrecer alternativa
+      // suprimía la instalación nativa del navegador (mismo bug que tuvo el Hub).
       if (!isMobileDevice) return;
+      e.preventDefault();
       setInstallPrompt(e);
       setShowInstallBanner(true);
     };
@@ -2010,7 +2143,15 @@ function App() {
 
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-  const [showIOSHint, setShowIOSHint] = useState(isIOS && !isStandalone);
+  // El cierre se recuerda: antes el aviso reaparecía en CADA visita.
+  const [showIOSHint, setShowIOSHint] = useState(() => {
+    try { if (localStorage.getItem('dg_ios_hint') === '1') return false; } catch { /* modo privado */ }
+    return isIOS && !isStandalone;
+  });
+  const dismissIOSHint = () => {
+    try { localStorage.setItem('dg_ios_hint', '1'); } catch { /* modo privado */ }
+    setShowIOSHint(false);
+  };
 
   return (
     <div className="flex flex-col h-screen bg-[#f5f6fb]">
@@ -2059,7 +2200,7 @@ function App() {
       {showIOSHint && (
         <div className="flex-shrink-0 bg-indigo-50 border-b border-indigo-200 text-indigo-800 px-4 py-2 text-sm flex items-center justify-between z-50">
           <span>{t.iosHintMsg}</span>
-          <button onClick={() => setShowIOSHint(false)} className="ml-2 opacity-60">✕</button>
+          <button onClick={dismissIOSHint} className="ml-2 opacity-60">✕</button>
         </div>
       )}
       {/* ── Offline indicator ── */}
