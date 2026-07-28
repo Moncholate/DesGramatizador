@@ -678,7 +678,7 @@ function ManualWordPill({
           {text}
         </span>
         {labelTag && (
-          <rt style={{ fontSize: 11, color: POS[labelTag].color, fontWeight: 800 }}>
+          <rt className="rt-pill" style={{ fontSize: 11, color: POS[labelTag].color, fontWeight: 800 }}>
             {POS[labelTag].label}
           </rt>
         )}
@@ -746,7 +746,7 @@ function ManualWordPill({
         {text}
       </span>
       {labelTag && (
-        <rt style={{ fontSize: 11, color: STRUCTURE[labelTag].color, fontWeight: 800 }}>
+        <rt className="rt-underline" style={{ fontSize: 11, color: STRUCTURE[labelTag].color, fontWeight: 800 }}>
           {STRUCTURE[labelTag].label}
         </rt>
       )}

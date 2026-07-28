@@ -79,10 +79,15 @@ rt {
   font-weight: 800;
   letter-spacing: 0.03em;
   line-height: 1.1;
-  /* Pega la etiqueta a su palabra: sin esto el navegador la deja centrada en el
-     hueco que abre el interlineado de fila y parece flotar suelta. */
-  transform: translateY(3px);
 }
+/* El ajuste fino depende de cómo se marca la palabra, así que va por caso y no
+   en la regla general:
+   - subrayado (estructura): la palabra es texto suelto, la etiqueta puede
+     acercarse o queda flotando en el hueco del interlineado.
+   - píldora (POS): la palabra es una caja con borde; acercar la etiqueta la
+     mete DENTRO del borde, así que hay que separarla. */
+rt.rt-underline { transform: translateY(3px); }
+rt.rt-pill      { transform: translateY(-3px); }
 
 /* Yellow highlight animation for textarea when example loads */
 @keyframes highlightFlash {
