@@ -1642,18 +1642,124 @@ function GuidePanel({ lang }) {
     <div className="flex-1 overflow-y-auto px-4 py-5 md:px-6">
       <div className="max-w-2xl mx-auto space-y-5 pb-4">
         <h2 className="font-bold text-xl text-slate-800">{es ? '📖 Guía de uso' : '📖 Usage guide'}</h2>
-        <div className="space-y-3">
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <p className="font-bold text-blue-900 mb-1">⚡ {t.autoAnalysis}</p>
-            <p className="text-sm text-blue-900">{t.hintAutoAnalysis}</p>
+
+        {/* Qué hace la app, en una frase */}
+        <p className="text-sm text-slate-600 leading-relaxed">
+          {es
+            ? <>Esta app <b>desarma</b> una oración en inglés y te muestra de qué está hecha. Escribe cualquier texto y lo verás pieza por pieza.</>
+            : <>This app <b>takes apart</b> an English sentence and shows you what it is made of. Type any text and you will see it piece by piece.</>}
+        </p>
+
+        {/* Cómo se usa */}
+        <div>
+          <h3 className="font-bold text-slate-700 mb-2">{es ? '¿Cómo se usa?' : 'How do you use it?'}</h3>
+          <ol className="space-y-2">
+            {(es
+              ? [['Escribe o pega texto en inglés', 'También puedes cargar un ejemplo desde el menú de arriba.'],
+                 ['Toca Analizar', 'La app pinta cada palabra según lo que es y lo que hace.'],
+                 ['Elige qué quieres ver', 'Con los botones Estructura, POS o Ambos cambias de capa sin volver a analizar.']]
+              : [['Type or paste English text', 'You can also load an example from the menu above.'],
+                 ['Tap Analyze', 'The app paints every word according to what it is and what it does.'],
+                 ['Choose what to look at', 'The Structure, POS and Both buttons switch layers without re-analysing.']]
+            ).map(([head, body], i) => (
+              <li key={i} className="flex gap-2.5">
+                <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-600 text-white text-[11px] font-bold flex items-center justify-center">{i + 1}</span>
+                <span className="min-w-0 text-sm">
+                  <b className="text-slate-800">{head}.</b> <span className="text-slate-600">{body}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        {/* EL concepto central de la app: por qué hay dos análisis distintos */}
+        <div>
+          <h3 className="font-bold text-slate-700 mb-2">{es ? 'Las dos capas' : 'The two layers'}</h3>
+          <p className="text-sm text-slate-600 mb-2.5">
+            {es
+              ? 'La misma palabra se puede mirar de dos maneras, y por eso hay dos análisis. No compiten: se complementan.'
+              : 'The same word can be looked at in two ways, and that is why there are two analyses. They do not compete: they complement each other.'}
+          </p>
+          <div className="grid sm:grid-cols-2 gap-2.5">
+            <div className="rounded-xl border p-3" style={{ borderColor: POS.noun.color + '55', background: POS.noun.bg }}>
+              <p className="font-bold text-sm mb-1" style={{ color: POS.noun.color }}>{t.partsOfSpeech} (POS)</p>
+              <p className="text-xs text-slate-600 leading-snug">
+                {es
+                  ? <><b>Qué ES cada palabra</b>, por sí sola: sustantivo, verbo, adjetivo… No cambia según la oración.</>
+                  : <><b>What each word IS</b>, on its own: noun, verb, adjective… It does not change with the sentence.</>}
+              </p>
+            </div>
+            <div className="rounded-xl border p-3" style={{ borderColor: STRUCTURE.S.color + '55', background: STRUCTURE.S.bg }}>
+              <p className="font-bold text-sm mb-1" style={{ color: STRUCTURE.S.color }}>{t.sentenceStructure}</p>
+              <p className="text-xs text-slate-600 leading-snug">
+                {es
+                  ? <><b>Qué HACE cada parte</b> dentro de esta oración: quién actúa, cuál es la acción, qué la acompaña.</>
+                  : <><b>What each part DOES</b> inside this sentence: who acts, what the action is, what goes with it.</>}
+              </p>
+            </div>
           </div>
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <p className="font-bold text-blue-900 mb-1">✏️ {t.manualPractice}</p>
-            <p className="text-sm text-blue-900">{es ? 'Pinta cada palabra con su categoría y verifica tus respuestas.' : 'Paint each word with its category and check your answers.'}</p>
+          <p className="text-xs text-slate-500 mt-2 leading-snug">
+            {es
+              ? <>Ejemplo: en <i>“My brother studies English”</i>, <b>brother</b> ES un sustantivo (POS) y HACE de sujeto (estructura). Un mismo sustantivo puede ser sujeto en una oración y objeto en otra.</>
+              : <>Example: in <i>“My brother studies English”</i>, <b>brother</b> IS a noun (POS) and ACTS as the subject (structure). The same noun can be the subject in one sentence and the object in another.</>}
+          </p>
+        </div>
+
+        {/* Cómo leer lo que aparece en pantalla */}
+        <div>
+          <h3 className="font-bold text-slate-700 mb-2">{es ? 'Cómo leer el análisis' : 'How to read the analysis'}</h3>
+          <ul className="space-y-1.5 text-sm text-slate-600">
+            <li>• {es ? <>La <b>etiqueta pequeña sobre cada palabra</b> dice su categoría. Puedes ocultarla con <b>{t.hideLabels}</b> para ponerte a prueba.</> : <>The <b>small label above each word</b> gives its category. You can hide it with <b>{t.hideLabels}</b> to test yourself.</>}</li>
+            <li>• {es ? <>En <b>POS</b> cada palabra va en una <b>casilla de color</b>; en <b>estructura</b>, con un <b>subrayado de color</b> y el texto siempre legible.</> : <>In <b>POS</b> each word sits in a <b>coloured box</b>; in <b>structure</b> it gets a <b>coloured underline</b> and the text stays fully legible.</>}</li>
+            <li>• {es ? <>En estructura la oración se muestra <b>en bloques</b>, uno por parte, y en filas si tiene varias cláusulas.</> : <>In structure the sentence is shown <b>in blocks</b>, one per part, and in rows when it has several clauses.</>}</li>
+            <li>• {es ? <>El mismo color significa lo mismo en <b>toda la suite</b>: sujeto, verbo y complemento se pintan igual en las cuatro apps.</> : <>The same colour means the same thing <b>across the whole suite</b>: subject, verb and complement are painted alike in all four apps.</>}</li>
+          </ul>
+        </div>
+
+        {/* Práctica manual */}
+        <div>
+          <h3 className="font-bold text-slate-700 mb-2">✏️ {t.manualPractice}</h3>
+          <ol className="space-y-1.5 text-sm text-slate-600 mb-2">
+            <li>1. {es ? <>Toca <b>{t.prepare}</b> con tu texto escrito.</> : <>Tap <b>{t.prepare}</b> with your text written.</>}</li>
+            <li>2. {es ? <>Elige una categoría en la leyenda y <b>toca las palabras</b> que le correspondan.</> : <>Pick a category in the legend and <b>tap the words</b> that belong to it.</>}</li>
+            <li>3. {es ? <>Tocar una palabra <b>varias veces</b> la va rotando entre categorías, por si te equivocaste.</> : <>Tapping a word <b>several times</b> cycles it through categories, in case you got it wrong.</>}</li>
+            <li>4. {es ? <>Cuando termines, toca <b>{t.checkAnswers}</b>.</> : <>When you are done, tap <b>{t.checkAnswers}</b>.</>}</li>
+          </ol>
+          <div className="flex flex-wrap gap-3 text-xs text-slate-600">
+            <span><b className="text-emerald-600">✓</b> {es ? 'acertaste' : 'correct'}</span>
+            <span><b className="text-red-500">✗</b> {es ? 'no era esa' : 'not that one'}</span>
+            <span><b className="text-amber-500">?</b> {es ? 'te faltó marcarla' : 'you left it unmarked'}</span>
           </div>
         </div>
-        <div>
-          <h3 className="font-bold text-slate-700 mb-2">{t.partsOfSpeech}</h3>
+
+        {/* Por qué hay categorías bloqueadas */}
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p className="font-bold text-sm text-slate-700 mb-1">🔒 {es ? 'Categorías bloqueadas' : 'Locked categories'}</p>
+          <p className="text-xs text-slate-600 leading-snug">
+            {es
+              ? <>Las categorías con candado todavía no corresponden a tu nivel. Cambia el <b>{t.levelLabel}</b> arriba y se irán abriendo: la app siempre analiza toda la oración, pero solo te muestra lo que ya viste en clase.</>
+              : <>Categories with a padlock are not part of your level yet. Change the <b>{t.levelLabel}</b> above and they will open up: the app always analyses the whole sentence, but only shows what you have already covered in class.</>}
+          </p>
+        </div>
+
+        {/* Honestidad sobre los límites del analizador */}
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+          <p className="font-bold text-sm text-amber-900 mb-1">⚠️ {es ? 'Cuándo puede fallar' : 'When it can get things wrong'}</p>
+          <ul className="text-xs text-amber-900 space-y-1 leading-snug">
+            <li>• {es ? <>En <b>oraciones largas o con varias cláusulas</b> el análisis se vuelve menos seguro y aparece un aviso.</> : <>With <b>long sentences or several clauses</b> the analysis becomes less reliable and a warning appears.</>}</li>
+            <li>• {es ? <>Las <b>preguntas</b> no se analizan por estructura: el sujeto y el verbo van invertidos. La app te lo explica cuando ocurre.</> : <><b>Questions</b> are not analysed by structure: subject and verb are inverted. The app explains this when it happens.</>}</li>
+            <li>• {es ? <>Una palabra con <b>borde rojo punteado</b> es una que no reconoció: revisa si está bien escrita.</> : <>A word with a <b>dashed red border</b> is one it did not recognise: check the spelling.</>}</li>
+            <li>• {es ? <>Ante la duda, <b>consulta con tu docente</b>: la app es una ayuda, no la última palabra.</> : <>When in doubt, <b>check with your teacher</b>: the app is a helper, not the final word.</>}</li>
+          </ul>
+        </div>
+
+        <div className="pt-2 border-t border-slate-200">
+          <h3 className="font-bold text-slate-700">{es ? 'Referencia de colores' : 'Colour reference'}</h3>
+          <p className="text-xs text-slate-500 mb-3">
+            {es ? 'Qué significa cada etiqueta y cada color. Te sirve mientras analizas o practicas.'
+                : 'What each label and colour means. Handy while you analyse or practise.'}
+          </p>
+          <h4 className="font-bold text-sm text-slate-600 mb-2">{t.partsOfSpeech}</h4>
           <div className="space-y-1">
             {POS_ORDER.map(k => { const p = POS[k]; return (
               <Row key={k} label={p.label} color={p.color} bg={p.bg} name={p.name}
@@ -1662,7 +1768,7 @@ function GuidePanel({ lang }) {
           </div>
         </div>
         <div>
-          <h3 className="font-bold text-slate-700 mb-2">{t.sentenceStructure}</h3>
+          <h4 className="font-bold text-sm text-slate-600 mb-2">{t.sentenceStructure}</h4>
           <div className="space-y-1">
             {structKeys.map(k => { const s = STRUCTURE[k]; return (
               <Row key={k} label={s.label} color={s.color} bg={s.bg} name={s.name}
