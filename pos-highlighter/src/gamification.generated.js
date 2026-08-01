@@ -10,7 +10,18 @@
 export const SHARED_KEY = 'gh_progress';
 export const SCHEMA_V = 1;
 
-const todayISO = (d = new Date()) => d.toISOString().slice(0, 10);
+/* Fecha LOCAL, no UTC. Con `toISOString()` el día cambiaba a medianoche de
+   Greenwich, o sea a las 20:00 en Chile, y la racha dejaba de contar el día del
+   alumno. Dos fallas reales, las dos sobre el que estudia de noche:
+     · practicar lunes 18:00 y lunes 22:00 → el motor veía DOS días (racha inflada)
+     · practicar domingo 22:00 y lunes 18:00 → veía UN día, y la racha no avanzaba
+       aunque el alumno sí había practicado dos días seguidos.
+   `dayGap` no cambia: compara dos strings del mismo formato, así que la resta
+   sigue dando días completos. */
+const todayISO = (d = new Date()) => {
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+};
 const dayGap = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
 
 export function emptyProgress() {
