@@ -45,6 +45,16 @@
 :root[data-theme="dark"] .border-orange-200, :root[data-theme="dark"] .border-amber-300 { border-color: #3a3320 !important; }
 /* texto de estado (banners) que quedaba oscuro → claro */
 :root[data-theme="dark"] .text-blue-900, :root[data-theme="dark"] .text-blue-800, :root[data-theme="dark"] .text-orange-900, :root[data-theme="dark"] .text-emerald-800, :root[data-theme="dark"] .text-emerald-900, :root[data-theme="dark"] .text-indigo-800, :root[data-theme="dark"] .text-amber-800, :root[data-theme="dark"] .text-purple-800, :root[data-theme="dark"] .text-teal-800 { color: #dfe4f0 !important; }
+/* Los dos avisos del panel de preguntas (el 💡 de la nota y el 🧪 que puentea a
+   Question Lab) se quedaban como cajas brillantes dentro de la UI oscura. Se
+   leían —su texto -900 no lo invierte esta capa— pero cantaban. Fondo y texto
+   se cambian JUNTOS: oscurecer solo el fondo los habría vuelto ilegibles, que
+   es exactamente el error que tuvo Grammaster en el modo práctica. */
+:root[data-theme="dark"] .bg-yellow-50 { background-color: #2e2410 !important; }
+:root[data-theme="dark"] .bg-teal-50   { background-color: #0e2b2c !important; }
+:root[data-theme="dark"] .border-yellow-200 { border-color: #4a3a15 !important; }
+:root[data-theme="dark"] .border-teal-200   { border-color: #1c4e4d !important; }
+:root[data-theme="dark"] .text-yellow-900, :root[data-theme="dark"] .text-teal-900 { color: #dfe4f0 !important; }
 
 :root {
   font-family: 'Lexend', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
