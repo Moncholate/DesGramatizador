@@ -1881,7 +1881,9 @@ function BottomNav({ section, onSelect, lang }) {
       <div className="flex items-stretch max-w-2xl mx-auto">
         {items.map(({ key, icon, label }) => (
           <button key={key} onClick={() => onSelect(key)} aria-pressed={section === key}
-            className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-colors ${section === key ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}>
+            /* hover:text-gray-800 y no -600: QL salta de gris apagado a texto
+               pleno y por eso se nota. Con -600 el cambio era casi invisible. */
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-colors ${section === key ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-800'}`}>
             <span className="text-xl leading-none">{icon}</span>
             <span className="text-[10px] font-bold leading-tight">{label}</span>
           </button>
