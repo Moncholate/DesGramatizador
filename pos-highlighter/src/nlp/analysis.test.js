@@ -518,3 +518,34 @@ describe('ambigüedad: las dos capas dicen lo mismo', () => {
     });
   }
 });
+
+describe('ambigüedad: la lista es de verbos QUE PIDEN OBJETO', () => {
+  // «move» estuvo en la lista y rompió esto: un tren se mueve solo, no como
+  // «interesar» o «confundir». La pregunta para agregar una palabra es si la
+  // acción puede no llevar objeto; si puede, no va.
+  it('un verbo que funciona sin objeto no entra en la lista', () => {
+    expect(posOf('Is the train moving?', 'moving')).toBe('verb');
+    expect(posOf('Are you moving?', 'moving')).toBe('verb');
+    expect(posOf('Is the line moving?', 'moving')).toBe('verb');
+  });
+  it('-ing adjetivos frecuentes, con su lectura verbal al lado', () => {
+    expect(posOf('Is the work demanding?', 'demanding')).toBe('adjective');
+    expect(posOf('Is he demanding a refund?', 'demanding')).toBe('verb');
+    expect(posOf('Is the show entertaining?', 'entertaining')).toBe('adjective');
+    expect(posOf('Are they entertaining guests?', 'entertaining')).toBe('verb');
+    expect(posOf('Is the result promising?', 'promising')).toBe('adjective');
+    expect(posOf('Are you promising too much?', 'promising')).toBe('verb');
+  });
+  it('los -ing que SOLO son adjetivo no se tocan', () => {
+    expect(posOf('Is she willing?', 'willing')).toBe('adjective');
+    expect(posOf('Is anything missing?', 'missing')).toBe('adjective');
+    expect(posOf('Is the result outstanding?', 'outstanding')).toBe('adjective');
+  });
+  it('adverbio de grado: zanja sin consultar ninguna lista', () => {
+    // «soothing» no está en PSY_TRANS y aun así sale bien.
+    expect(posOf('Is the water very soothing?', 'soothing')).toBe('adjective');
+    expect(posOf('Is the drink very refreshing?', 'refreshing')).toBe('adjective');
+    // «really» queda fuera: sí puede ir delante de un progresivo
+    expect(posOf('Are you really working?', 'working')).toBe('verb');
+  });
+});

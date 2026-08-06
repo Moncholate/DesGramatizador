@@ -50,10 +50,19 @@ const PREDICATIVE_ED_ADJ = new Set([
 // resuelve — hace falta mirar la estructura.
 // Todos estos son verbos psicológicos (X interesa a Y) y en progresivo piden
 // objeto. Sin nada detrás, la lectura es la adjetiva.
+// Lo que entra acá NO es «verbo psicológico» en sentido estricto, es algo más
+// estrecho: verbos que necesitan objeto. «move» estuvo un rato en esta lista y
+// fue un error — un tren se mueve solo, así que "Is the train moving?" pasó a
+// leerse como adjetivo. Antes de agregar uno: ¿puede la acción no tener objeto?
+// Si sí, no va.
 const PSY_TRANS = new Set([
   'interest','bore','tire','amaze','excite','disappoint','frighten','terrify',
   'disgust','challenge','confuse','surprise','annoy','embarrass','shock',
-  'fascinate','depress','satisfy','exhaust','move',
+  'fascinate','depress','satisfy','exhaust',
+  // mismo criterio, y son los adjetivos en -ing más frecuentes del inglés de aula
+  'refresh','reward','charm','demand','promise','mislead','overwhelm','disturb',
+  'alarm','convince','encourage','discourage','entertain','inspire','thrill',
+  'puzzle','irritate','frustrate','please','stun',
 ]);
 // Estos además funcionan sin objeto ("I relax"), así que el objeto no alcanza y
 // hay que mirar el sujeto: "Are you relaxing?" es progresivo de verdad.
@@ -73,6 +82,16 @@ const SUBJ_PRON = new Set(['i', 'you', 'he', 'she', 'it', 'we', 'they']);
 // siendo adjetivo.
 const TRAILING_ADV = new Set(['now','today','tonight','tomorrow','yesterday','lately',
   'recently','again','still','always','usually','often','sometimes','never','here','there']);
+// Adverbios de grado. Modifican adjetivos, NUNCA un progresivo: "Are you very
+// working?" no existe. Uno de estos delante zanja la lectura sin consultar
+// ninguna lista, y cubre los -ing que no están en ellas. «really» y «totally»
+// quedan FUERA: "Are you really working?" es normal.
+const GRADO = new Set(['very','quite','extremely','incredibly','fairly','rather','pretty','so','too']);
+// Palabras en -ing que SOLO son adjetivo: no hay progresivo detrás ("Is she
+// willing?"). Es la lista corta; para todo lo demás, tras «be + sujeto» lo
+// normal es el progresivo, así que ese es el default.
+const ING_SOLO_ADJ = new Set(['outstanding','willing','unwilling','missing','cunning',
+  'upcoming','ongoing','surrounding','everlasting','forthcoming','longstanding','underlying']);
 
 // Las dos capas del análisis (el tokenizador que PINTA las categorías y el que
 // arma los bloques S/V/C) construyen su propia lista de POS por separado. Estas
@@ -99,6 +118,13 @@ function resolverIng(arr) {
     }
     if (b === -1 || b === c - 1) continue;      // sin be, o sin sujeto en medio
 
+    const anterior = cont[c - 1] && cont[c - 1].t;
+    if (anterior && GRADO.has(limpio(anterior))) {   // "Is the drink very refreshing?"
+      tok.pos = 'adjective';
+      tok.psyAdj = true;
+      continue;
+    }
+
     const base = psyBase(w);
     if (base) {
       let k = cont.length - 1;                  // un adverbio final no es objeto
@@ -113,13 +139,19 @@ function resolverIng(arr) {
       continue;
     }
 
-    if (tok.pos !== 'noun') continue;
-    // No es psicológico y quedó de sustantivo. Decide la posición dentro del
-    // sintagma: pegada al determinante es el núcleo («Is the building new?»),
-    // después del núcleo es el verbo («Is the plan working?»).
-    const prev = cont[c - 1] && cont[c - 1].t;
-    if (prev && (prev.pos === 'determiner' || prev.pos === 'adjective')) tok.ingNoun = true;
-    else tok.pos = 'verb';
+    if (tok.pos === 'noun') {
+      // Quedó de sustantivo. Decide la posición dentro del sintagma: pegada al
+      // determinante es el núcleo («Is the building new?»), después del núcleo
+      // es el verbo («Is the plan working?»).
+      if (anterior && (anterior.pos === 'determiner' || anterior.pos === 'adjective')) tok.ingNoun = true;
+      else tok.pos = 'verb';
+    } else if (tok.pos === 'adjective' && !ING_SOLO_ADJ.has(w)) {
+      // compromise da «moving» como adjetivo puro y "Is the train moving?"
+      // quedaba sin progresivo. Tras «be + sujeto» el default correcto es el
+      // verbo: los -ing que solo son adjetivo son un puñado y están arriba, y
+      // los ambiguos ya se resolvieron con la lista de arriba o con el grado.
+      tok.pos = 'verb';
+    }
     void i;
   }
 }
