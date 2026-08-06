@@ -30,6 +30,11 @@ function ThemeToggle({ lang = 'es' }) {
       window.removeEventListener('storage', onStorage);
     };
   }, []);
+  /* Embebida en el Hub: el tema se maneja desde la barra del Hub, no desde
+     aqui — en celular esta cabecera queda cargada y el boton compite con el
+     titulo. Standalone / PWA es el unico que hay, asi que se mantiene.
+     El corte va DESPUES de los hooks: si no, serian hooks condicionales. */
+  if (typeof window !== 'undefined' && window.self !== window.top) return null;
   const target = eff === 'dark' ? 'light' : 'dark';
   const name = { es: { light: 'Claro', dark: 'Oscuro' }, en: { light: 'Light', dark: 'Dark' } }[lang][target];
   return (
@@ -2444,6 +2449,21 @@ function App() {
           </div>
         )}
       </header>
+
+      {/* Salir de la sección al análisis. Antes solo se podía por la barra de
+          abajo, así que el único «atrás» a la vista era el del Hub —arriba a la
+          izquierda, donde uno mira— y se llevaba los clics dirigidos aquí.
+          Nombra el destino, igual que el del Hub nombra el suyo. */}
+      {section !== 'analyze' && (
+        <div className="flex-shrink-0 px-4 pt-3 max-w-5xl w-full mx-auto">
+          <button
+            onClick={() => selectSection('analyze')}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 hover:text-gray-700 transition-colors"
+          >
+            ← {lang === 'es' ? 'Análisis' : 'Analysis'}
+          </button>
+        </div>
+      )}
 
       {/* ══ BODY / SECCIÓN ACTIVA ═══════════════════════════ */}
       {panel === null ? (
