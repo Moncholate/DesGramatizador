@@ -155,3 +155,17 @@ button:disabled { cursor: not-allowed; }
 :root[data-theme="dark"] .hover\:text-gray-700:hover,
 :root[data-theme="dark"] .hover\:text-slate-600:hover,
 :root[data-theme="dark"] .hover\:text-slate-800:hover { color: #eceff8 !important; }
+
+/* Tinta de color sobre un tinte que la capa oscurece: el fondo se invierte y el
+   texto de marca no, así que quedaba tinta oscura sobre fondo oscuro — el peor,
+   text-red-900 sobre bg-red-50, en 1.68:1. Selector compuesto/descendiente a
+   propósito: no toca los chips -100, que conservan su fondo claro.
+   Lo detecta `check-dark.mjs`. */
+:root[data-theme="dark"] .bg-indigo-50.text-indigo-600,
+:root[data-theme="dark"] .bg-indigo-50 .text-indigo-600,
+:root[data-theme="dark"] .bg-indigo-50.text-indigo-700,
+:root[data-theme="dark"] .bg-indigo-50 .text-indigo-700 { color: #c7d2fe !important; } /* 10.80:1 */
+:root[data-theme="dark"] .bg-red-50.text-red-800,
+:root[data-theme="dark"] .bg-red-50 .text-red-800,
+:root[data-theme="dark"] .bg-red-50.text-red-900,
+:root[data-theme="dark"] .bg-red-50 .text-red-900 { color: #fecaca !important; }       /* 11.67:1 */
