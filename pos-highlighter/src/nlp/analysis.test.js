@@ -549,3 +549,38 @@ describe('ambigüedad: la lista es de verbos QUE PIDEN OBJETO', () => {
     expect(posOf('Are you really working?', 'working')).toBe('verb');
   });
 });
+
+// Preguntas de sujeto: la wh-word ocupa el lugar del sujeto, así que NO hay
+// inversión y no hay auxiliar. Todo el cuerpo de la wh-pregunta colgaba de
+// «hay auxiliar», así que estas se quedaban solo con el bloque WH: la fila
+// salía con una palabra y el verbo desaparecía de la pantalla.
+describe('estructura — preguntas de sujeto (sin auxiliar)', () => {
+  it('el verbo y el complemento no se pierden', () => {
+    expect(blocks('Who lives here?', 'Intermedio')).toEqual(['WH:Who', 'V:lives', 'O:here']);
+    expect(blocks('Who called you?', 'Intermedio')).toEqual(['WH:Who', 'V:called', 'O:you']);
+    expect(blocks('What happened?', 'Intermedio')).toEqual(['WH:What', 'V:happened']);
+  });
+  it('adverbio entre la wh y el verbo', () => {
+    expect(blocks('Who always arrives late?', 'Intermedio'))
+      .toEqual(['WH:Who', 'A:always', 'V:arrives', 'O:late']);
+  });
+  it('wh compuesta como sujeto', () => {
+    expect(blocks('Which bus goes downtown?', 'Intermedio'))
+      .toEqual(['WH:Which bus', 'V:goes', 'O:downtown']);
+    // «How many/much» + sustantivo es UNA wh: antes «people» quedaba de adverbial
+    expect(blocks('How many people came?', 'Intermedio'))
+      .toEqual(['WH:How many people', 'V:came']);
+  });
+  it('no toca las wh compuestas que no llevan sustantivo', () => {
+    expect(blocks('How long does the trip take?', 'Intermedio'))
+      .toEqual(['WH:How long', 'V:does', 'S:the trip', 'V:take']);
+    expect(blocks('How old are you?', 'Intermedio')).toEqual(['WH:How old', 'V:are', 'S:you']);
+    expect(blocks('How often do you go to the gym?', 'Intermedio'))
+      .toEqual(['WH:How often', 'V:do', 'S:you', 'V:go', 'O:to the gym']);
+  });
+  it('la wh-pregunta normal (con auxiliar) no cambia', () => {
+    expect(blocks('Where do you live?', 'Intermedio')).toEqual(['WH:Where', 'V:do', 'S:you', 'V:live']);
+    expect(blocks('How many hours do you work?', 'Intermedio'))
+      .toEqual(['WH:How many hours', 'V:do', 'S:you', 'V:work']);
+  });
+});

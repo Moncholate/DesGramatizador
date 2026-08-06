@@ -439,6 +439,15 @@ function analyzeSentenceStructure(sentenceText, level) {
           if (shouldMerge) {
             whText = firstTerm.text + ' ' + termPOS[1].text;
             auxSearchStart = 2;
+            // "How many/much" + sustantivo forma UNA sola wh: en "How many
+            // people came?" el sujeto es «How many people», y sin esto «people»
+            // quedaba suelto como adverbial.
+            if (firstWordLower === 'how' && (nextLower === 'many' || nextLower === 'much') &&
+                termPOS[2] && (termPOS[2].pos === 'noun' ||
+                  (termPOS[2].tags || []).some(t => ['Noun', 'Singular', 'Plural', 'Uncountable'].includes(t)))) {
+              whText += ' ' + termPOS[2].text;
+              auxSearchStart = 3;
+            }
           }
         }
         components.push({ type: 'WH', text: whText, position: 0 });
@@ -562,6 +571,35 @@ function analyzeSentenceStructure(sentenceText, level) {
               .replace(/[?!.\s]+$/, '')
               .trim();
             if (rest) components.push({ type: 'C', text: rest, position: subjectEnd });
+          }
+        } else {
+          /* Wh-pregunta SIN auxiliar = PREGUNTA DE SUJETO: "Who lives here?",
+             "What happened?". La wh-word ocupa el lugar del sujeto, así que el
+             verbo va pegado a ella y no hay inversión.
+             Todo el cuerpo de arriba colgaba de `auxIndex !== -1`, así que estas
+             se quedaban SOLO con el bloque WH: la fila salía con una palabra y
+             el verbo y el complemento desaparecían de la pantalla. */
+          let mainVerbIndex = -1;
+          for (let i = auxSearchStart; i < termPOS.length; i++) {
+            const pos = termPOS[i].pos;
+            const tags = termPOS[i].tags || [];
+            if (pos === 'verb' || tags.includes('Verb') || tags.includes('Infinitive') ||
+                tags.includes('PresentTense') || tags.includes('PastTense')) { mainVerbIndex = i; break; }
+          }
+          if (mainVerbIndex !== -1) {
+            // Adverbios entre la wh y el verbo ("Who always arrives late?")
+            if (mainVerbIndex > auxSearchStart) {
+              const advText = termPOS.slice(auxSearchStart, mainVerbIndex).map(t => t.text).join(' ').trim();
+              if (advText) components.push({ type: 'A', text: advText, position: auxSearchStart });
+            }
+            components.push({ type: 'V', text: termPOS[mainVerbIndex].text, position: mainVerbIndex, isMainVerb: true });
+            if (mainVerbIndex + 1 < termPOS.length) {
+              const rest = termPOS.slice(mainVerbIndex + 1).map(t => t.text).join(' ')
+                .replace(/\s+([,;:.!?])/g, '$1')
+                .replace(/[?!.\s]+$/, '')
+                .trim();
+              if (rest) components.push({ type: isBasic ? 'C' : 'O', text: rest, position: mainVerbIndex + 1 });
+            }
           }
         }
 
