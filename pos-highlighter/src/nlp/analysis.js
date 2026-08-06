@@ -44,6 +44,116 @@ const PREDICATIVE_ED_ADJ = new Set([
   'divorced','dressed','prepared','qualified','experienced','worried','ashamed',
 ]);
 
+// La contraparte en -ing de PREDICATIVE_ED_ADJ, y es más difícil: "tired" solo
+// es adjetivo, pero "confusing" es adjetivo en "Is the map confusing?" y verbo
+// en "Am I confusing you?". Es la MISMA palabra, así que ninguna lista la
+// resuelve — hace falta mirar la estructura.
+// Todos estos son verbos psicológicos (X interesa a Y) y en progresivo piden
+// objeto. Sin nada detrás, la lectura es la adjetiva.
+const PSY_TRANS = new Set([
+  'interest','bore','tire','amaze','excite','disappoint','frighten','terrify',
+  'disgust','challenge','confuse','surprise','annoy','embarrass','shock',
+  'fascinate','depress','satisfy','exhaust','move',
+]);
+// Estos además funcionan sin objeto ("I relax"), así que el objeto no alcanza y
+// hay que mirar el sujeto: "Are you relaxing?" es progresivo de verdad.
+const PSY_INTRANS = new Set(['relax', 'worry']);
+function psyBase(word) {
+  const w = (word || '').toLowerCase().replace(/[^a-z]/g, '');
+  if (!w.endsWith('ing')) return null;
+  const s = w.slice(0, -3);
+  for (const c of [s, s + 'e', s.slice(0, -1)]) {   // annoy·ing · confus+e · runn→run
+    if (PSY_TRANS.has(c) || PSY_INTRANS.has(c)) return c;
+  }
+  return null;
+}
+const BE_FORMS = new Set(['am', 'is', 'are', 'was', 'were']);
+const SUBJ_PRON = new Set(['i', 'you', 'he', 'she', 'it', 'we', 'they']);
+// Un adverbio al final no es objeto: "Is the music relaxing tonight?" sigue
+// siendo adjetivo.
+const TRAILING_ADV = new Set(['now','today','tonight','tomorrow','yesterday','lately',
+  'recently','again','still','always','usually','often','sometimes','never','here','there']);
+
+// Las dos capas del análisis (el tokenizador que PINTA las categorías y el que
+// arma los bloques S/V/C) construyen su propia lista de POS por separado. Estas
+// reglas viven acá, en una sola copia, porque si cada capa resuelve la
+// ambigüedad a su manera la app se contradice a sí misma en pantalla.
+// Solo necesitan `text` y `pos` de cada elemento.
+const limpio = (t) => (t.text || '').toLowerCase().replace(/[^a-zà-ÿ']/g, '');
+const contenido = (arr) => arr.map((t, i) => ({ t, i })).filter(({ t }) => !t.isPunct && limpio(t));
+
+// ¿La palabra en -ing es adjetivo predicativo, núcleo del sujeto, o gerundio?
+function resolverIng(arr) {
+  const cont = contenido(arr);
+  for (let c = 0; c < cont.length; c++) {
+    const { t: tok, i } = cont[c];
+    const w = limpio(tok);
+    if (!w.endsWith('ing')) continue;
+
+    // El «be» del que cuelga. Si aparece otro verbo antes, ya no cuelga de él.
+    let b = -1;
+    for (let k = c - 1; k >= 0; k--) {
+      const p = cont[k].t;
+      if (BE_FORMS.has(limpio(p))) { b = k; break; }
+      if (p.pos === 'verb' || p.pos === 'auxiliary' || p.pos === 'modal') break;
+    }
+    if (b === -1 || b === c - 1) continue;      // sin be, o sin sujeto en medio
+
+    const base = psyBase(w);
+    if (base) {
+      let k = cont.length - 1;                  // un adverbio final no es objeto
+      while (k > c && TRAILING_ADV.has(limpio(cont[k].t))) k--;
+      let esAdjetivo = k === c;
+      if (esAdjetivo && PSY_INTRANS.has(base)) {
+        const subj = cont.slice(b + 1, c);
+        if (subj.length === 1 && SUBJ_PRON.has(limpio(subj[0].t))) esAdjetivo = false;
+      }
+      tok.pos = esAdjetivo ? 'adjective' : 'verb';
+      if (esAdjetivo) tok.psyAdj = true;
+      continue;
+    }
+
+    if (tok.pos !== 'noun') continue;
+    // No es psicológico y quedó de sustantivo. Decide la posición dentro del
+    // sintagma: pegada al determinante es el núcleo («Is the building new?»),
+    // después del núcleo es el verbo («Is the plan working?»).
+    const prev = cont[c - 1] && cont[c - 1].t;
+    if (prev && (prev.pos === 'determiner' || prev.pos === 'adjective')) tok.ingNoun = true;
+    else tok.pos = 'verb';
+    void i;
+  }
+}
+
+// Una pregunta con do-support tiene siempre SUJETO + VERBO PRINCIPAL.
+function resolverDoSupport(arr) {
+  const cont = contenido(arr);
+  const a = cont.findIndex(({ t }) => t.pos === 'auxiliary' && DO_AUX_SET.has(limpio(t)));
+  if (a === -1) return;
+  const tras = cont.slice(a + 1).filter(({ t }) => !['not', "n't"].includes(limpio(t)));
+  if (!tras.length) return;
+
+  if (!tras.some(({ t }) => t.pos === 'verb')) {
+    // Ningún verbo: alguno de los sustantivos lo es. Es el que va DESPUÉS del
+    // núcleo del sujeto — el primero del sintagma va pegado al determinante.
+    // («Does the bus stop here?», donde «the bus stop» se leía entero.)
+    for (let k = 1; k < tras.length; k++) {
+      if (tras[k].t.pos !== 'noun') continue;
+      const prev = tras[k - 1].t;
+      if (prev.pos !== 'noun' && prev.pos !== 'pronoun') continue;
+      tras[k].t.pos = 'verb';
+      return;
+    }
+    return;
+  }
+  // El sujeto no puede ser un verbo pelado: venían cambiados.
+  // («Does work start at eight?»). Con pronombre o determinante no se dispara.
+  if (tras.length >= 2 && tras[0].t.pos === 'verb' && tras[1].t.pos === 'noun') {
+    tras[0].t.pos = 'noun';
+    tras[0].t.subjNoun = true;      // que los pasos siguientes no lo revivan
+    tras[1].t.pos = 'verb';
+  }
+}
+
 // True when `word` right after 's/'d signals a PERFECT tense (→ has/had),
 // as opposed to a copular adjective/noun or a modal infinitive (→ is/would).
 function isPerfectParticiple(word) {
@@ -139,8 +249,13 @@ function findQuestionSubjectEnd(termPOS, start) {
     if (p.isPunct) break;
     const pos = p.pos;
     const tags = p.tags || p.nlpTags || [];
-    const isVerb = pos === 'verb' ||
-      ['Verb', 'Infinitive', 'PresentTense', 'PastTense'].some(t => tags.includes(t));
+    // `subjNoun` lo pone la regla de do-support: ya se decidió que esta palabra
+    // es el sujeto («Does work start at eight?»). Sin esto la decisión se
+    // perdía acá, porque las etiquetas crudas de compromise siguen diciendo
+    // Verb y este corte se quedaba con el sujeto vacío.
+    const isVerb = !p.subjNoun &&
+      (pos === 'verb' ||
+       ['Verb', 'Infinitive', 'PresentTense', 'PastTense'].some(t => tags.includes(t)));
     if (isVerb) break;
     if (pos === 'conjunction') {
       // "you and your sister" — keep going only if another NP follows
@@ -248,6 +363,12 @@ function analyzeSentenceStructure(sentenceText, level) {
           break;
         }
       }
+
+      // Ambigüedad léxica: LAS MISMAS reglas que usa el tokenizador. Esta capa
+      // arma su propio termPOS, así que si no se llaman aquí también, la app se
+      // contradice: pinta «working» de verbo y lo mete en el sujeto.
+      resolverIng(termPOS);
+      resolverDoSupport(termPOS);
 
       if (auxIndex !== -1) {
         const preSubjEnd = findQuestionSubjectEnd(termPOS, negAfterAux(auxIndex));
@@ -1480,6 +1601,9 @@ const WORD_LEXICON = new Map(Object.entries({
   // interrogative / relative pronouns and adverbs
   what:'pronoun', which:'pronoun', who:'pronoun', whom:'pronoun', whose:'determiner',
   where:'adverb', when:'adverb', why:'adverb', how:'adverb',
+  // compromise da here como Noun Uncountable. «there» NO va aquí: en «There is
+  // a book» hace de sujeto y esa discusión es otra.
+  here:'adverb',
   // Note: full contractions (what's, it's, he's, don't, etc.) are handled
   // by the CONTRACTION_SPLITS map below — they render as two colored parts.
   // articles (determiners)
@@ -1696,6 +1820,13 @@ function tokenizeSentence(s, level) {
     else                    part.pos = afterPerfect ? 'auxiliary' : 'modal';
   }
 
+  // ── Post-processing: ambigüedad léxica ──────────────────────────────────────
+  // Va ANTES del paso de «be» porque ese consulta lo que estas dos deciden
+  // (psyAdj / ingNoun). Las reglas están arriba, en una sola copia, porque la
+  // capa de estructura arma su propio POS y tiene que decidir lo mismo.
+  resolverIng(tokens);
+  resolverDoSupport(tokens);
+
   // ── Post-processing: differentiate auxiliary vs. copular "be" verbs ──────────
   // be + V-ing (progressive) or be + V-participle (passive) → auxiliary
   // be + noun / adjective / preposition / adverb / pronoun → verb (copula)
@@ -1718,6 +1849,10 @@ function tokenizeSentence(s, level) {
       // gerund that compromise mis-tags as adjective in questions ("What are you
       // doing?") still carries the Gerund tag, so it's kept as the verb. (I3)
       if (tLow.endsWith('ing') && t.pos !== 'auxiliary' && t.pos !== 'modal') {
+        // Ya decidido arriba: adjetivo predicativo ("Is the map confusing?") o
+        // núcleo del sujeto ("Is the building new?"). En los dos casos el be es
+        // cópula, no auxiliar de progresivo.
+        if (t.psyAdj || t.ingNoun) break;
         const isPureAdj = t.nlpTags.includes('Adjective') && !t.nlpTags.includes('Gerund');
         if (isPureAdj) break; // copula + adjective → stop, leave `be` as verb
         nextVerb = t; break;
@@ -1850,10 +1985,19 @@ function tokenizeSentence(s, level) {
       for (let j = i + 1; j < tokens.length; j++) {
         const nextToken = tokens[j];
 
-        // Skip punctuation, determiners, and pronouns (subjects in inverted questions: "is he playing?")
-        if (nextToken.isPunct || nextToken.pos === 'determiner' || nextToken.pos === 'pronoun') {
+        // Saltar todo lo que puede ser el SUJETO de una pregunta invertida. Los
+        // pronombres ya estaban ("is he playing?"), pero faltaban los
+        // sustantivos: en "Is the plan working?" se tomaba «plan» como
+        // complemento y el be quedaba de cópula. Con sujeto de una palabra
+        // funcionaba y con determinante no, que es lo que lo escondía.
+        // `ingNoun` es un sustantivo en -ing que encabeza el sujeto ("Is the
+        // building new?"): se salta y NO cuenta como gerundio.
+        if (nextToken.isPunct || nextToken.pos === 'determiner' ||
+            nextToken.pos === 'pronoun' || nextToken.pos === 'noun' || nextToken.ingNoun) {
           continue;
         }
+        // Adjetivo predicativo ya decidido ("Was the trip tiring?") → cópula.
+        if (nextToken.psyAdj) break;
 
         // If followed by verb, gerund (-ing), or participle (-ed), it's an auxiliary
         if (nextToken.pos === 'verb') {

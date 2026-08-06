@@ -399,3 +399,122 @@ describe('buildStructureAnswerMap', () => {
     expect(m.teacher).toBe('C');
   });
 });
+
+// ── Ambigüedad léxica (agosto 2026) ──────────────────────────────────────────
+// Todo lo de acá va en PARES MÍNIMOS a propósito: la misma palabra en sus dos
+// lecturas. Un "arreglo" de ambigüedad que solo mira un lado siempre parece
+// funcionar — corrige «Is the map confusing?» y rompe «Am I confusing you?», y
+// nadie se entera porque nadie prueba la otra mitad.
+// Portado desde Question Lab, que tiene el mismo problema con su propio
+// analizador. Las reglas son PSY_TRANS/PSY_INTRANS + los dos post-procesados.
+describe('ambigüedad: adjetivo en -ing vs gerundio', () => {
+  const pares = [
+    ['Is the map confusing?',           'confusing',  'adjective',
+     'Am I confusing you?',             'confusing',  'verb'],
+    ['Is the music relaxing?',          'relaxing',   'adjective',
+     'Are you relaxing?',               'relaxing',   'verb'],
+    ['Is your job interesting?',        'interesting','adjective',
+     'Are you interesting the client?', 'interesting','verb'],
+    ['Is she boring?',                  'boring',     'adjective',
+     'Is the teacher boring the class?','boring',     'verb'],
+    ['Is the noise annoying?',          'annoying',   'adjective',
+     'Am I annoying you?',              'annoying',   'verb'],
+    ['Was the trip tiring?',            'tiring',     'adjective',
+     'Was the noise tiring the students?','tiring',   'verb'],
+  ];
+  for (const [qa, wa, pa, qv, wv, pv] of pares) {
+    it(`«${qa}» → ${pa} · «${qv}» → ${pv}`, () => {
+      expect(posOf(qa, wa)).toBe(pa);
+      expect(posOf(qv, wv)).toBe(pv);
+    });
+  }
+  it('un adverbio al final no es objeto', () => {
+    expect(posOf('Is the music relaxing tonight?', 'relaxing')).toBe('adjective');
+    expect(posOf('Are you relaxing tonight?', 'relaxing')).toBe('verb');
+  });
+  it('se abstiene cuando el verbo no es psicológico', () => {
+    expect(posOf('Is she cooking dinner?', 'cooking')).toBe('verb');
+    expect(posOf('Is it raining?', 'raining')).toBe('verb');
+    expect(posOf('What are you doing?', 'doing')).toBe('verb');
+    expect(posOf('Are they building a house?', 'building')).toBe('verb');
+  });
+});
+
+describe('ambigüedad: -ing como núcleo del sujeto o como verbo', () => {
+  it('después del núcleo del sujeto es el verbo', () => {
+    expect(posOf('Is the plan working?', 'working')).toBe('verb');
+    expect(posOf('Is your phone charging?', 'charging')).toBe('verb');
+  });
+  it('pegado al determinante es el núcleo, y el be queda de cópula', () => {
+    expect(posOf('Is the building new?', 'building')).toBe('noun');
+    expect(posOf('Is the building new?', 'Is')).toBe('verb');
+    expect(posOf('Are the meeting rooms ready?', 'meeting')).toBe('noun');
+    expect(posOf('Are the meeting rooms ready?', 'Are')).toBe('verb');
+  });
+});
+
+describe('ambigüedad: sustantivo o verbo', () => {
+  const pares = [
+    ['Does the bus stop here?', 'stop', 'verb',   'Where is the bus stop?',   'stop',  'noun'],
+    ['Did you pass the exam?',  'pass', 'verb',   'Is your pass valid?',      'pass',  'noun'],
+    ['Do you watch TV?',        'watch','verb',   'Is your watch expensive?', 'watch', 'noun'],
+    ['Did you order a coffee?', 'order','verb',   'Is the order ready?',      'order', 'noun'],
+    ['Did she call you?',       'call', 'verb',   'Was the call important?',  'call',  'noun'],
+  ];
+  for (const [qv, wv, pv, qn, wn, pn] of pares) {
+    it(`«${qv}» → verbo · «${qn}» → sustantivo`, () => {
+      expect(posOf(qv, wv)).toBe(pv);
+      expect(posOf(qn, wn)).toBe(pn);
+    });
+  }
+  it('una pregunta con do-support siempre tiene verbo principal', () => {
+    expect(posOf('Does the bus stop here?', 'stop')).toBe('verb');
+  });
+  it('el sujeto de do-support no puede ser un verbo pelado', () => {
+    // Venían cambiados: «work» de verbo y «start» de sustantivo.
+    expect(posOf('Does work start at eight?', 'work')).toBe('noun');
+    expect(posOf('Does work start at eight?', 'start')).toBe('verb');
+    // y la decisión debe sobrevivir a los pasos siguientes
+    expect(answerMap('Does work start at eight?', 'Intermedio').work).toBe('S');
+  });
+  it('no toca las preguntas con sujeto normal', () => {
+    expect(posOf('Do you google it?', 'google')).toBe('verb');   // caso ya documentado
+    expect(posOf('Do you work here?', 'work')).toBe('verb');
+    expect(posOf('Does he speak English?', 'speak')).toBe('verb');
+    expect(posOf('Do people like coffee?', 'like')).toBe('verb');
+  });
+  it('«here» es adverbio, no sustantivo', () => {
+    expect(posOf('Does the bus stop here?', 'here')).toBe('adverb');
+  });
+});
+
+// Las dos capas (la que PINTA categorías y la que arma S/V/C) construyen su POS
+// por separado. Si cada una resuelve la ambigüedad a su manera, la app se
+// contradice en pantalla: «working» pintado de verbo y metido en el sujeto.
+describe('ambigüedad: las dos capas dicen lo mismo', () => {
+  const beDe = (q) => {
+    const toks = tokenizeText(q, 'Intermedio');
+    const map = buildStructureAnswerMap(toks, analyzeStructure(q, 'Intermedio'));
+    const be = toks.find(t => ['is','are','am','was','were'].includes(t.text.toLowerCase()));
+    return { pos: be.pos, bloque: map[be.id] };
+  };
+  const casos = [
+    ['Is the plan working?',            'auxiliary', 'AUX'],  // progresivo
+    ['Is your phone charging?',         'auxiliary', 'AUX'],
+    ['Is the teacher boring the class?','auxiliary', 'AUX'],
+    ['Is the music relaxing?',          'verb',      'V'],    // cópula + adjetivo
+    ['Was the trip tiring?',            'verb',      'V'],
+    ['Is the building new?',            'verb',      'V'],    // cópula + sujeto en -ing
+    ['Are the meeting rooms ready?',    'verb',      'V'],
+    ['Is she a teacher?',               'verb',      'V'],
+    ['Is the plan ready?',              'verb',      'V'],
+    ['Is the book on the table?',       'verb',      'V'],
+  ];
+  for (const [q, pos, bloque] of casos) {
+    it(`«${q}» → ${pos}`, () => {
+      // Con sujeto de UNA palabra esto ya funcionaba; con determinante no, y eso
+      // lo escondía: el paso de cópula saltaba pronombres pero no sustantivos.
+      expect(beDe(q)).toEqual({ pos, bloque });
+    });
+  }
+});
