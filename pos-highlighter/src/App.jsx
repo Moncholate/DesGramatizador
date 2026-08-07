@@ -1813,11 +1813,11 @@ function ProgressPanel({ lang }) {
     <div className="flex-1 overflow-y-auto px-4 py-5 md:px-6">
       <div className="max-w-2xl mx-auto space-y-4 pb-4">
         <h2 className="font-bold text-xl text-slate-800">{es ? '📊 Progreso' : '📊 Progress'}</h2>
-        <div className={`rounded-xl p-4 flex items-center gap-4 ${streak > 0 ? 'bg-gradient-to-br from-rose-500 to-amber-500 shadow-lg shadow-rose-500/25' : 'bg-slate-50 border border-slate-200'}`}>
+        <div className={`rounded-xl p-4 flex items-center gap-4 ${streak > 0 ? 'bg-gradient-to-br from-rose-400 to-amber-400 shadow-lg shadow-rose-400/30' : 'bg-slate-50 border border-slate-200'}`}>
           <span className="text-4xl">{streak > 0 ? '🔥' : '💤'}</span>
           <div>
-            <p className={`text-2xl font-bold ${streak > 0 ? 'text-white' : 'text-slate-500'}`}>{streak} {es ? 'días de racha' : 'day streak'}</p>
-            <p className={`text-xs ${streak > 0 ? 'text-white/90' : 'text-slate-400'}`}>{es ? 'Mejor' : 'Best'}: {best}</p>
+            <p className={`text-2xl font-bold ${streak > 0 ? 'text-red-950' : 'text-slate-500'}`}>{streak} {es ? 'días de racha' : 'day streak'}</p>
+            <p className={`text-xs ${streak > 0 ? 'text-red-950/85' : 'text-slate-400'}`}>{es ? 'Mejor' : 'Best'}: {best}</p>
           </div>
         </div>
         {/* Práctica manual: rondas, precisión y lo que más cuesta */}
@@ -2363,7 +2363,7 @@ function App() {
             const b = BADGES.find(x => x.id === bid); if (!b) return null;
             const name = (lang === 'es' ? b.name.es : b.name.en).replace('{tense}', tid);
             return (
-              <div key={id} role="status" className="gtoast-in pointer-events-auto flex items-center gap-2.5 max-w-sm px-3.5 py-2.5 rounded-xl text-white shadow-lg bg-gradient-to-br from-rose-500 to-amber-500">
+              <div key={id} role="status" className="gtoast-in pointer-events-auto flex items-center gap-2.5 max-w-sm px-3.5 py-2.5 rounded-xl text-red-950 shadow-lg bg-gradient-to-br from-rose-400 to-amber-400">
                 <span className="text-2xl leading-none">{b.icon}</span>
                 <span className="flex flex-col leading-tight">
                   <b className="text-[0.68rem] uppercase tracking-wide opacity-90 font-extrabold">{lang === 'es' ? '¡Logro!' : 'Achievement!'}</b>
@@ -2710,7 +2710,7 @@ function App() {
 
               {/* Racha de rondas 100% correctas (inline) */}
               {isManual && analyzed && answerStreak > 0 && (
-                <span className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold text-white bg-gradient-to-br from-rose-500 to-amber-500 shadow-sm shadow-rose-500/25">
+                <span className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold text-red-950 bg-gradient-to-br from-rose-400 to-amber-400 shadow-sm shadow-rose-400/30">
                   🔥 {lang === 'es' ? 'Racha' : 'Streak'}: {answerStreak}
                 </span>
               )}
