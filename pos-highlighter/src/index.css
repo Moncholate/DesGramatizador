@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Anillo de foco accesible, generado desde design-tokens (no editar allí). */
+@import './dua.generated.css';
 
 @font-face{font-family:'Lexend';font-style:normal;font-weight:400 700;font-display:swap;src:url('./fonts/Lexend.woff2') format('woff2');}
 @font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:400;font-display:swap;src:url('./fonts/AtkinsonHyperlegible-Regular.woff2') format('woff2');}
@@ -74,9 +76,9 @@ select {
   appearance: auto;
 }
 
-textarea:focus {
-  outline: none;
-}
+/* El `textarea:focus { outline: none }` que había aquí dejaba SIN indicador de
+   foco al campo principal de la app: quien navega con teclado no veía dónde
+   estaba parado. Ahora lo cubre el anillo de dua.generated.css. */
 
 /* Ruby labels above words */
 ruby {

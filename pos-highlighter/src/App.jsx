@@ -2496,7 +2496,7 @@ function App() {
               <select
                 onChange={loadExample}
                 defaultValue=""
-                className="text-xs bg-white border border-slate-200 text-slate-600 rounded-lg px-3 py-1.5 cursor-pointer outline-none"
+                className="text-xs bg-white border border-slate-200 text-slate-600 rounded-lg px-3 py-1.5 cursor-pointer"
               >
                 <option value="" disabled>{t.loadExample}</option>
                 {EXAMPLES.map((ex, i) => (
