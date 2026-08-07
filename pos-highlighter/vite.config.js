@@ -21,6 +21,12 @@ export default defineConfig({
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
+        /* `id` fija la identidad de la app instalada aparte de la URL. Sin él
+           la identidad ES el start_url, y esta app ya lo cambió dos veces
+           (/pos-highlighter/ → /Desgramatizador/ → /DesGramatizador/): cada
+           cambio dejó huérfana a la copia instalada. Si algún día se renombra
+           otra vez, se mueven scope y start_url y este `id` se deja quieto. */
+        id: '/DesGramatizador/',
         scope: '/DesGramatizador/',
         start_url: '/DesGramatizador/',
         icons: [
