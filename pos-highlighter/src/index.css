@@ -171,3 +171,8 @@ button:disabled { cursor: not-allowed; }
 :root[data-theme="dark"] .bg-red-50 .text-red-800,
 :root[data-theme="dark"] .bg-red-50.text-red-900,
 :root[data-theme="dark"] .bg-red-50 .text-red-900 { color: #fecaca !important; }       /* 11.67:1 */
+
+/* Tinta de marca que la capa no invertía y quedaba oscura sobre fondo oscuro.
+   Compuestos a propósito: los chips sobre tinte claro conservan su texto. */
+:root[data-theme="dark"] .bg-white.text-indigo-600 { color: #c7d2fe !important; }   /* 2.81 → 11.85 */
+:root[data-theme="dark"] .hover\:text-red-700:hover { color: #fca5a5 !important; }  /* 2.44 → 8.89 */

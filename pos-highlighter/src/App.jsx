@@ -868,7 +868,7 @@ function QuestionMessage({ text, lang = 'es' }) {
         {/* Yes/No Questions */}
         <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-3 border border-emerald-200">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold">
+            <div className="w-6 h-6 rounded-full bg-emerald-700 text-white flex items-center justify-center text-xs font-bold">
               1
             </div>
             <div className="text-xs font-bold text-emerald-900">
@@ -1191,7 +1191,7 @@ function SentenceStructure({ sentence, showLabels = true, lang = 'es' }) {
         {rows.map((row, i) =>
           row.isConjunction ? (
             <div key={i} className="flex items-center gap-1 pl-1">
-              <span className="text-xs font-bold uppercase tracking-wide text-slate-400 border border-slate-300 rounded px-1.5 py-0.5 bg-slate-50">
+              <span className="text-xs font-bold uppercase tracking-wide text-slate-600 border border-slate-300 rounded px-1.5 py-0.5 bg-slate-50">
                 {row.text}
               </span>
               {row.trailing && (
@@ -2458,7 +2458,7 @@ function App() {
         <div className="flex-shrink-0 px-4 pt-3 max-w-5xl w-full mx-auto">
           <button
             onClick={() => selectSection('analyze')}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 hover:text-gray-700 transition-colors"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 hover:text-gray-700 transition-colors"
           >
             ← {lang === 'es' ? 'Análisis' : 'Analysis'}
           </button>
@@ -2620,7 +2620,7 @@ function App() {
                       onClick={handleClearText}
                       title={t.clearText}
                       aria-label={t.clearText}
-                      className="shrink-0 flex items-center px-2 py-1 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg border border-gray-200 hover:border-red-200 transition-all"
+                      className="shrink-0 flex items-center px-2 py-1 text-gray-500 hover:text-red-700 hover:bg-red-50 rounded-lg border border-gray-200 hover:border-red-200 transition-all"
                     >
                       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                     </button>
