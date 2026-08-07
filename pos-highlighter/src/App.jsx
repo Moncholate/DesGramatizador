@@ -2871,7 +2871,15 @@ function App() {
         </main>
       </div>
 
-      {/* ══ MOBILE LEGEND BAR ═══════════════════════════════ */}
+      {/* ══ MOBILE LEGEND BAR ═══════════════════════════════
+          En Práctica va SIEMPRE: ahí es la paleta con la que se pinta.
+          En Análisis no es interactiva (`onClick` y `cursor` están detrás de
+          `isManual`) y las palabras ya llevan su etiqueta encima, así que
+          repetía la información y se comía ~80px de pantalla apilada sobre la
+          navegación. Aparece solo con las etiquetas apagadas, que es cuando el
+          color queda como único canal. El botón que las apaga está junto a
+          «Analizar», y la referencia completa vive en Guía. */}
+      {(isManual || !showLabels) && (
       <MobileBar
         unlocked={unlocked}
         isManual={isManual}
@@ -2886,6 +2894,7 @@ function App() {
         level={level}
         lang={lang}
       />
+      )}
       </>
       ) : panel === 'guide' ? (
         <GuidePanel lang={lang} />
