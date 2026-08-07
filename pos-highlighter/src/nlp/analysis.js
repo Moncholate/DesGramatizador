@@ -1314,7 +1314,24 @@ const SUBORD_CONJ = [
 
 // Subordinating conjunctions that introduce a visible separate clause row
 // when both sides have S+V (because, when, although, while…)
-const SUBORD_SPLIT_CONJ = ['because', 'when', 'although', 'while', 'whereas', 'though', 'before', 'after', 'until', 'since', 'once', 'whenever', 'provided', 'even though', 'even if', 'in case', 'now that', 'unless', 'so that'];
+/* Conectores que introducen una CONDICIÓN: el conector se pega a ella y las
+   dos cláusulas se rotulan condición/resultado. */
+const CONJ_CONDICION = ['if', 'unless', 'even if'];
+
+/* Verbos que abren una cláusula sustantiva con `if` = «whether». Detrás de
+   ellos `if` no introduce una condición sino el objeto del verbo. */
+const VERBOS_WHETHER = ['know', 'knows', 'knew', 'wonder', 'wonders', 'wondered',
+  'ask', 'asks', 'asked', 'see', 'saw', 'tell', 'tells', 'told', 'doubt', 'doubts',
+  'remember', 'remembers', 'forget', 'forgets', 'decide', 'decides', 'decided',
+  'check', 'checks', 'checked', 'care', 'cares', 'mind', 'minds', 'find out'];
+
+/* OJO CON EL ORDEN: se devuelve el PRIMERO que corte, así que las locuciones
+   largas van antes que sus partes. `if` va al final justamente por eso: si
+   estuviera antes, "even if" e "in case" se partirían por la mitad.
+   `if` faltaba en esta lista —estaba solo en SUBORD_CONJ, que sirve para
+   detectar subordinadas, no para cortar—, y por eso "I will stay home if it
+   rains" se tragaba la condición entera dentro del complemento. */
+const SUBORD_SPLIT_CONJ = ['because', 'when', 'although', 'while', 'whereas', 'though', 'before', 'after', 'until', 'since', 'once', 'whenever', 'provided', 'even though', 'even if', 'in case', 'now that', 'unless', 'so that', 'if'];
 
 // Try to split a sentence at the first clause-level conjunction (coord or subord).
 // Returns { first, conj, second } or null.
@@ -1325,15 +1342,23 @@ function splitOnClauseConj(sentenceText) {
   //    first = clause after "if" and before comma (no "if" prefix)
   //    conj  = "if"
   //    second = main clause after the comma
-  if (lower.startsWith('if ')) {
+  /* Subordinada ANTEPUESTA: "Cuando/Si/Aunque …, cláusula principal".
+     Esta rama existía solo para `if`; el resto —when, because, although,
+     unless, even if— no se partía NUNCA, porque el paso 2 encuentra la
+     conjunción en el índice 0 y le queda una primera cláusula vacía. Se
+     generaliza a toda la lista. El orden de SUBORD_SPLIT_CONJ importa: las
+     locuciones largas van antes, así "even if" no se parte por `if`. */
+  for (const conj of SUBORD_SPLIT_CONJ) {
+    if (!lower.startsWith(conj + ' ')) continue;
     const commaIdx = sentenceText.indexOf(',');
-    if (commaIdx !== -1) {
-      const first  = sentenceText.substring(3, commaIdx).trim(); // strip leading "if "
-      const second = sentenceText.substring(commaIdx + 1).trim();
-      if (first.split(/\s+/).length >= 2 && second && nlp(second).verbs().length > 0) {
-        return { first, conj: 'if', second };
-      }
+    if (commaIdx === -1) break;
+    const first = sentenceText.substring(conj.length, commaIdx).trim();
+    const second = sentenceText.substring(commaIdx + 1).trim();
+    if (first.split(/\s+/).length >= 2 && second && nlp(second).verbs().length > 0) {
+      // `fronted`: la subordinada abre la oración, así que va primero.
+      return { first, conj, second, fronted: true };
     }
+    break;
   }
 
   // Helper: true if text has a verb that is NOT inside a subordinate clause
@@ -1370,6 +1395,12 @@ function splitOnClauseConj(sentenceText) {
     const m = lower.match(new RegExp(`\\b${conj}\\b`, 'i'));
     if (!m) continue;
     const idx = m.index;
+    /* `if` con estos verbos NO es condición, es «whether»: "I don't know if
+       she is coming" es una cláusula sustantiva, el OBJETO de `know`. Partirla
+       como condición/resultado enseña algo falso. Se deja sin cortar, igual que
+       ya se hace con las de `that`. */
+    if (conj === 'if' && VERBOS_WHETHER.some(v =>
+      new RegExp(`\\b${v}\\b`, 'i').test(lower.substring(0, idx)))) continue;
     const first  = sentenceText.substring(0, idx).trim().replace(/[,]+$/, '').trim();
     const second = sentenceText.substring(idx + conj.length).trim();
     // For subordinating conjunctions, only require the second clause to have a verb.
@@ -1406,16 +1437,41 @@ function buildClauseRows(text, level, inheritedSubject = null) {
   const firstComponents = r1.components || [];
   const firstSubject = subjectFromComponents(firstComponents);
 
-  // For "if", show the connector BEFORE the condition clause (since "if" opens it)
-  // For all others, show the connector BETWEEN clause 1 and clause 2
-  if (split.conj === 'if') {
+  /* Con `if` el conector abre la CONDICIÓN, así que va pegado a ella — y eso
+     cambia de sitio según dónde estuviera el `if` en la oración:
+       "If it rains, I will stay home."  →  if · [condición] · [resultado]
+       "I will stay home if it rains."   →  [resultado] · if · [condición]
+     Poner el conector siempre delante invertía la segunda: se leía como si la
+     condición fuera quedarse en casa. Las cláusulas se marcan con su papel para
+     que la app pueda rotularlas. */
+  // `unless` = «if not» y `even if` son de la misma familia: llevan condición.
+  if (CONJ_CONDICION.includes(split.conj)) {
+    const resto = buildClauseRows(split.second, level, firstSubject);
+    if (split.fronted) {
+      return [
+        { isConjunction: true, text: split.conj },
+        { components: firstComponents, papel: 'condicion' },
+        ...resto.map((r, i) => (i === 0 && r.components ? { ...r, papel: 'resultado' } : r)),
+      ];
+    }
+    return [
+      { components: firstComponents, papel: 'resultado' },
+      { isConjunction: true, text: split.conj },
+      ...resto.map((r, i) => (i === 0 && r.components ? { ...r, papel: 'condicion' } : r)),
+    ];
+  }
+
+  /* Antepuesta y NO condicional (when, because, although…): el conector abre la
+     primera cláusula, así que también va delante. Dejarlo en medio se leía al
+     revés — «When I arrive, I will call you» salía como "I arrive · when · I
+     will call you". */
+  if (split.fronted) {
     return [
       { isConjunction: true, text: split.conj },
       { components: firstComponents },
       ...buildClauseRows(split.second, level, firstSubject),
     ];
   }
-
   return [
     { components: firstComponents },
     { isConjunction: true, text: split.conj },

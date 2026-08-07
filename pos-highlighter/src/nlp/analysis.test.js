@@ -584,3 +584,53 @@ describe('estructura — preguntas de sujeto (sin auxiliar)', () => {
       .toEqual(['WH:How many hours', 'V:do', 'S:you', 'V:work']);
   });
 });
+
+/* Condicionales. El `if` estaba solo en SUBORD_CONJ (detectar subordinadas) y
+   NO en SUBORD_SPLIT_CONJ (cortar), así que únicamente funcionaba con el `if`
+   antepuesto, que tenía su propia rama. Con el `if` al final, la condición
+   entera se iba dentro del complemento. */
+describe('condicionales: condición y resultado', () => {
+  // Mapa legible de la fila: «conector» o [papel]
+  const forma = (t, lvl = 'Intermedio') =>
+    analyzeStructure(t)[0].rows
+      .map(r => (r.isConjunction ? `«${r.text}»` : (r.papel ? `[${r.papel}]` : '[·]')))
+      .join(' ');
+
+  it('las tres, con el if delante', () => {
+    expect(forma('If it rains, I will stay home.')).toBe('«if» [condicion] [resultado]');
+    expect(forma('If I had money, I would travel.')).toBe('«if» [condicion] [resultado]');
+    expect(forma('If I had studied, I would have passed.')).toBe('«if» [condicion] [resultado]');
+  });
+
+  it('las tres, con el if al final — el conector sigue pegado a la condición', () => {
+    expect(forma('I will stay home if it rains.')).toBe('[resultado] «if» [condicion]');
+    expect(forma('I would travel if I had money.')).toBe('[resultado] «if» [condicion]');
+    expect(forma('I would have passed if I had studied.')).toBe('[resultado] «if» [condicion]');
+  });
+
+  it('unless y even if son de la misma familia', () => {
+    expect(forma('Unless you hurry, we will be late.')).toBe('«unless» [condicion] [resultado]');
+    expect(forma('We will be late unless you hurry.')).toBe('[resultado] «unless» [condicion]');
+    expect(forma('Even if it rains, I will go.')).toBe('«even if» [condicion] [resultado]');
+  });
+
+  /* `if` = «whether» detrás de know/ask/wonder… NO es una condición: es el
+     OBJETO del verbo. Rotularlo condición/resultado enseñaría algo falso. */
+  it('el if de «whether» no se parte', () => {
+    expect(forma("I don't know if she is coming.")).toBe('[·]');
+    expect(forma('She asked if we were ready.')).toBe('[·]');
+  });
+
+  /* Ninguna subordinada ANTEPUESTA se partía: el paso 2 encontraba la
+     conjunción en el índice 0 y le quedaba una primera cláusula vacía. */
+  it('las subordinadas antepuestas se parten y el conector va delante', () => {
+    expect(forma('When I arrive, I will call you.')).toBe('«when» [·] [·]');
+    expect(forma('Because it rained, we stayed.')).toBe('«because» [·] [·]');
+    expect(forma('Although she tried, she failed.')).toBe('«although» [·] [·]');
+  });
+
+  it('con el conector al final se mantiene entre las cláusulas', () => {
+    expect(forma('I will call you when I arrive.')).toBe('[·] «when» [·]');
+    expect(forma('We stayed because it rained.')).toBe('[·] «because» [·]');
+  });
+});
