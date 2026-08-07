@@ -75,6 +75,8 @@ const TRANSLATIONS = {
     charsCount: 'caracteres',
     partsOfSpeech: 'Partes de la Oración',
     sentenceStructure: 'Estructura de la Oración',
+    condicion: 'condición',
+    resultado: 'resultado',
     colorReference: 'Referencia de colores para el texto resaltado',
     clickToSelect: 'Haz clic para seleccionar una categoría para pintar',
     categoriesUnlocked: 'categorías desbloqueadas',
@@ -196,6 +198,8 @@ const TRANSLATIONS = {
     charsCount: 'chars',
     partsOfSpeech: 'Parts of Speech',
     sentenceStructure: 'Sentence Structure',
+    condicion: 'condition',
+    resultado: 'result',
     colorReference: 'Colour reference for highlighted text',
     clickToSelect: 'Click to select a category for painting',
     categoriesUnlocked: 'categories unlocked',
@@ -1199,6 +1203,17 @@ function SentenceStructure({ sentence, showLabels = true, lang = 'es' }) {
                   {row.trailing}
                 </span>
               )}
+            </div>
+          ) : row.papel ? (
+            /* Condicional: cada cláusula dice qué papel cumple. Sin esto se ven
+               dos cláusulas sueltas y el alumno no sabe cuál es la condición —
+               que es justo lo que hay que aprender, porque de eso depende el
+               tiempo verbal de cada una. */
+            <div key={i} className="flex flex-col gap-1">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500 pl-1">
+                {row.papel === 'condicion' ? t.condicion : t.resultado}
+              </span>
+              <ClauseRow components={row.components} isQuestion={sentence.isQuestion} showLabels={showLabels} lang={lang} />
             </div>
           ) : (
             <ClauseRow key={i} components={row.components} isQuestion={sentence.isQuestion} showLabels={showLabels} lang={lang} />
