@@ -34,7 +34,7 @@ function ThemeToggle({ lang = 'es' }) {
     };
   }, []);
   /* Embebida en el Hub: el tema se maneja desde la barra del Hub, no desde
-     aqui — en celular esta cabecera queda cargada y el boton compite con el
+     aqui: en celular esta cabecera queda cargada y el boton compite con el
      titulo. Standalone / PWA es el unico que hay, asi que se mantiene.
      El corte va DESPUES de los hooks: si no, serian hooks condicionales. */
   if (typeof window !== 'undefined' && window.self !== window.top) return null;
@@ -96,10 +96,10 @@ const TRANSLATIONS = {
     paintPOS: 'Pintar POS',
     paintStructure: 'Pintar Estructura',
     assigning: 'Asignando',
-    structureModeMobile: 'MODO ESTRUCTURA — toca tipo de bloque, luego toca palabras',
-    paintModeMobile: 'MODO PINTAR — toca categoría, luego toca palabras',
-    hintManualPOS: 'Selecciona una categoría POS en la leyenda y haz clic en palabras para etiquetarlas — o toca una palabra varias veces para rotar entre categorías.',
-    hintManualStructure: 'Selecciona un tipo de bloque de estructura y haz clic en palabras para asignarlas — o toca una palabra varias veces para rotar entre bloques.',
+    structureModeMobile: 'MODO ESTRUCTURA: toca tipo de bloque, luego toca palabras',
+    paintModeMobile: 'MODO PINTAR: toca categoría, luego toca palabras',
+    hintManualPOS: 'Selecciona una categoría POS en la leyenda y haz clic en palabras para etiquetarlas, o toca una palabra varias veces para rotar entre categorías.',
+    hintManualStructure: 'Selecciona un tipo de bloque de estructura y haz clic en palabras para asignarlas, o toca una palabra varias veces para rotar entre bloques.',
     hintCheckAnswers: 'Presiona "Verificar Respuestas" cuando termines.',
     hintAutoAnalysis: 'Escribe o pega texto en inglés, luego haz clic en "Analizar" para resaltar automáticamente cada parte de la oración.',
     placeholderEmpty: 'Ingresa texto arriba o carga un ejemplo para comenzar.',
@@ -124,7 +124,7 @@ const TRANSLATIONS = {
     structureDef: {
       WH: 'introduce la pregunta',
       S: 'quién o qué hace la acción',
-      AUX: 'auxiliar — ayuda al verbo principal (van unidos)',
+      AUX: 'auxiliar: ayuda al verbo principal (van unidos)',
       V: 'la acción o estado',
       C: 'todo lo demás',
       O: 'recibe la acción: ¿qué? / ¿a quién?',
@@ -132,17 +132,17 @@ const TRANSLATIONS = {
     },
     // Structure warnings
     complexWarning: 'Oración compleja (múltiples cláusulas o más de 15 palabras). El análisis puede no ser exacto: consulta con tu docente.',
-    questionNotAvailable: 'Pregunta — análisis de estructura no disponible para este tipo de oración.',
+    questionNotAvailable: 'Pregunta: análisis de estructura no disponible para este tipo de oración.',
     // Educational hints (shown via InfoTip on hover/tap)
     tipLocked: 'Categoría bloqueada en este nivel',
-    tipPhrasal: (pv) => `Phrasal verb — "${pv}" funciona como un solo verbo`,
-    tipFormalSubject: 'Sujeto formal — el significado real está en el complemento (that…)',
-    tipQuestion: 'Pregunta — el sujeto y el verbo están invertidos. Orden normal: [S] + [V] + [C]',
+    tipPhrasal: (pv) => `Phrasal verb: "${pv}" funciona como un solo verbo`,
+    tipFormalSubject: 'Sujeto formal: el significado real está en el complemento (that…)',
+    tipQuestion: 'Pregunta: el sujeto y el verbo están invertidos. Orden normal: [S] + [V] + [C]',
     // Embedded clause note + mobile hints
-    embeddedNote: '📎 Esta oración contiene una cláusula subordinada sustantiva (embedded clause). Para un análisis más profundo, consulta con tu profesor.',
-    fragmentNote: '🧩 Esto parece un fragmento, no una oración completa: no encuentro un verbo principal. Toda oración necesita al menos un verbo.',
+    embeddedNote: 'Esta oración contiene una cláusula subordinada sustantiva (embedded clause). Para un análisis más profundo, consulta con tu profesor.',
+    fragmentNote: 'Esto parece un fragmento, no una oración completa: no encuentro un verbo principal. Toda oración necesita al menos un verbo.',
     gapVerb: '⟦ falta: verbo ⟧',
-    imperativeNote: '💡 Sin sujeto explícito: probablemente un imperativo (una orden o instrucción) — el sujeto «you» está implícito.',
+    imperativeNote: 'Sin sujeto explícito: probablemente un imperativo (una orden o instrucción); el sujeto «you» está implícito.',
     scrollHint: '← desliza para ver todas las categorías →',
     bannerHide: 'toca para ocultar',
     bannerShow: 'toca para ver instrucciones',
@@ -156,14 +156,14 @@ const TRANSLATIONS = {
     legendCorrect: 'Correcto',
     legendIncorrect: 'Incorrecto',
     legendUntagged: 'Sin etiquetar',
-    notRecognizedTip: 'Palabra no reconocida — revisa la ortografía',
+    notRecognizedTip: 'Palabra no reconocida: revisa la ortografía',
     clickToTag: 'Haz clic para etiquetar',
-    tipPhrasalTagVerb: (pv) => `Phrasal verb — "${pv}" — etiquétalo como Verbo`,
-    tipPhrasalPart: (word, pv) => `'${word}' en '${pv}' es parte de un phrasal verb — etiquétalo como Verbo`,
+    tipPhrasalTagVerb: (pv) => `Phrasal verb "${pv}": etiquétalo como Verbo`,
+    tipPhrasalPart: (word, pv) => `'${word}' en '${pv}' es parte de un phrasal verb: etiquétalo como Verbo`,
     // Question educational message
     q: {
       title: 'Esta es una pregunta (Question)',
-      structureHeader: '📚 Estructura de las preguntas en inglés:',
+      structureHeader: 'Estructura de las preguntas en inglés:',
       structureBody: 'Las preguntas en inglés tienen una estructura invertida comparada con las oraciones declarativas. El verbo auxiliar o modal aparece antes del sujeto.',
       yesNoTitle: 'Yes/No Questions',
       yesNoDesc: 'Comienzan con auxiliar/modal + sujeto + verbo',
@@ -176,7 +176,7 @@ const TRANSLATIONS = {
     installBannerMsg: '📲 Instala la app en tu celular para usarla sin internet',
     installBannerBtn: 'Instalar',
     iosHintMsg: '📲 iPhone: toca Compartir → Agregar a pantalla de inicio',
-    offlineMsg: '⚠️ Sin conexión — la app sigue funcionando con el contenido cargado',
+    offlineMsg: '⚠️ Sin conexión: la app sigue funcionando con el contenido cargado',
     newVersion: '✨ Hay una versión nueva disponible',
     newVersionHub: '✨ Hay una versión nueva. Vuelve al inicio y abre la app de nuevo para actualizarla.',
     updateBtn: 'Actualizar',
@@ -219,10 +219,10 @@ const TRANSLATIONS = {
     paintPOS: 'Paint POS',
     paintStructure: 'Paint Structure',
     assigning: 'Assigning',
-    structureModeMobile: 'STRUCTURE MODE — tap block type then tap words',
-    paintModeMobile: 'PAINT MODE — tap category then tap words',
-    hintManualPOS: 'Select a POS category in the legend and click words to label them — or tap a word repeatedly to cycle through the categories.',
-    hintManualStructure: 'Select a structure block type and click words to assign them — or tap a word repeatedly to cycle through the blocks.',
+    structureModeMobile: 'STRUCTURE MODE: tap block type then tap words',
+    paintModeMobile: 'PAINT MODE: tap category then tap words',
+    hintManualPOS: 'Select a POS category in the legend and click words to label them, or tap a word repeatedly to cycle through the categories.',
+    hintManualStructure: 'Select a structure block type and click words to assign them, or tap a word repeatedly to cycle through the blocks.',
     hintCheckAnswers: 'Press "Check Answers" when done.',
     hintAutoAnalysis: 'Type or paste English text, then click "Analyze" to automatically highlight each part of speech.',
     placeholderEmpty: 'Enter text above or load an example to get started.',
@@ -247,7 +247,7 @@ const TRANSLATIONS = {
     structureDef: {
       WH: 'introduces the question',
       S: 'who or what does the action',
-      AUX: 'auxiliary — helps the main verb (they go together)',
+      AUX: 'auxiliary: helps the main verb (they go together)',
       V: 'the action or state',
       C: 'everything else',
       O: 'receives the action: what? / whom?',
@@ -255,17 +255,17 @@ const TRANSLATIONS = {
     },
     // Structure warnings
     complexWarning: 'Complex sentence (multiple clauses or 15+ words). The analysis may not be exact: check with your teacher.',
-    questionNotAvailable: 'Question — structure analysis not available for this sentence type.',
+    questionNotAvailable: 'Question: structure analysis not available for this sentence type.',
     // Educational hints (shown via InfoTip on hover/tap)
     tipLocked: 'Category locked for this level',
-    tipPhrasal: (pv) => `Phrasal verb — "${pv}" works as a single verb`,
-    tipFormalSubject: 'Formal subject — the real meaning is in the complement (that…)',
-    tipQuestion: 'Question — subject and verb are inverted. Normal order: [S] + [V] + [C]',
+    tipPhrasal: (pv) => `Phrasal verb: "${pv}" works as a single verb`,
+    tipFormalSubject: 'Formal subject: the real meaning is in the complement (that…)',
+    tipQuestion: 'Question: subject and verb are inverted. Normal order: [S] + [V] + [C]',
     // Embedded clause note + mobile hints
-    embeddedNote: '📎 This sentence contains an embedded (noun) clause. For a deeper analysis, check with your teacher.',
-    fragmentNote: '🧩 This looks like a fragment, not a full sentence: I can\'t find a main verb. Every sentence needs at least a verb.',
+    embeddedNote: 'This sentence contains an embedded (noun) clause. For a deeper analysis, check with your teacher.',
+    fragmentNote: 'This looks like a fragment, not a full sentence: I can\'t find a main verb. Every sentence needs at least a verb.',
     gapVerb: '⟦ missing: verb ⟧',
-    imperativeNote: '💡 No explicit subject: likely an imperative (a command or instruction) — the subject "you" is implied.',
+    imperativeNote: 'No explicit subject: likely an imperative (a command or instruction); the subject "you" is implied.',
     scrollHint: '← swipe to see all categories →',
     bannerHide: 'tap to hide',
     bannerShow: 'tap to see instructions',
@@ -279,14 +279,14 @@ const TRANSLATIONS = {
     legendCorrect: 'Correct',
     legendIncorrect: 'Incorrect',
     legendUntagged: 'Untagged',
-    notRecognizedTip: 'Word not recognized — check spelling',
+    notRecognizedTip: 'Word not recognized: check spelling',
     clickToTag: 'Click to tag',
-    tipPhrasalTagVerb: (pv) => `Phrasal verb — "${pv}" — tag as Verb`,
-    tipPhrasalPart: (word, pv) => `'${word}' in '${pv}' is part of a phrasal verb — tag it as Verb`,
+    tipPhrasalTagVerb: (pv) => `Phrasal verb "${pv}": tag as Verb`,
+    tipPhrasalPart: (word, pv) => `'${word}' in '${pv}' is part of a phrasal verb: tag it as Verb`,
     // Question educational message
     q: {
       title: 'This is a question',
-      structureHeader: '📚 Structure of questions in English:',
+      structureHeader: 'Structure of questions in English:',
       structureBody: 'Questions in English have an inverted structure compared with statements. The auxiliary or modal verb comes before the subject.',
       yesNoTitle: 'Yes/No Questions',
       yesNoDesc: 'Start with auxiliary/modal + subject + verb',
@@ -299,7 +299,7 @@ const TRANSLATIONS = {
     installBannerMsg: '📲 Install this app on your phone for offline use',
     installBannerBtn: 'Install',
     iosHintMsg: '📲 iPhone: tap Share → Add to Home Screen to install',
-    offlineMsg: '⚠️ You are offline — the app still works with previously loaded content',
+    offlineMsg: '⚠️ You are offline: the app still works with previously loaded content',
     newVersion: '✨ A new version is available',
     newVersionHub: '✨ A new version is available. Go back to the menu and reopen the app to update it.',
     updateBtn: 'Update',
@@ -380,22 +380,22 @@ const writeStored = (key, v) => { try { localStorage.setItem(key, v); } catch { 
 
 const EXAMPLES = [
   {
-    label: 'Básico — Daily Life in Santiago',
+    label: 'Básico: Daily Life in Santiago',
     level: 'Básico',
     text: "My name is Valentina. I am a student at a university in Santiago. I live in a small apartment with my family. My brother is twenty years old. Every morning, I get up at seven o'clock and I go to class by bus. I like my classes because the teachers are very friendly. In the afternoon, I study at the library. I can speak Spanish and English.",
   },
   {
-    label: 'Elemental — A Weekend in Valparaíso',
+    label: 'Elemental: A Weekend in Valparaíso',
     level: 'Elemental',
     text: "Last weekend, my friend Diego and I visited Valparaíso. We took the bus early in the morning and arrived at ten o'clock. The city was more beautiful than I expected. We walked slowly through the colorful streets and took many photos. We also ate delicious seafood at a small restaurant near the port. In the evening, we were very tired but very happy.",
   },
   {
-    label: 'Intermedio — Working from Home',
+    label: 'Intermedio: Working from Home',
     level: 'Intermedio',
     text: "Working from home has become very common since 2020. Many people prefer it because they can organize their own schedule and avoid long commutes. However, it is not always easy. Some employees feel isolated when they work alone, and it can be difficult to separate work from personal life. If you are thinking about working from home, you should consider both the advantages and the disadvantages before you make a decision.",
   },
   {
-    label: 'Intermedio Alto — Social Media and Society',
+    label: 'Intermedio Alto: Social Media and Society',
     level: 'Intermedio Alto',
     text: "Social media has transformed the way people communicate, but it has also created a number of serious problems. It is widely believed that excessive use of these platforms can contribute to anxiety, particularly among younger users. If governments had regulated social media companies earlier, some of these issues might have been avoided. Despite these challenges, social media continues to be used by billions of people worldwide.",
   },
@@ -403,10 +403,10 @@ const EXAMPLES = [
 
 
 /* ═══════════════════════════════════════════════════════════
-   INFO TIP — accessible tooltip that works on hover AND tap (I6)
+   INFO TIP: accessible tooltip that works on hover AND tap (I6)
    The educational hints (phrasal verbs, formal subject, question
    inversion, locked categories) used to live only in `title=`, which is
-   invisible on touch devices — and this is a mobile-first PWA. InfoTip
+   invisible on touch devices: and this is a mobile-first PWA. InfoTip
    shows the same text as a bubble on tap/focus, keeps the native `title`
    for desktop hover, and is keyboard-operable.
 ═══════════════════════════════════════════════════════════ */
@@ -665,7 +665,7 @@ function ManualWordPill({
           role="button"
           tabIndex={0}
           aria-pressed={hasUserTag}
-          aria-label={`${text}${userTag ? ` — ${POS[userTag].name}` : ''}`}
+          aria-label={`${text}${userTag ? `: ${POS[userTag].name}` : ''}`}
           onClick={onClick}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
           /* focus-visible y no focus: el anillo se dibuja POR FUERA de la caja y,
@@ -743,7 +743,7 @@ function ManualWordPill({
         role="button"
         tabIndex={0}
         aria-pressed={hasUserTag}
-        aria-label={`${text}${userTag ? ` — ${STRUCTURE[userTag].name}` : ''}`}
+        aria-label={`${text}${userTag ? `: ${STRUCTURE[userTag].name}` : ''}`}
         onClick={onClick}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
         className="inline-block px-1.5 pt-0.5 pb-1 cursor-pointer transition-all hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded select-none"
@@ -785,7 +785,7 @@ function StructurePalette({ level, selectedStructure, onSelectStructure, activeS
       <div className="flex items-center gap-2 mb-3">
         <div className="w-0.5 h-4 bg-indigo-600 rounded"></div>
         <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
-          {isBasic ? 'Básico/Elemental' : 'Intermedio/Intermedio Alto'} — {t.paintStructure}
+          {isBasic ? 'Básico/Elemental' : 'Intermedio/Intermedio Alto'}: {t.paintStructure}
         </span>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -1167,7 +1167,7 @@ function SentenceStructure({ sentence, showLabels = true, lang = 'es' }) {
           <div className="mt-2 text-xs text-slate-500">⚠️ {sentence.error}</div>
         ) : (
           <>
-            {/* Chip de hueco del verbo (estilo bloque de estructura, punteado) — como en Question Lab */}
+            {/* Chip de hueco del verbo (estilo bloque de estructura, punteado): como en Question Lab */}
             <div className="mt-2">
               <span
                 className="inline-flex items-center px-3 py-1.5 rounded-lg border-2 border-dashed text-sm font-bold"
@@ -1189,7 +1189,7 @@ function SentenceStructure({ sentence, showLabels = true, lang = 'es' }) {
 
   /* Los DOS ejes de la oración, leídos del análisis y no del texto crudo.
      `not` y nada más: las contracciones llegan aquí ya expandidas («doesn't» →
-     «does not»), y `never` NO cuenta — su sentido es negativo pero su FORMA es
+     «does not»), y `never` NO cuenta: su sentido es negativo pero su FORMA es
      afirmativa, que es la misma línea que traza Grammaster al no dejar combinar
      los adverbios de sentido negativo con el modo negativo. Si una app dijera
      una cosa y la otra la contraria, el chip dejaría de significar algo.
@@ -1325,7 +1325,7 @@ function LegendItem({ posKey, unlocked, isManual, isSelected, onSelect }) {
         role: 'button',
         tabIndex: 0,
         'aria-pressed': isSelected,
-        'aria-label': `${p.name} — ${p.def}`,
+        'aria-label': `${p.name}: ${p.def}`,
         onClick: () => onSelect(posKey),
         onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(posKey); } },
       }
@@ -1681,7 +1681,7 @@ function GuidePanel({ lang }) {
   return (
     <div className="flex-1 overflow-y-auto px-4 py-5 md:px-6">
       <div className="max-w-2xl mx-auto space-y-5 pb-4">
-        <h2 className="font-bold text-xl text-slate-800">{es ? '📖 Guía de uso' : '📖 Usage guide'}</h2>
+        <h2 className="font-bold text-xl text-slate-800">{es ? 'Guía de uso' : 'Usage guide'}</h2>
 
         {/* Qué hace la app, en una frase */}
         <p className="text-sm text-slate-600 leading-relaxed">
@@ -1847,7 +1847,7 @@ function ProgressPanel({ lang }) {
   return (
     <div className="flex-1 overflow-y-auto px-4 py-5 md:px-6">
       <div className="max-w-2xl mx-auto space-y-4 pb-4">
-        <h2 className="font-bold text-xl text-slate-800">{es ? '📊 Progreso' : '📊 Progress'}</h2>
+        <h2 className="font-bold text-xl text-slate-800">{es ? 'Progreso' : 'Progress'}</h2>
         <div className={`rounded-xl p-4 flex items-center gap-4 ${streak > 0 ? 'bg-gradient-to-br from-rose-400 to-amber-400 shadow-lg shadow-rose-400/30' : 'bg-slate-50 border border-slate-200'}`}>
           <span className="text-4xl">{streak > 0 ? '🔥' : '💤'}</span>
           <div>
@@ -1870,7 +1870,7 @@ function ProgressPanel({ lang }) {
             </div>
             {hardest.length > 0 && (
               <div>
-                <p className="text-xs font-bold text-slate-600 mb-1.5">{es ? '🎯 Lo que más te cuesta' : '🎯 Your hardest categories'}</p>
+                <p className="text-xs font-bold text-slate-600 mb-1.5">{es ? 'Lo que más te cuesta' : 'Your hardest categories'}</p>
                 <div className="space-y-1.5">
                   {hardest.map(h => {
                     const [kind, key] = h.k.split(':');
@@ -1893,7 +1893,7 @@ function ProgressPanel({ lang }) {
           </div>
         )}
 
-        <p className="text-sm font-bold text-slate-700">{es ? 'Insignias' : 'Badges'} — {unlocked}/{BADGES.length}</p>
+        <p className="text-sm font-bold text-slate-700">{es ? 'Insignias' : 'Badges'}: {unlocked}/{BADGES.length}</p>
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
           {BADGES.map(b => { const on = isOn(b); const name = (es ? b.name.es : b.name.en).replace('{tense}', '…');
             return (
@@ -2621,7 +2621,7 @@ function App() {
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setBannerExpanded(v => !v); } }}
                   >
                     <div className="flex items-center justify-between">
-                      <span><strong>{bannerIcon} {bannerTitle}</strong> — {bannerExpanded ? t.bannerHide : t.bannerShow}</span>
+                      <span><strong>{bannerIcon} {bannerTitle}</strong> · {bannerExpanded ? t.bannerHide : t.bannerShow}</span>
                       <span className={`ml-2 transition-transform duration-200 ${bannerExpanded ? 'rotate-180' : ''}`}>▼</span>
                     </div>
                     {bannerExpanded && (
@@ -2749,7 +2749,7 @@ function App() {
                   🔥 {lang === 'es' ? 'Racha' : 'Streak'}: {answerStreak}
                 </span>
               )}
-              {/* Score counter — manual mode */}
+              {/* Score counter: manual mode */}
               {isManual && analyzed && (
                 <div className={`${answerStreak > 0 ? '' : 'ml-auto'} bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm text-slate-600 flex items-center gap-1.5`}>
                   <strong className="text-slate-800 text-base">
