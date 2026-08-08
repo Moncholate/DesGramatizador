@@ -2720,7 +2720,7 @@ function App() {
                         onClick={handleCheckAnswers}
                         className={`px-5 py-2.5 rounded-xl border-none text-sm font-bold text-white transition-all ${
                           canAnalyze
-                            ? 'bg-emerald-600 shadow-lg shadow-emerald-600/30 cursor-pointer hover:shadow-xl'
+                            ? 'bg-emerald-700 shadow-lg shadow-emerald-700/30 cursor-pointer hover:shadow-xl'
                             : 'bg-emerald-200 cursor-not-allowed'
                         }`}
                       >
