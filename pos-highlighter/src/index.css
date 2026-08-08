@@ -1,6 +1,8 @@
 @import "tailwindcss";
 /* Anillo de foco accesible, generado desde design-tokens (no editar allí). */
 @import './dua.generated.css';
+/* Chip de forma (+ − ?) y tipo de pregunta — el mismo objeto en las 4 apps. */
+@import './forms.generated.css';
 
 @font-face{font-family:'Lexend';font-style:normal;font-weight:400 700;font-display:swap;src:url('./fonts/Lexend.woff2') format('woff2');}
 @font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:400;font-display:swap;src:url('./fonts/AtkinsonHyperlegible-Regular.woff2') format('woff2');}

@@ -1,0 +1,32 @@
+/* AUTO-GENERATED from design-tokens/tokens.json — do not edit by hand.
+   Change tokens.json and run `npm run sync` in Apps/design-tokens. */
+
+:root{ --f-aff:#166534; --f-neg:#7f1d1d; --f-int:#175fb8; --f-cap:#edeff7; --f-cap-border:#e1e4f0; --f-cap-ink:#161927; --qt-open:#0f766e; --qt-open-ink:#115e59; --qt-closed:#e11d48; --qt-closed-ink:#9f1239; }
+@media (prefers-color-scheme:dark){ :root{ --f-aff:#bbf7d0; --f-neg:#fca5a5; --f-int:#7cb2fb; --f-cap:#1d2233; --f-cap-border:#2a3042; --f-cap-ink:#eceff8; --qt-open:#2dd4bf; --qt-open-ink:#2dd4bf; --qt-closed:#fb7185; --qt-closed-ink:#fb7185; } }
+:root[data-theme="light"]{ --f-aff:#166534; --f-neg:#7f1d1d; --f-int:#175fb8; --f-cap:#edeff7; --f-cap-border:#e1e4f0; --f-cap-ink:#161927; --qt-open:#0f766e; --qt-open-ink:#115e59; --qt-closed:#e11d48; --qt-closed-ink:#9f1239; }
+:root[data-theme="dark"]{ --f-aff:#bbf7d0; --f-neg:#fca5a5; --f-int:#7cb2fb; --f-cap:#1d2233; --f-cap-border:#2a3042; --f-cap-ink:#eceff8; --qt-open:#2dd4bf; --qt-open-ink:#2dd4bf; --qt-closed:#fb7185; --qt-closed-ink:#fb7185; }
+
+.ghf{display:inline-flex; align-items:stretch; vertical-align:middle;
+  border:1px solid var(--f-cap-border); background:var(--f-cap);
+  border-radius:999px; overflow:hidden; font-size:.85rem; font-weight:700; line-height:1.2;}
+.ghf__sign{display:inline-flex; align-items:center; gap:.22rem; padding:.35rem .62rem; font-size:1.05em;}
+/* El glifo se declara DOS veces a propósito, y no es copia-pega: dentro de .ghf
+   (donde el fondo lo pone la cápsula) y suelto (la barra de modos de Grammaster
+   lo usa sin chip alrededor). Las dos salen del mismo token, así que no pueden
+   desfasarse, y de paso un chequeo de contraste mide cada una contra el fondo
+   que de verdad le toca. Ese .ghf de delante no es decorativo: sin él, el tinte
+   translúcido se compone sobre la página en vez de sobre --f-cap, y para el
+   tipo cerrado eso es la diferencia entre 5,66:1 y 4,43:1 — entre pasar AA y no.
+   La regla verdadera y la regla medible tienen que ser la misma. */
+.ghf .ghf__g[data-form="affirmative"], .ghf__g[data-form="affirmative"]{color:var(--f-aff);}
+.ghf .ghf__g[data-form="negative"], .ghf__g[data-form="negative"]{color:var(--f-neg);}
+.ghf .ghf__g[data-form="interrogative"], .ghf__g[data-form="interrogative"]{color:var(--f-int);}
+/* La pregunta de sujeto no es una forma: es una pregunta ABIERTA sin auxiliar,
+   así que toma el tono del tipo abierto y no uno propio. Está aquí y no en la
+   sección signs de tokens.json porque allí sería inventar un cuarto valor de un
+   eje que solo tiene tres. */
+.ghf .ghf__g[data-form="subject-question"], .ghf__g[data-form="subject-question"]{color:var(--qt-open-ink);}
+.ghf .ghf__slot{display:inline-flex; align-items:center; padding:.35rem .7rem;
+  border-left:1px solid var(--f-cap-border); color:var(--f-cap-ink);}
+.ghf .ghf__slot[data-type="open"]{background:color-mix(in srgb, var(--qt-open) 14%, transparent); color:var(--qt-open-ink);}
+.ghf .ghf__slot[data-type="closed"]{background:color-mix(in srgb, var(--qt-closed) 14%, transparent); color:var(--qt-closed-ink);}

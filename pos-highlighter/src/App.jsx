@@ -2,6 +2,9 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { isQuestion, tokenizeText, analyzeStructure, buildStructureAnswerMap } from './nlp/analysis';
 import { loadProgress, saveProgress, recordAnalysis, recordAttempt, evaluateBadges, BADGES } from './gamification.generated.js';
 import { TOKENS as TOKENS_LIGHT, TOKENS_DARK } from './tokens.generated.js';
+/* Chip de los dos ejes (forma + − ? y tipo abierta/cerrada), generado desde
+   design-tokens para que sea el MISMO objeto en las cuatro apps. */
+import { FormChip } from './forms.generated.jsx';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 // Colores de rol según el tema resuelto (data-theme). Se (re)construyen en
 // refreshTheme() para que cambien EN VIVO al alternar el tema, sin recargar.
@@ -1184,8 +1187,25 @@ function SentenceStructure({ sentence, showLabels = true, lang = 'es' }) {
   const allTypes = rows.flatMap(r => (r.components || []).map(c => c.type));
   const looksImperative = !sentence.isQuestion && allTypes.includes('V') && !allTypes.includes('S') && !allTypes.includes('WH');
 
+  /* Los DOS ejes de la oración, leídos del análisis y no del texto crudo.
+     `not` y nada más: las contracciones llegan aquí ya expandidas («doesn't» →
+     «does not»), y `never` NO cuenta — su sentido es negativo pero su FORMA es
+     afirmativa, que es la misma línea que traza Grammaster al no dejar combinar
+     los adverbios de sentido negativo con el modo negativo. Si una app dijera
+     una cosa y la otra la contraria, el chip dejaría de significar algo.
+     Abierta = la que ABRE con wh-word; esa es justo la regla que el color
+     cuenta, así que se lee de la primera pieza y no de otro sitio. */
+  const piezas = rows.flatMap(r => r.components || []);
+  const esNegativa = piezas.some(c => /\bnot\b/i.test(c.text || ''));
+  const tipoPregunta = !sentence.isQuestion ? null
+    : (piezas[0]?.type === 'WH' ? 'open' : 'closed');
+  const forma = sentence.isQuestion ? 'interrogative' : esNegativa ? 'negative' : 'affirmative';
+
   const inner = (
     <div className="mb-4 p-3 rounded-lg border border-slate-200 bg-white">
+      <div className="mb-2">
+        <FormChip form={forma} negative={esNegativa} type={tipoPregunta} lang={lang} />
+      </div>
       {sentence.isComplex && (
         <div className="mb-2 px-2 py-1 rounded bg-amber-50 border border-amber-200 text-xs text-amber-800">
           ⚠️ {t.complexWarning}
