@@ -3,6 +3,12 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  /* Fecha de compilación para el reporte de errores. Se inyecta al construir y
+     no se escribe a mano: una constante en el código se queda vieja el primer
+     día que nadie se acuerda de subirla, y entonces miente. */
+  define: {
+    __APP_BUILD__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ')),
+  },
   base: '/DesGramatizador/',
   server: {
     port: 5175,

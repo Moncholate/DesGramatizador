@@ -19,6 +19,10 @@ function buildNeutral(d){
 
 /* Toggle de tema de la suite (auto→claro→oscuro por SO; toggle binario que ofrece
    el modo destino). Usa window.ghTheme, sincronizado same-origin entre las 4 apps. */
+/* Lo inyecta vite.config.js al construir. En `npm run dev` no existe, y ahí da
+   igual: el reporte solo importa cuando la app está publicada. */
+const APP_VERSION = typeof __APP_BUILD__ === 'string' ? __APP_BUILD__ : 'dev';
+
 function ThemeToggle({ lang = 'es' }) {
   const [eff, setEff] = useState(() => (typeof window !== 'undefined' && window.ghTheme ? window.ghTheme.effective() : 'light'));
   useEffect(() => {
@@ -87,6 +91,15 @@ const TRANSLATIONS = {
     selectCategory: 'Selecciona una categoría arriba',
     levelLabel: 'Nivel',
     langLabel: 'Idioma',
+    /* Reportar. Mismo texto que las otras dos apps: es el mismo trámite y el
+       alumno lo ve en las tres. */
+    reportar: 'Reportar un problema',
+    reportarCorto: 'Reportar',
+    reporteAyuda: 'Cuéntame qué esperabas que hiciera la app. Lo de abajo se rellena solo: dice en qué estado estaba cuando falló.',
+    reportePaso1: 'Copia el informe',
+    reportePaso2: 'Escribe abajo del todo qué esperabas',
+    reportePaso3: 'Mándamelo por correo',
+    copiar: 'Copiar', copiado: 'Copiado', abrirCorreo: 'Abrir correo', cerrarReporte: 'Cerrar',
     showLabels: 'Mostrar Etiquetas',
     hideLabels: 'Ocultar Etiquetas',
     clearAll: 'Limpiar Todo',
@@ -210,6 +223,13 @@ const TRANSLATIONS = {
     selectCategory: 'Select a category above',
     levelLabel: 'Level',
     langLabel: 'Language',
+    reportar: 'Report a problem',
+    reportarCorto: 'Report',
+    reporteAyuda: 'Tell me what you expected the app to do. The part below fills in on its own: it says what state the app was in when it failed.',
+    reportePaso1: 'Copy the report',
+    reportePaso2: 'Write what you expected at the bottom',
+    reportePaso3: 'Send it to me by email',
+    copiar: 'Copy', copiado: 'Copied', abrirCorreo: 'Open email', cerrarReporte: 'Close',
     showLabels: 'Show Labels',
     hideLabels: 'Hide Labels',
     clearAll: 'Clear All',
@@ -1994,6 +2014,52 @@ function App() {
 
   const unlocked = LEVELS[level];
   const isManual = mode === 'manual';
+
+  /* ── REPORTAR UN PROBLEMA ────────────────────────────────────────────────
+     Igual que en Grammaster y Question Lab. La app es un archivo estático en
+     GitHub Pages: no hay servidor, así que no puede enviar nada por su cuenta.
+     Lo que sí puede es volcar el ESTADO EXACTO con el que falló.
+     Aquí lo que importa es la ORACIÓN y lo que la app dijo de ella: es una app
+     de análisis, y el reporte típico va a ser «esta palabra está mal pintada». */
+  const [reporte, setReporte] = useState(null);
+  const [reporteCopiado, setReporteCopiado] = useState(false);
+  const construirReporte = () => {
+    const linea = (k, v) => (v == null || v === '' ? null : `${k}: ${v}`);
+    const etiquetas = (obj) => Object.keys(obj).length
+      ? manualTokens.filter(tk => obj[tk.id]).map(tk => `${tk.text}=${obj[tk.id]}`).join(' ')
+      : null;
+    return [
+      `Desgramatizador ${APP_VERSION}`,
+      linea('Nivel', level),
+      linea('Idioma', lang),
+      isManual ? '— PRÁCTICA MANUAL —' : '— ANÁLISIS AUTOMÁTICO —',
+      linea('Vista', isManual ? manualView : autoView),
+      linea('Oración', text),
+      isManual ? linea('Marcó (categorías)', etiquetas(userPOSTags)) : null,
+      isManual ? linea('Marcó (estructura)', etiquetas(userStructureTags)) : null,
+      /* Lo que la app dijo: sin esto el reporte cuenta la mitad. `analysis.js`
+         etiqueta cada palabra, y el desacuerdo es justo lo que hay que ver. */
+      !isManual && analyzed ? linea('La app leyó', tokens.map(tk => `${tk.text}=${tk.pos || '?'}`).join(' ')) : null,
+      linea('Error del analizador', nlpError),
+      '—',
+      linea('Navegador', typeof navigator !== 'undefined' ? navigator.userAgent : ''),
+      '',
+      lang === 'es' ? 'Qué esperaba en vez de eso:' : 'What I expected instead:',
+      '',
+    ].filter(Boolean).join('\n');
+  };
+  const copiarReporte = async () => {
+    try { await navigator.clipboard.writeText(reporte); setReporteCopiado(true); }
+    catch { setReporteCopiado(false); }
+  };
+  /* La dirección se arma al pulsar y NO está entera en el HTML publicado: los
+     rastreadores de spam leen el código de las páginas. */
+  const abrirCorreo = () => {
+    const destino = ['v.moralesm', 'profesor.duoc.cl'].join('@');
+    const asunto = lang === 'es' ? 'Desgramatizador: reporte de un problema' : 'Desgramatizador: problem report';
+    window.location.href = `mailto:${destino}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(reporte)}`;
+  };
+
   const showStructure = mode === 'auto' && (autoView === 'structure' || autoView === 'both');
   const canAnalyze = !!text.trim();
 
@@ -2378,6 +2444,40 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen bg-[#f5f6fb]">
+      {/* Panel del reporte. El texto va en un `textarea` de solo lectura y no en
+          un `<pre>`: así se puede seleccionar a mano cuando el portapapeles
+          falla, que en un iframe o sin HTTPS pasa. */}
+      {reporte !== null && (
+        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/40 p-3" role="dialog" aria-modal="true" aria-label={t.reportar}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-4 sm:p-5 space-y-3 max-h-[92vh] overflow-auto">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-gray-800">{t.reportar}</h3>
+                <p className="text-xs text-gray-600 mt-0.5">{t.reporteAyuda}</p>
+              </div>
+              <button onClick={() => setReporte(null)} aria-label={t.cerrarReporte} className="flex-shrink-0 px-1 text-slate-400 hover:text-slate-700">✕</button>
+            </div>
+            {/* Numerados de verdad: es una secuencia y hay que hacerla en orden. */}
+            <ol className="text-xs text-gray-700 space-y-1 list-decimal list-inside marker:font-bold marker:text-indigo-600">
+              <li>{t.reportePaso1}</li>
+              <li>{t.reportePaso2}</li>
+              <li>{t.reportePaso3}</li>
+            </ol>
+            <textarea
+              readOnly value={reporte} rows={11} onChange={() => {}}
+              className="w-full text-xs font-mono p-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-800"
+            />
+            <div className="flex flex-wrap gap-2">
+              <button onClick={copiarReporte} className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700">
+                {reporteCopiado ? t.copiado : t.copiar}
+              </button>
+              <button onClick={abrirCorreo} className="px-3 py-2 rounded-lg border border-indigo-300 text-indigo-700 text-sm font-semibold hover:border-indigo-500">
+                {t.abrirCorreo}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* PWA: aviso de versión nueva. Embebida en el Hub (iframe) no se puede
           actualizar desde dentro → se guía a volver al inicio y reabrir. */}
       {needRefresh && (
@@ -2466,6 +2566,18 @@ function App() {
               </div>
             )}
             <ThemeToggle lang={lang} />
+            {/* Reportar. En ámbar y no en gris: con la piel de los demás
+                controles de la cabecera no se encuentra, que fue la queja en
+                Grammaster. `text-amber-700` sobre `bg-amber-50` porque es el
+                par que la capa oscura sabe invertir. */}
+            <button
+              onClick={() => { setReporte(construirReporte()); setReporteCopiado(false); }}
+              title={t.reportar} aria-label={t.reportar}
+              className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-bold bg-amber-50 border border-amber-400 text-amber-700 hover:bg-amber-100 transition-all"
+            >
+              <span aria-hidden="true" className="text-sm leading-none">⚠️</span>
+              <span className="hidden sm:inline whitespace-nowrap">{t.reportarCorto}</span>
+            </button>
           </div>
         </div>
 

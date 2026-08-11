@@ -185,6 +185,12 @@ button:disabled { cursor: not-allowed; }
 :root[data-theme="dark"] .bg-red-50 .text-red-800,
 :root[data-theme="dark"] .bg-red-50.text-red-900,
 :root[data-theme="dark"] .bg-red-50 .text-red-900 { color: #fecaca !important; }       /* 11.67:1 */
+/* El botón de reportar. Grammaster ya traía esta regla y aquí faltaba, así que
+   la misma clase se veía bien en una app y a 3,04:1 en la otra. Es el argumento
+   de siempre a favor de generar la capa oscura en vez de escribirla dos veces;
+   mientras tanto, al menos que estén las dos. */
+:root[data-theme="dark"] .bg-amber-50.text-amber-700,
+:root[data-theme="dark"] .bg-amber-50 .text-amber-700 { color: #fde68a !important; }   /* 12.25:1 */
 
 /* Tinta de marca que la capa no invertía y quedaba oscura sobre fondo oscuro.
    Compuestos a propósito: los chips sobre tinte claro conservan su texto. */
