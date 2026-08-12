@@ -17,12 +17,15 @@ export const SCHEMA_V = 1;
      · practicar domingo 22:00 y lunes 18:00 → veía UN día, y la racha no avanzaba
        aunque el alumno sí había practicado dos días seguidos.
    `dayGap` no cambia: compara dos strings del mismo formato, así que la resta
-   sigue dando días completos. */
-const todayISO = (d = new Date()) => {
+   sigue dando días completos.
+   Se EXPORTAN los dos: la revisión periódica de la unidad del curso necesita la
+   misma noción de «día» que la racha, y una segunda copia del helper acabaría
+   divergiendo justo en el caso de las 22:00 que costó encontrar. */
+export const todayISO = (d = new Date()) => {
   const p = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
-const dayGap = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
+export const dayGap = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
 
 export function emptyProgress() {
   return {
