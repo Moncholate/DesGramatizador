@@ -196,3 +196,17 @@ button:disabled { cursor: not-allowed; }
    Compuestos a propósito: los chips sobre tinte claro conservan su texto. */
 :root[data-theme="dark"] .bg-white.text-indigo-600 { color: #c7d2fe !important; }   /* 2.81 → 11.85 */
 :root[data-theme="dark"] .hover\:text-red-700:hover { color: #fca5a5 !important; }  /* 2.44 → 8.89 */
+
+/* ── SALIR DEL EJERCICIO ─────────────────────────────────────────────────────
+   Borde marcado en un neutro PROPIO, no en `border-slate-*`: esa familia cae a
+   #2a3042 en oscuro, que contra la tarjeta #141826 da 1,35:1 — o sea que como
+   marca no marca nada, y es exactamente lo que este botón viene a arreglar.
+   Neutro a propósito: una salida no es un error ni un acierto, así que no puede
+   tomar prestado el rojo ni el verde.
+   Medido: 4,76:1 sobre blanco y 5,80:1 sobre #141826, por encima del 3:1 que
+   pide un elemento gráfico. Los mismos valores que en Grammaster y Question Lab:
+   las tres apps tienen que ofrecer la misma salida con el mismo aspecto. */
+.btn-salir { border: 2px solid #64748b; background: transparent; }
+.btn-salir:hover { background: rgba(100, 116, 139, .12); }
+:root[data-theme="dark"] .btn-salir { border-color: #8b94a7 !important; }
+:root[data-theme="dark"] .btn-salir:hover { background: rgba(139, 148, 167, .16); }

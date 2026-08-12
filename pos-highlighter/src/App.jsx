@@ -103,6 +103,7 @@ const TRANSLATIONS = {
     showLabels: 'Mostrar Etiquetas',
     hideLabels: 'Ocultar Etiquetas',
     clearAll: 'Limpiar Todo',
+    salirEjercicio: 'Salir del ejercicio',
     clearText: 'Borrar texto',
     englishText: 'Texto en Inglés',
     analyzed: 'Analizado',
@@ -233,6 +234,7 @@ const TRANSLATIONS = {
     showLabels: 'Show Labels',
     hideLabels: 'Hide Labels',
     clearAll: 'Clear All',
+    salirEjercicio: 'Exit exercise',
     clearText: 'Clear text',
     englishText: 'English Text',
     analyzed: 'Analyzed',
@@ -2849,6 +2851,21 @@ function App() {
                         className="px-4 py-2.5 rounded-xl border-[1.5px] border-indigo-200 bg-indigo-50 text-indigo-700 text-sm font-semibold cursor-pointer hover:bg-indigo-100 transition-all"
                       >
                         👁️ {t.showAnswers}
+                      </button>
+                      {/* SALIR DEL EJERCICIO. Antes no había ninguna: empezado el
+                          ejercicio, la única forma de salir era tocar «Análisis»
+                          en la barra de abajo, o sea el botón de la funcionalidad
+                          principal. No es que se confundieran: eran el mismo.
+                          «Limpiar todo» tampoco sirve de salida — borra las
+                          respuestas y te deja EN el ejercicio.
+                          Vuelve al estado de preparar, que es el equivalente al
+                          menú de práctica de las otras dos apps, y conserva el
+                          texto: el alumno puede rehacerlo o escribir otro. */}
+                      <button
+                        onClick={() => setAnalyzed(false)}
+                        className="btn-salir px-4 py-2.5 rounded-xl text-slate-800 text-sm font-bold cursor-pointer transition-all"
+                      >
+                        {t.salirEjercicio}
                       </button>
                     </>
                   )}
