@@ -895,7 +895,38 @@ function analyzeSentenceStructure(sentenceText, level) {
         }
       }
       if (vStart !== -1) {
+        /* SALIÓ EN CLASE (2026-08-12): «She works in Santiago» daba el verbo
+           «works in». Compromise trae su propio diccionario de phrasal verbs y
+           ahí están `work in` y `sleep in` —que existen: «incorporar algo»,
+           «dormir hasta tarde»— así que etiqueta el `in` como Particle aunque
+           sea claramente locativo. `VERB_TAGS` incluye 'Particle', y la
+           preposición entraba en el sintagma verbal.
+           La regla: manda NUESTRA lista, que es la del libro. Si el verbo con
+           esa partícula no está en ella, la partícula no es del verbo.
+           Se recorta solo la ÚLTIMA: en «came up with» las intermedias las
+           protege la lista, y quitarlas de dentro rompería el sintagma. */
+        while (vEnd > vStart) {
+          const ult = (rawTerms[vEnd].text || '').toLowerCase().replace(/[^a-z]/g, '');
+          if (!PREP_PARTICLES.has(ult)) break;
+          const verbo = normVerb((rawTerms[vStart].text || '').toLowerCase().replace(/[^a-z]/g, ''));
+          const sets = PHRASAL_BY_VERB.get(verbo);
+          const enElLibro = sets && sets.some(ps => ps.includes(ult));
+          /* Aunque el libro lo tenga, si detrás va un adverbial de tiempo o
+             lugar la partícula es preposición: «We go on HOLIDAY», «She came in
+             the MORNING». Es la misma regla que `particleIsPreposition` aplica
+             a las palabras pintadas; sin ella las dos capas se contradicen y el
+             alumno ve `on` en gris de preposición y dentro del verbo a la vez. */
+          if (enElLibro && !seguidoDeAdverbial(sentenceText, rawTerms, vEnd)) break;
+          vEnd--;
+        }
         verbPhrase = rawTerms.slice(vStart, vEnd + 1).map(p => p.text).join(' ');
+        /* Y al revés: si el libro dice que es phrasal y compromise no lo vio,
+           la partícula FALTA en el verbo. Pasaba con `look at`, `listen to` y
+           `look for`: el token se pintaba de verbo y el sintagma lo dejaba en el
+           complemento, o sea la app se contradecía consigo misma según qué vista
+           mirara el alumno. Con `run into` o `get on` no pasaba porque ahí
+           compromise sí los reconoce, lo que hacía el fallo más difícil de ver. */
+        verbPhrase = añadirParticulaDelLibro(sentenceText, verbPhrase);
       }
     }
 
@@ -1645,6 +1676,51 @@ const ADVERBIAL_HEADS = new Set([
   'home', 'time', 'foot',
 ]);
 
+/* ¿Detrás de la partícula viene un adverbial de tiempo/lugar? Igual que
+   `particleIsPreposition`, pero para la capa de ESTRUCTURA, que no trabaja con
+   los tokens del pintado sino con los términos de compromise. Se mira el texto
+   de la oración porque la palabra que sigue está FUERA del sintagma verbal y
+   por tanto fuera de `rawTerms`. */
+function seguidoDeAdverbial(sentenceText, rawTerms, vEnd) {
+  const part = (rawTerms[vEnd].text || '').replace(/[^A-Za-z]/g, '');
+  if (!part) return false;
+  const re = new RegExp('\\b' + part + '\\b\\s+(.*)$', 'i');
+  const m = String(sentenceText || '').match(re);
+  if (!m) return false;
+  let resto = m[1].trim().split(/\s+/).filter(Boolean);
+  if (!resto.length) return false;
+  let head = resto[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+  // Se salta un determinante: «on a holiday», «in the morning»
+  if (['the', 'a', 'an', 'my', 'your', 'his', 'her', 'our', 'their'].includes(head)) {
+    if (resto.length < 2) return false;
+    head = resto[1].toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+  return ADVERBIAL_HEADS.has(head) || /^\d{2,4}$/.test(head);
+}
+
+/* Añade al sintagma verbal la partícula que el LIBRO reconoce y compromise no.
+   Solo se mira lo que va inmediatamente después del sintagma, y solo si el par
+   verbo+partícula está en `PHRASAL_VERB_LIST`; si detrás hay un adverbial se
+   deja como preposición, que es la misma regla de siempre. */
+function añadirParticulaDelLibro(sentenceText, verbPhrase) {
+  if (!verbPhrase) return verbPhrase;
+  const palabras = verbPhrase.trim().split(/\s+/);
+  const base = normVerb(palabras[0].toLowerCase().replace(/[^a-z]/g, ''));
+  const sets = PHRASAL_BY_VERB.get(base);
+  if (!sets) return verbPhrase;
+  const esc = verbPhrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const m = String(sentenceText || '').match(new RegExp(esc + '\\s+([A-Za-z]+)', 'i'));
+  if (!m) return verbPhrase;
+  const sig = m[1].toLowerCase();
+  const yaEsta = palabras.some(p => p.toLowerCase().replace(/[^a-z]/g, '') === sig);
+  if (yaEsta) return verbPhrase;
+  if (!sets.some(ps => ps.length === 1 && ps[0] === sig)) return verbPhrase;
+  /* Adverbial detrás: «look after THE KIDS» sí, pero «go on HOLIDAY» no. */
+  const fake = [{ text: sig }];
+  if (PREP_PARTICLES.has(sig) && seguidoDeAdverbial(sentenceText, fake, 0)) return verbPhrase;
+  return `${verbPhrase} ${m[1]}`;
+}
+
 // True if a PREP_PARTICLE at index p is really a preposition (adverbial PP),
 // i.e. it is immediately followed by a time/place head noun or a year number.
 function particleIsPreposition(tokens, p) {
@@ -2216,6 +2292,27 @@ function tokenizeSentence(s, level) {
         tokens.splice(j, 1);
       }
     }
+  }
+
+  /* ── Preposición que compromise dio por partícula ────────────────────────
+     Mismo fallo que en el sintagma verbal, por el otro camino: aquí la palabra
+     se PINTA de verbo. «She works in Santiago» salía con el `in` rojo.
+     Solo se corrigen las que también son PREPOSICIÓN (in, on, at, to, for…).
+     Las partículas puras —up, down, off, out, back— NO se tocan: en «She showed
+     up» el `up` es del verbo aunque `show up` no esté en nuestra lista, y
+     llamarlo preposición sería cambiar un error por otro peor.
+     Va ANTES del paso de abajo para no deshacer lo que ese confirma. */
+  for (let i = 1; i < tokens.length; i++) {
+    const tok = tokens[i];
+    if (tok.pos !== 'verb' || tok.isPhrasalParticle) continue;
+    const w = tok.text.toLowerCase();
+    if (!PREP_PARTICLES.has(w)) continue;
+    let v = i - 1;
+    while (v >= 0 && tokens[v].isPunct) v--;
+    if (v < 0 || !['verb', 'auxiliary', 'modal'].includes(tokens[v].pos)) continue;
+    const sets = PHRASAL_BY_VERB.get(normVerb(tokens[v].text));
+    if (sets && sets.some(ps => ps.includes(w))) continue;   // lo confirma el libro
+    tok.pos = 'preposition';
   }
 
   // ── Post-processing: Phrasal Verb detection ──────────────────────────────
