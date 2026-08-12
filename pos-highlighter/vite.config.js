@@ -1,13 +1,24 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { execSync } from 'node:child_process'
+
+/* Version para el reporte de errores: sale del COMMIT y no de la hora de
+   compilar. Dice que codigo esta en linea y es DETERMINISTA, asi que el mismo
+   commit da siempre el mismo bundle y un despliegue se puede verificar
+   comparando el hash servido con el local. Con la hora dentro, cada build daba
+   un hash distinto y esa comprobacion dejaba de funcionar. Paso. */
+function versionDelCommit() {
+  try {
+    const q = (c) => execSync(c, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+    return `${q('git log -1 --format=%cs')} · ${q('git rev-parse --short HEAD')}`
+  } catch { return 'dev' }
+}
 
 export default defineConfig({
-  /* Fecha de compilación para el reporte de errores. Se inyecta al construir y
-     no se escribe a mano: una constante en el código se queda vieja el primer
-     día que nadie se acuerda de subirla, y entonces miente. */
+  /* Ver `versionDelCommit` arriba. */
   define: {
-    __APP_BUILD__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ')),
+    __APP_BUILD__: JSON.stringify(versionDelCommit()),
   },
   base: '/DesGramatizador/',
   server: {
