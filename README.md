@@ -3,7 +3,7 @@
 Identificador interactivo de Partes de la Oración (POS) para estudiantes de inglés.
 Diseñado para uso en aula con _American English File_ (3.ª ed.) en Duoc UC, Santiago.
 
-🔗 **App en vivo:** https://moncholate.github.io/Desgramatizador/
+🔗 **App en vivo:** https://moncholate.github.io/DesGramatizador/
 
 ---
 

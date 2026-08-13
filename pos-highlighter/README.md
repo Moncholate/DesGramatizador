@@ -1,9 +1,10 @@
 # Desgramatizador
 
 Identificador interactivo de Partes de la Oración (POS) para estudiantes de inglés.
-Diseñado para uso en aula con _American English File_ (3.ª ed.) en Duoc UC, Santiago.
+Pensado para uso en aula, con el temario gramatical de _American English File_
+(3.ª ed.) como referencia de en qué unidad se enseña cada cosa.
 
-🔗 **App en vivo:** https://moncholate.github.io/Desgramatizador/
+🔗 **App en vivo:** https://moncholate.github.io/DesGramatizador/
 
 ---
 
