@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { isQuestion, tokenizeText, analyzeStructure, buildStructureAnswerMap } from './nlp/analysis';
+import { etiquetasPos, etiquetasEstructura } from './reporte';
 import { loadProgress, saveProgress, recordAnalysis, recordAttempt, evaluateBadges, BADGES } from './gamification.generated.js';
 import { TOKENS as TOKENS_LIGHT, TOKENS_DARK } from './tokens.generated.js';
 /* Chip de los dos ejes (forma + − ? y tipo abierta/cerrada), generado desde
@@ -2030,6 +2031,9 @@ function App() {
     const etiquetas = (obj) => Object.keys(obj).length
       ? manualTokens.filter(tk => obj[tk.id]).map(tk => `${tk.text}=${obj[tk.id]}`).join(' ')
       : null;
+    /* `etiquetasPos` y `etiquetasEstructura` viven en reporte.js y se prueban
+       allí: son las dos que FALTABAN en el correo, y un reporte incompleto no
+       da error, así que la única defensa es una prueba. */
     return [
       `Desgramatizador ${APP_VERSION}`,
       linea('Nivel', level),
@@ -2039,9 +2043,15 @@ function App() {
       linea('Oración', text),
       isManual ? linea('Marcó (categorías)', etiquetas(userPOSTags)) : null,
       isManual ? linea('Marcó (estructura)', etiquetas(userStructureTags)) : null,
-      /* Lo que la app dijo: sin esto el reporte cuenta la mitad. `analysis.js`
-         etiqueta cada palabra, y el desacuerdo es justo lo que hay que ver. */
-      !isManual && analyzed ? linea('La app leyó', tokens.map(tk => `${tk.text}=${tk.pos || '?'}`).join(' ')) : null,
+      /* En práctica, la app también tiene una opinión: es la que corrige. Sin
+         ella el reporte enseña lo que marcó el alumno y no contra qué se
+         comparó, así que no se puede saber quién de los dos se equivocó. */
+      isManual && analyzed ? linea('La app daba por buenas (categorías)', etiquetasPos(manualTokens)) : null,
+      isManual && analyzed ? linea('La app daba por buenas (estructura)', etiquetasEstructura(structureData)) : null,
+      isManual && analyzed ? linea('Marcador', `${manualView === 'pos' ? Object.keys(userPOSTags).length : Object.keys(userStructureTags).length}/${score.total} etiquetadas · ${score.correct} bien`) : null,
+      isManual ? linea('Ya comprobó', answerChecked ? 'sí' : 'todavía no') : null,
+      !isManual && analyzed ? linea('La app leyó (categorías)', etiquetasPos(tokens)) : null,
+      !isManual && analyzed ? linea('La app leyó (estructura)', etiquetasEstructura(structureData)) : null,
       linea('Error del analizador', nlpError),
       '—',
       linea('Navegador', typeof navigator !== 'undefined' ? navigator.userAgent : ''),
