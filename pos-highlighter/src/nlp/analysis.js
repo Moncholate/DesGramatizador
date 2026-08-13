@@ -4,6 +4,8 @@
 // Las reglas lingüísticas están documentadas en REGLAS.md (raíz del repo).
 // ═══════════════════════════════════════════════════════════
 import nlp from 'compromise';
+/* Frasales del libro: fuente única en Grammar HUB/phrasal-verbs.json. */
+import { PHRASAL_VERB_LIST, PREP_PARTICLES, ADVERBIAL_HEADS, DETERMINERS } from './phrasal.generated.js';
 
 // Clause markers for complexity detection
 const CLAUSE_MARKERS = [
@@ -1632,49 +1634,11 @@ function analyzeStructure(text, level) {
   });
 }
 
-// ── Phrasal Verb detection data ─────────────────────────────────────────────
-// Each entry: [verbBase, ...particles]
-const PHRASAL_VERB_LIST = [
-  // Starter / Book 1
-  ['get','up'], ['wake','up'], ['sit','down'], ['stand','up'],
-  ['go','out'], ['come','in'], ['put','on'], ['take','off'],
-  ['turn','on'], ['turn','off'], ['pick','up'], ['put','down'],
-  ['come','back'], ['go','back'], ['look','at'], ['listen','to'],
-  // Book 2 / Book 3
-  ['find','out'], ['give','up'], ['look','for'], ['look','after'],
-  ['carry','on'], ['set','up'], ['turn','up'], ['turn','down'],
-  ['go','on'], ['come','on'], ['take','up'], ['take','out'],
-  ['take','back'], ['bring','up'], ['bring','back'],
-  ['run','out'], ['run','into'],
-  ['come','up','with'], ['look','forward','to'],
-  ['get','on'], ['get','off'], ['get','along'], ['get','back'],
-  ['give','back'],
-];
-
-// Particles that are ALSO prepositions: when one of these heads a time/place
-// adverbial ("came in the morning", "went on holiday", "in 2020") the word is a
-// preposition, not a phrasal particle. Pure adverb particles (up, down, off,
-// out, back, away…) never have this ambiguity, so they are not listed here.
-const PREP_PARTICLES = new Set(['in', 'on', 'at', 'into', 'after', 'to', 'for']);
-
-// Head nouns that, right after a PREP_PARTICLE, mark the phrase as an adverbial
-// (time/place) rather than the object of a phrasal verb. Kept deliberately
-// narrow (mostly temporal + "home") so legit objects like "look at the board",
-// "get on the bus", "look after the kids" are NOT rejected.
-const ADVERBIAL_HEADS = new Set([
-  // times of day
-  'morning', 'afternoon', 'evening', 'night', 'midnight', 'noon',
-  // weekdays
-  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
-  // months
-  'january', 'february', 'march', 'april', 'may', 'june', 'july',
-  'august', 'september', 'october', 'november', 'december',
-  // periods / seasons / occasions
-  'weekend', 'week', 'weekday', 'holiday', 'holidays', 'vacation', 'vacations',
-  'day', 'summer', 'winter', 'spring', 'autumn', 'fall', 'easter', 'christmas',
-  // common adverbial places with in/on/at
-  'home', 'time', 'foot',
-]);
+/* ── Phrasal Verb detection data ─────────────────────────────────────────────
+   La lista vive en Grammar HUB/phrasal-verbs.json y llega generada. Estaba SOLO
+   aquí, y Question Lab no tenía ninguna: «get up» salía bien en esta app y mal
+   en la otra, que es cómo lo encontró el profesor en clase. Para cambiarla, se
+   edita el JSON y se corre `npm run sync-phrasal` en Grammar HUB. */
 
 /* ¿Detrás de la partícula viene un adverbial de tiempo/lugar? Igual que
    `particleIsPreposition`, pero para la capa de ESTRUCTURA, que no trabaja con
@@ -1691,7 +1655,7 @@ function seguidoDeAdverbial(sentenceText, rawTerms, vEnd) {
   if (!resto.length) return false;
   let head = resto[0].toLowerCase().replace(/[^a-z0-9]/g, '');
   // Se salta un determinante: «on a holiday», «in the morning»
-  if (['the', 'a', 'an', 'my', 'your', 'his', 'her', 'our', 'their'].includes(head)) {
+  if (DETERMINERS.includes(head)) {
     if (resto.length < 2) return false;
     head = resto[1].toLowerCase().replace(/[^a-z0-9]/g, '');
   }

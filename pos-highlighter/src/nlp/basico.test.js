@@ -16,6 +16,8 @@
    ============================================================================ */
 import { describe, it, expect } from 'vitest';
 import { analyzeStructure, tokenizeText } from './analysis';
+/* La lista compartida, para comprobar que llega y no viene vacía. */
+import { PHRASAL_VERB_LIST, PREP_PARTICLES } from './phrasal.generated.js';
 
 /* S/V/C de la oración, en una cadena legible. */
 const svc = (s) => {
@@ -162,5 +164,41 @@ describe('la negación y la pregunta básicas', () => {
   });
   it('Where does she work?', () => {
     expect(verbo('Where does she work?')).toContain('work');
+  });
+});
+
+/* ── Los frasales vienen de una lista COMPARTIDA ────────────────────────────
+   Esta lista vivía solo aquí. Question Lab no tenía ninguna, así que «get up»
+   salía bien en esta app y partido en la otra: el profesor lo encontró en clase
+   y dijo «pensé que habíamos solucionado el problema». Lo estaba, en una sola
+   app. Ahora la fuente es Grammar HUB/phrasal-verbs.json y la consumen las dos;
+   estas pruebas fijan que consumirla desde fuera no cambió nada. */
+describe('verbos frasales desde la lista compartida', () => {
+  const bloques = (frase) => analyzeStructure(frase, 'C1')
+    .flatMap(s => (s.rows || [{ components: s.components }])
+      .flatMap(r => (r.components || []).map(c => `${c.text}=${c.type}`)))
+    .join(' | ');
+
+  it('la partícula va con el verbo', () => {
+    expect(bloques('I get up during the week.')).toMatch(/get up=V/);
+    expect(bloques('She looks for her keys.')).toMatch(/looks for=V/);
+    expect(bloques('They turn off the light.')).toMatch(/turn off=V/);
+  });
+
+  it('la partícula ambigua delante de un adverbial NO se absorbe', () => {
+    // «on» es partícula en «go on», pero aquí encabeza un adverbial de tiempo.
+    // Es la mitad difícil de la regla y la que hay que proteger al tocar la lista.
+    expect(bloques('They go on holiday in summer.')).not.toMatch(/go on=V/);
+    expect(bloques('She came in the morning.')).not.toMatch(/came in=V/);
+  });
+
+  it('la lista llega entera desde el archivo generado', () => {
+    // Si el sync no corrió o el import se rompió, la lista queda vacía y los
+    // frasales dejan de detectarse EN SILENCIO: la app sigue analizando, solo
+    // que peor. Ese es el modo de fallo que hay que cazar aquí.
+    expect(PHRASAL_VERB_LIST.length).toBeGreaterThan(30);
+    expect(PHRASAL_VERB_LIST.some(e => e[0] === 'get' && e[1] === 'up')).toBe(true);
+    expect(PREP_PARTICLES.has('on')).toBe(true);
+    expect(PREP_PARTICLES.has('up')).toBe(false);   // `up` no es ambigua
   });
 });
