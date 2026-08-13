@@ -3071,7 +3071,16 @@ function App() {
       )}
       </>
       ) : panel === 'guide' ? (
-        <GuidePanel lang={lang} />
+        /* La autoría va al final de la Guía: presente pero fuera del camino. No
+           es información que el alumno necesite mientras analiza, y una franja
+           fija se come pantalla en un teléfono. El aviso que pesa a efectos
+           legales es el del código y el LICENSE del repositorio. */
+        <>
+          <GuidePanel lang={lang} />
+          <p className="pb-4 text-[11px] text-slate-400 text-center">
+            Desgramatizador · © 2026 Víctor Manuel Morales Muñoz · {lang === 'es' ? 'Todos los derechos reservados' : 'All rights reserved'}
+          </p>
+        </>
       ) : (
         <ProgressPanel lang={lang} />
       )}

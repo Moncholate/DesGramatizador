@@ -1,0 +1,60 @@
+Copyright © 2026 Víctor Manuel Morales Muñoz. Todos los derechos reservados.
+All rights reserved.
+
+Desgramatizador — parte de la suite Grammar Hub.
+https://moncholate.github.io/Grammar-HUB/
+
+
+NO SE CONCEDE LICENCIA DE USO
+
+Que este repositorio sea público, o que el código llegue a tu navegador al abrir
+la aplicación, NO otorga ningún permiso sobre él. Se publica así por una razón
+técnica: una aplicación web tiene que enviarle su código al navegador para poder
+funcionar, y GitHub Pages sirve desde repositorios públicos.
+
+
+LO QUE SÍ PUEDES HACER
+
+  · Usar la aplicación en tu navegador, gratis y sin registrarte.
+  · Leerla. Es inevitable y no tiene nada de malo: el código de cualquier página
+    web se puede inspeccionar, y de eso se aprende.
+  · Enseñarla, citarla o recomendarla, nombrando su autor.
+
+
+LO QUE NO PUEDES HACER SIN PERMISO POR ESCRITO
+
+  · Copiar, redistribuir o publicar la aplicación, entera o en partes.
+  · Publicar una versión derivada, aunque le cambies el nombre o los colores.
+  · Reutilizar el material didáctico, que es lo que costó hacer: el banco de
+    preguntas, las respuestas escritas a mano, el mapeo de contenidos a las
+    unidades del libro y los textos de la guía.
+  · Usar cualquiera de esos materiales para entrenar modelos.
+  · Usar el nombre de la aplicación o su identidad visual.
+
+
+CÓDIGO Y RECURSOS DE TERCEROS
+
+Este aviso cubre SOLO el trabajo propio. Lo de terceros mantiene su licencia y
+sus condiciones, y ahí este documento no dice nada:
+
+  · Tipografía Lexend
+  · Tipografía Atkinson Hyperlegible (Braille Institute of America)
+  · React y React DOM
+  · compromise
+  · Tailwind CSS, Vite, vite-plugin-pwa, PostCSS, autoprefixer, ESLint y Vitest (herramientas de compilación y pruebas)
+
+Cada una con su propia licencia; se consultan en su paquete o en su sitio.
+
+
+SIN GARANTÍA
+
+El software se entrega «tal cual», sin garantía de ningún tipo. El autor no
+responde por daños derivados de su uso.
+
+
+PERMISOS
+
+Para cualquier uso no contemplado aquí, escribe a:
+v.moralesm@profesor.duoc.cl
+
+Los permisos se dan por escrito. Que alguien no conteste no es un permiso.
