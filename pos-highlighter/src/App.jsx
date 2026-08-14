@@ -2882,10 +2882,17 @@ function App() {
                 </>
               )}
 
-              {/* Racha de rondas 100% correctas (inline) */}
+              {/* NO se llama «Racha» a propósito. En Question Lab y en
+                  Grammaster «racha» son ACIERTOS seguidos; esto son RONDAS
+                  enteras sin un solo fallo, que es otra cosa y bastante más
+                  difícil. Con el mismo nombre y el mismo 🔥, un alumno que usa
+                  las tres apps veía el mismo indicador significando cosas
+                  distintas. Tiene nombre propio, y por lo mismo NO se envía a
+                  `bestAnswerStreak`: mezclar rondas con respuestas en un
+                  `Math.max` regalaría la insignia de puntería. */}
               {isManual && analyzed && answerStreak > 0 && (
                 <span className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold text-red-950 bg-gradient-to-br from-rose-400 to-amber-400 shadow-sm shadow-rose-400/30">
-                  🔥 {lang === 'es' ? 'Racha' : 'Streak'}: {answerStreak}
+                  🔥 {lang === 'es' ? 'Rondas perfectas' : 'Perfect rounds'}: {answerStreak}
                 </span>
               )}
               {/* Score counter: manual mode */}
