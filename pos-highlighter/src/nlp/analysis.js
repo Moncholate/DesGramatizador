@@ -275,7 +275,7 @@ const MODAL_WORD_SET = new Set(['can','could','will','would','shall','should','m
 // Returns the exclusive end index. It stops at the first word that can't
 // belong to the NP, so "Is she happy?" yields subject "she" — not "she happy" —
 // and "Is she a teacher?" yields "she", leaving "a teacher" as complement.
-function findQuestionSubjectEnd(termPOS, start) {
+function findQuestionSubjectEnd(termPOS, start, auxWord = '') {
   let end = start;
   let sawHead = null; // 'pronoun' | 'noun' | null
   for (let i = start; i < termPOS.length; i++) {
@@ -312,6 +312,33 @@ function findQuestionSubjectEnd(termPOS, start) {
     }
     break;
   }
+
+  // Reserve the main verb. After do-support or a modal the question MUST have a
+  // bare-infinitive verb behind the subject — the same "position is proof"
+  // reasoning as isLikelyQuestionMainVerb. So if the tagger found no verb at all
+  // in the rest of the sentence, the last word the scan just swallowed IS that
+  // verb, whatever compromise called it, and it has to be given back.
+  //
+  // "Will Tom and Ana work at home?" is the case that exposed this: a compound
+  // proper-noun subject plus a bare verb that doubles as a noun ("work"), which
+  // compromise tags Noun, so the noun+noun rule above kept eating and the
+  // subject came out as "Tom and Ana work".
+  //
+  // Deliberately NOT applied to be/have: "Is the bus driver happy?" is copular
+  // and has no main verb to reserve, so swallowing both nouns is right there.
+  const requiereInfinitivo = DO_AUX_SET.has(String(auxWord).toLowerCase()) ||
+    MODAL_WORD_SET.has(String(auxWord).toLowerCase());
+  if (requiereInfinitivo && end > start + 1) {
+    const hayVerbo = termPOS.slice(start).some(p => {
+      if (p.isPunct) return false;
+      const tags = p.tags || p.nlpTags || [];
+      return p.pos === 'verb' ||
+        ['Verb', 'Infinitive', 'PresentTense', 'PastTense'].some(t => tags.includes(t));
+    });
+    const ultimo = termPOS[end - 1];
+    if (!hayVerbo && ultimo && ultimo.pos === 'noun') end -= 1;
+  }
+
   return end;
 }
 
@@ -405,7 +432,7 @@ function analyzeSentenceStructure(sentenceText, level) {
       resolverDoSupport(termPOS);
 
       if (auxIndex !== -1) {
-        const preSubjEnd = findQuestionSubjectEnd(termPOS, negAfterAux(auxIndex));
+        const preSubjEnd = findQuestionSubjectEnd(termPOS, negAfterAux(auxIndex), termPOS[auxIndex] && termPOS[auxIndex].text);
         // Skip mid-position adverbs: "Do you really like coffee?"
         let cand = preSubjEnd;
         while (cand < termPOS.length && termPOS[cand].pos === 'adverb') cand++;
@@ -496,7 +523,7 @@ function analyzeSentenceStructure(sentenceText, level) {
           });
 
           // 4. Subject NP after the inverted auxiliary (shared helper)
-          const subjectEnd = findQuestionSubjectEnd(termPOS, subjStart);
+          const subjectEnd = findQuestionSubjectEnd(termPOS, subjStart, termPOS[auxIndex] && termPOS[auxIndex].text);
           const subjectTerms = termPOS.slice(subjStart, subjectEnd);
           if (subjectTerms.length > 0) {
             components.push({ type: 'S', text: subjectTerms.map(t => t.text).join(' '), position: subjStart });
@@ -631,7 +658,7 @@ function analyzeSentenceStructure(sentenceText, level) {
         });
 
         // 2. Subject NP after the inverted auxiliary (shared helper)
-        const subjectEnd = findQuestionSubjectEnd(termPOS, subjStart);
+        const subjectEnd = findQuestionSubjectEnd(termPOS, subjStart, termPOS[0] && termPOS[0].text);
         const subjectTerms = termPOS.slice(subjStart, subjectEnd);
         if (subjectTerms.length > 0) {
           components.push({ type: 'S', text: subjectTerms.map(t => t.text).join(' '), position: subjStart });
@@ -974,6 +1001,48 @@ function analyzeSentenceStructure(sentenceText, level) {
       }
     }
 
+    // Last resort 2: compound proper-noun subject that swallows a bare verb.
+    // "Tom and Ana work at home." leaves doc.verbs() completely EMPTY: compromise
+    // reads the whole "Tom and Ana work" as one noun phrase, because "work" in
+    // its bare form is also a noun. Every fallback above then misses and the
+    // sentence used to come back with zero components — the analysis collapsed
+    // instead of merely mislabelling something.
+    //
+    // It takes both conditions at once, which is why it stayed hidden: "The dogs
+    // work at home." parses fine (common-noun subject), and so does "Tom and Ana
+    // worked at home." (inflected verb). Only compound proper noun + bare
+    // noun-homonym verb hits it.
+    //
+    // The fix is structural rather than another word list: after "X and Y" a word
+    // that compromise lumped into the noun phrase can only be the verb. Question
+    // Lab guards the same noun/verb homonymy in check-analyzer.mjs, but through a
+    // verb lexicon that this app does not have.
+    // The cut is made on the raw words instead of asking compromise for the
+    // compound: at the end of a sentence its #ProperNoun+ swallows the verb too
+    // ("Tom and Ana work." matches whole), so there would be nothing left after
+    // the match. Capitalisation is the same proper-noun signal Rule 11 uses.
+    if (!verbPhrase) {
+      const limpia = (w) => w.replace(/[.,;:!?]+$/, '');
+      const esMayus = (w) => /^[A-Z]/.test(w);
+      const palabras = sentenceText.trim().split(/\s+/);
+      const iAnd = palabras.findIndex(w => limpia(w).toLowerCase() === 'and');
+      // Proper nouns on both sides of "and", and at least one word after them.
+      if (iAnd > 0 && palabras.slice(0, iAnd).every(esMayus)) {
+        let k = iAnd + 1;
+        while (k < palabras.length && esMayus(palabras[k])) k++;
+        const siguiente = limpia(palabras[k] || '');
+        // Function words can't be the verb; anything else in this slot is one.
+        const NO_VERBO = new Set([
+          'a','an','the','this','that','these','those','and','or','but',
+          'at','in','on','of','to','for','from','with','by','about',
+          'my','your','his','her','its','our','their',
+        ]);
+        if (k > iAnd + 1 && siguiente && !NO_VERBO.has(siguiente.toLowerCase())) {
+          verbPhrase = siguiente;
+        }
+      }
+    }
+
     if (!verbPhrase) {
       return { components: [], isComplex, isQuestion: isQuestionSentence, error: 'Could not parse sentence structure' };
     }
@@ -1054,6 +1123,26 @@ function analyzeSentenceStructure(sentenceText, level) {
     if (HAVE_VP_SET.has(verbPhrase.trim().toLowerCase())) {
       const haveToRe = new RegExp(`\\b${verbPhrase.trim()}\\s+to\\s+(\\w+)`, 'i');
       const m = sentenceText.match(haveToRe);
+      if (m) verbPhrase = verbPhrase.trim() + ' to ' + m[1];
+    }
+
+    // Rule 16b: same idea for the past-habit unit "use(d) to + verb".
+    // It needs its own rule because the unit sits at the END of the verb phrase
+    // instead of being the whole of it, so the equality test above cannot see
+    // it. With do-support compromise stops the phrase at "did not use", which
+    // stranded the infinitive in the complement:
+    //     "I didn't use to work at home."  →  V:「did not use」 C:「to work at home」
+    // while the affirmative ("used to work") and the question path — which goes
+    // through splitVerbPhrase, whose SEMI_AUX_STARTERS has accepted 'use' all
+    // along — both kept it inside the verb. The bug was that disagreement.
+    //
+    // Only fires when the phrase ENDS in use/used and "to + verb" follows
+    // immediately, so "I used a key to open the door" is untouched: there the
+    // word after "used" is "a", not "to".
+    if (/\b(use|used)$/i.test(verbPhrase.trim())) {
+      const escapado = verbPhrase.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const useToRe = new RegExp(`\\b${escapado}\\s+to\\s+(\\w+)`, 'i');
+      const m = sentenceText.match(useToRe);
       if (m) verbPhrase = verbPhrase.trim() + ' to ' + m[1];
     }
 
@@ -2126,7 +2215,7 @@ function tokenizeSentence(s, level) {
     // 'verb' when the position (do/did/modal) or the tags prove it. Copular
     // questions ("Is your brother tall?") keep the adjective as adjective.
     if (auxIndex !== -1) {
-      const subjEnd = findQuestionSubjectEnd(tokens, auxIndex + 1);
+      const subjEnd = findQuestionSubjectEnd(tokens, auxIndex + 1, tokens[auxIndex] && tokens[auxIndex].text);
       let candidateIdx = subjEnd;
       while (candidateIdx < tokens.length &&
              !tokens[candidateIdx].isPunct &&

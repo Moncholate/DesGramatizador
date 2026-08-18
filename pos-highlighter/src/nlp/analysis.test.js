@@ -634,3 +634,75 @@ describe('condicionales: condición y resultado', () => {
     expect(forma('We stayed because it rained.')).toBe('[·] «because» [·]');
   });
 });
+
+/* ── Bugs encontrados por el oráculo de paridad de la suite ──────────────────
+   Los dos salieron de Grammaster/src/suite.parity.test.js, que genera oraciones
+   con Grammaster y comprueba que este analizador recupere las piezas que el
+   generador puso. Ninguno de los dos lo habría encontrado una prueba por
+   ejemplos: nadie escribe a mano el caso que no se le ocurrió.
+   ------------------------------------------------------------------------- */
+describe('paridad suite — «use to» al negar (Regla 16b)', () => {
+  /* El analizador agrupaba bien la perífrasis en afirmativo pero la partía al
+     negar, dejando el infinitivo en el complemento. La misma construcción no
+     puede analizarse de dos maneras según la polaridad. */
+  it('el infinitivo se queda dentro del verbo al negar', () => {
+    expect(blocks("I didn't use to work at home."))
+      .toEqual(['S:I', 'V:did not use to work', 'C:at home']);
+    expect(blocks("She didn't use to study."))
+      .toEqual(['S:She', 'V:did not use to study']);
+  });
+
+  it('afirmativo e interrogativo siguen como estaban', () => {
+    expect(blocks('I used to work at home.'))
+      .toEqual(['S:I', 'V:used to work', 'C:at home']);
+    expect(blocks('Did you use to work at home?'))
+      .toEqual(['V:Did', 'S:you', 'V:use to work', 'C:at home']);
+  });
+
+  /* La regla solo dispara si «to» va INMEDIATAMENTE detrás de use/used, así que
+     el «use» de utilizar no se toca: ahí lo que sigue es el objeto. */
+  it('el «use» de utilizar no se fusiona', () => {
+    expect(blocks('I use a key to open the door.'))
+      .toEqual(['S:I', 'V:use', 'C:a key to open the door']);
+  });
+});
+
+describe('paridad suite — sujeto propio compuesto + verbo homónimo de sustantivo', () => {
+  /* «Tom and Ana work at home.» devolvía CERO componentes: compromise leía todo
+     «Tom and Ana work» como un sintagma nominal, porque «work» desnudo también
+     es sustantivo, y ningún fallback lo rescataba. Hacen falta las dos
+     condiciones a la vez, que es por lo que estuvo escondido. */
+  it('el declarativo ya no colapsa', () => {
+    expect(blocks('Tom and Ana work at home.'))
+      .toEqual(['S:Tom and Ana', 'V:work', 'C:at home']);
+    expect(blocks('Tom and Ana study at home.'))
+      .toEqual(['S:Tom and Ana', 'V:study', 'C:at home']);
+    expect(blocks('Tom and Ana work.')).toEqual(['S:Tom and Ana', 'V:work']);
+  });
+
+  /* Cada una de estas funcionaba ya, y son las que prueban que hacen falta las
+     dos condiciones: basta con un sujeto común o con el verbo flexionado. */
+  it('los casos vecinos que ya funcionaban no se mueven', () => {
+    expect(blocks('The dogs work at home.')).toEqual(['S:The dogs', 'V:work', 'C:at home']);
+    expect(blocks('Tom and Ana worked at home.')).toEqual(['S:Tom and Ana', 'V:worked', 'C:at home']);
+    expect(blocks('Tom and Ana go at home.')).toEqual(['S:Tom and Ana', 'V:go', 'C:at home']);
+  });
+
+  /* En interrogativo el sujeto se comía el verbo por la otra ruta
+     (findQuestionSubjectEnd): tras un modal o do-support tiene que quedar un
+     infinitivo detrás del sujeto, así que el último sustantivo es ese verbo. */
+  it('en interrogativo el sujeto ya no se traga el verbo', () => {
+    expect(blocks('Will Tom and Ana work at home?'))
+      .toEqual(['V:Will', 'S:Tom and Ana', 'V:work', 'C:at home']);
+    expect(blocks('Will the bus driver work at home?'))
+      .toEqual(['V:Will', 'S:the bus driver', 'V:work', 'C:at home']);
+  });
+
+  /* La reserva NO se aplica a be/have: una copulativa no tiene verbo principal
+     que reservar, así que ahí el compuesto de sustantivos se consume entero. */
+  it('las copulativas no pierden el último sustantivo del sujeto', () => {
+    expect(blocks('Is the bus driver happy?')).toEqual(['V:Is', 'S:the bus driver', 'C:happy']);
+    expect(blocks('Are Tom and Ana happy?')).toEqual(['V:Are', 'S:Tom and Ana', 'C:happy']);
+    expect(blocks('Does work start at eight?')).toEqual(['V:Does', 'S:work', 'V:start', 'C:at eight']);
+  });
+});
