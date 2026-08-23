@@ -1,6 +1,11 @@
 /* AUTO-GENERATED from design-tokens/tokens.json — do not edit by hand.
    Change tokens.json and run `npm run sync` in Apps/design-tokens. */
 
+/* --state-* va FUERA de los bloques por tema, y no es un descuido: el estado se
+   marca con relleno sólido, así que su contraste es contra su propia tinta y no
+   contra la página. Declararlo por tema daría dos valores idénticos y sugeriría
+   que hay algo que ajustar cuando no lo hay. */
+:root{ --state-fill:#0f6fd6; --state-ink:#ffffff; }
 :root{ --f-aff:#166534; --f-neg:#7f1d1d; --f-int:#175fb8; --f-cap:#edeff7; --f-cap-border:#e1e4f0; --f-cap-ink:#161927; --qt-open:#0f766e; --qt-open-ink:#115e59; --qt-closed:#e11d48; --qt-closed-ink:#9f1239; }
 @media (prefers-color-scheme:dark){ :root{ --f-aff:#bbf7d0; --f-neg:#fca5a5; --f-int:#7cb2fb; --f-cap:#1d2233; --f-cap-border:#2a3042; --f-cap-ink:#eceff8; --qt-open:#2dd4bf; --qt-open-ink:#2dd4bf; --qt-closed:#fb7185; --qt-closed-ink:#fb7185; } }
 :root[data-theme="light"]{ --f-aff:#166534; --f-neg:#7f1d1d; --f-int:#175fb8; --f-cap:#edeff7; --f-cap-border:#e1e4f0; --f-cap-ink:#161927; --qt-open:#0f766e; --qt-open-ink:#115e59; --qt-closed:#e11d48; --qt-closed-ink:#9f1239; }
