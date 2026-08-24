@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "check-contraste": "node check-contraste-render.mjs"
   },
   "dependencies": {
     "compromise": "^14.15.0",
