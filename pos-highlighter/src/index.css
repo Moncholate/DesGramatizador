@@ -195,6 +195,25 @@ button:disabled { cursor: not-allowed; }
 /* Tinta de marca que la capa no invertía y quedaba oscura sobre fondo oscuro.
    Compuestos a propósito: los chips sobre tinte claro conservan su texto. */
 :root[data-theme="dark"] .bg-white.text-indigo-600 { color: #c7d2fe !important; }   /* 2.81 → 11.85 */
+/* La MISMA clase, pero cuando el `bg-white` está en el ANCESTRO y no en el
+   propio elemento: la pestaña activa de la barra inferior, que se quedaba en
+   2,73:1 — el índigo apagado sobre la barra ya oscurecida. La regla de arriba no
+   la alcanza porque empareja las dos clases en un solo elemento.
+   Acotada a `nav button` y no a `.bg-white .text-indigo-600` suelto, que es la
+   trampa de siempre: dentro de una tarjeta blanca también viven chips con tinte
+   índigo CLARO que conservan su fondo, y aclararles la tinta los borraría. */
+:root[data-theme="dark"] nav button.text-indigo-600 { color: #c7d2fe !important; }  /* 2.73 → 10.80 */
+
+/* Los tres glifos que explican las marcas de la Práctica (✓ acertaste ·
+   ✗ no era esa · ? te faltó marcarla). Se oscurecieron en el JSX porque en
+   CLARO no pasaban —el «?» estaba en 1,98:1— y eso los rompió en OSCURO, que es
+   la trampa de siempre con esta capa: un color no se elige contra un tema, se
+   elige contra los dos. Van por `b` porque son los únicos <b> con estas clases;
+   las mismas clases sueltas visten insignias sobre tinte claro, que se quedan
+   como están. */
+:root[data-theme="dark"] b.text-emerald-700 { color: #05df72 !important; }  /* 3.59 → 10.84 */
+:root[data-theme="dark"] b.text-red-700     { color: #ff6467 !important; }  /* 3.00 →  6.67 */
+:root[data-theme="dark"] b.text-amber-700   { color: #fcd34d !important; }  /* 3.83 → 13.37 */
 :root[data-theme="dark"] .hover\:text-red-700:hover { color: #fca5a5 !important; }  /* 2.44 → 8.89 */
 
 /* ── SALIR DEL EJERCICIO ─────────────────────────────────────────────────────

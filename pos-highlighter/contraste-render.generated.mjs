@@ -62,22 +62,50 @@ export const AUDITOR = () => {
     return [d[0], d[1], d[2], d[3] / 255];
   };
 
-  /* El fondo EFECTIVO: sube por el árbol hasta el primer fondo opaco y compone
-     los translúcidos que haya encontrado por el camino. Suponer blanco —o el
-     fondo del padre inmediato— daba ratios inventados en cadena. */
-  const fondo = (el) => {
+  /* Un degradado NO tiene `backgroundColor`: la pinta `background-image`, así
+     que la propiedad de color sale transparente. El auditor se saltaba esa capa
+     y seguía subiendo, y acababa midiendo contra un fondo que el usuario no ve
+     en ningún momento. Costó dos falsos positivos seguidos en la tarjeta de
+     racha de Desgramatizador —texto rojo muy oscuro sobre un degradado ROSA
+     BRILLANTE, o sea perfectamente legible— que el auditor daba en 1,19:1
+     porque medía contra la página.
+     Se sacan las paradas del degradado y luego se mide contra TODAS: un texto
+     encima de un degradado tiene que leerse en todo su recorrido, así que el
+     ratio bueno es el PEOR de sus paradas. Es aproximado (ignora el punto medio
+     de la interpolación) pero es conservador, que es como tiene que fallar una
+     herramienta de accesibilidad. */
+  const paradasDe = (bi) => {
+    if (!bi || bi === 'none') return [];
+    const m = bi.match(/rgba?\([^)]*\)|oklch\([^)]*\)|oklab\([^)]*\)|color\([^)]*\)|#[0-9a-fA-F]{3,8}/g) || [];
+    return m.map(parse).filter(c => c && (c[3] ?? 1) > 0);
+  };
+
+  /* Compone las capas translúcidas acumuladas sobre una base opaca. */
+  const componer = (capas, base) => {
+    let out = base.slice(0, 3);
+    for (let i = capas.length - 1; i >= 0; i--) {
+      const c = capas[i], a = c[3] ?? 1;
+      out = [0, 1, 2].map(k => Math.round(c[k] * a + out[k] * (1 - a)));
+    }
+    return out;
+  };
+
+  /* Los fondos EFECTIVOS: sube por el árbol hasta el primer fondo opaco (o el
+     primer degradado) y compone los translúcidos del camino. Devuelve una LISTA
+     porque un degradado da varios candidatos; lo normal es que traiga uno solo.
+     Suponer blanco —o el fondo del padre inmediato— daba ratios inventados en
+     cadena. */
+  const fondos = (el) => {
     const capas = [];
     for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
-      const c = parse(getComputedStyle(n).backgroundColor);
-      if (c && (c[3] === undefined || c[3] > 0)) { capas.push(c); if ((c[3] ?? 1) >= 1) break; }
+      const cs = getComputedStyle(n);
+      const c = parse(cs.backgroundColor);
+      if (c && (c[3] ?? 1) >= 1) return [componer(capas, c)];
+      const paradas = paradasDe(cs.backgroundImage);
+      if (paradas.length) return paradas.map(p => componer(capas, p));
+      if (c && (c[3] ?? 1) > 0) capas.push(c);
     }
-    if (!capas.length) return [255, 255, 255];
-    let base = capas[capas.length - 1].slice(0, 3);
-    for (let i = capas.length - 2; i >= 0; i--) {
-      const c = capas[i], a = c[3] ?? 1;
-      base = [0, 1, 2].map(k => Math.round(c[k] * a + base[k] * (1 - a)));
-    }
-    return base;
+    return [componer(capas, [255, 255, 255])];
   };
 
   const out = [];
@@ -100,9 +128,15 @@ export const AUDITOR = () => {
 
     const fg = parse(cs.color);
     if (!fg || (fg[3] ?? 1) === 0) continue;
-    const bg = fondo(el);
-    const l1 = lum(...fg.slice(0, 3)), l2 = lum(...bg);
-    const ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+    // Contra un degradado hay varios fondos posibles: se guarda el PEOR, que es
+    // el que decide si el texto se lee en todo el recorrido.
+    const l1 = lum(...fg.slice(0, 3));
+    let ratio = Infinity, bg = null;
+    for (const cand of fondos(el)) {
+      const l2 = lum(...cand);
+      const r = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+      if (r < ratio) { ratio = r; bg = cand; }
+    }
 
     const px = parseFloat(cs.fontSize), peso = parseInt(cs.fontWeight) || 400;
     const grande = px >= 24 || (px >= 18.66 && peso >= 700);
@@ -119,12 +153,23 @@ export const AUDITOR = () => {
 };
 
 /* ── El arnés ─────────────────────────────────────────────────────────────────
-   `conducir(page)`    lleva la app a la pantalla que vale la pena auditar.
+   `conducir(page)`    deja la app en el estado que hace falta para auditar
+                       (escribir, analizar, abrir un panel…). Corre UNA vez.
+   `pantallas`         [{ nombre, ir(page) }] — las vistas que hay que recorrer
+                       en CADA tema. Si no se pasa, se audita solo donde dejó
+                       `conducir`, que es como se comportaba antes.
    `cambiarTema(page)` la pone en oscuro. Cada app tiene su propio conmutador.
    `revisados`         excepciones decididas: { txt, motivo }. Se comparan por
                        inclusión para no depender de la traducción exacta.
+
+   POR QUÉ `pantallas` y no una sola vista: auditar donde quedó `conducir`
+   daba un verde que solo valía para esa pantalla. Desgramatizador salía
+   «CONTRASTE OK» con 33 elementos bajo AA esperando en Guía y Práctica —
+   incluida la Guía, que es justo donde el estudiante va a aprenderse el código
+   de colores. Un chequeo que aprueba mirando un cuarto de la app es peor que
+   no tenerlo, porque además da permiso para no mirar.
    -------------------------------------------------------------------------- */
-export async function correr({ nombre, puerto, conducir, cambiarTema, revisados = [], viewport }) {
+export async function correr({ nombre, puerto, conducir, pantallas, cambiarTema, revisados = [], viewport }) {
   let chromium;
   try {
     ({ chromium } = await import('playwright'));
@@ -164,19 +209,30 @@ export async function correr({ nombre, puerto, conducir, cambiarTema, revisados 
   const perdonar = (f) => revisados.find(r => f.txt.includes(r.txt));
   let fallos = 0, perdonados = 0;
 
+  // Sin `pantallas`, una sola vista implícita: la que dejó `conducir`.
+  const vistas = (pantallas && pantallas.length) ? pantallas : [{ nombre: null, ir: null }];
+
   for (const tema of ['claro', 'oscuro']) {
     if (tema === 'oscuro') await cambiarTema(page);
-    const hallados = await page.evaluate(AUDITOR);
-    const nuevos = hallados.filter(f => !perdonar(f));
-    perdonados += hallados.length - nuevos.length;
-
     console.log(`\n── modo ${tema} ──`);
-    if (!nuevos.length) console.log('   ✓ ningún elemento bajo AA');
-    for (const f of nuevos.sort((a, b) => a.ratio - b.ratio)) {
-      fallos++;
-      console.log(`   ✗ ${String(f.ratio).padStart(5)}:1 (pide ${f.umbral})  ${f.px}px/${f.peso}  «${f.txt}»`);
-      console.log(`       ${f.fg} sobre ${f.bg}`);
+    let enTema = 0;
+
+    for (const vista of vistas) {
+      if (vista.ir) await vista.ir(page);
+      const hallados = await page.evaluate(AUDITOR);
+      const nuevos = hallados.filter(f => !perdonar(f));
+      perdonados += hallados.length - nuevos.length;
+      if (!nuevos.length) continue;
+
+      enTema += nuevos.length;
+      if (vista.nombre) console.log(`   · ${vista.nombre}`);
+      for (const f of nuevos.sort((a, b) => a.ratio - b.ratio)) {
+        fallos++;
+        console.log(`   ✗ ${String(f.ratio).padStart(5)}:1 (pide ${f.umbral})  ${f.px}px/${f.peso}  «${f.txt}»`);
+        console.log(`       ${f.fg} sobre ${f.bg}`);
+      }
     }
+    if (!enTema) console.log('   ✓ ningún elemento bajo AA');
   }
 
   await browser.close();

@@ -2,14 +2,14 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { isQuestion, tokenizeText, analyzeStructure, buildStructureAnswerMap } from './nlp/analysis';
 import { etiquetasPos, etiquetasEstructura } from './reporte';
 import { loadProgress, saveProgress, recordAnalysis, recordAttempt, evaluateBadges, BADGES } from './gamification.generated.js';
-import { TOKENS as TOKENS_LIGHT, TOKENS_DARK } from './tokens.generated.js';
+import { TOKENS as TOKENS_LIGHT, TOKENS_DARK, INK } from './tokens.generated.js';
 /* Chip de los dos ejes (forma + − ? y tipo abierta/cerrada), generado desde
    design-tokens para que sea el MISMO objeto en las cuatro apps. */
 import { FormChip } from './forms.generated.jsx';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 // Colores de rol según el tema resuelto (data-theme). Se (re)construyen en
 // refreshTheme() para que cambien EN VIVO al alternar el tema, sin recargar.
-let IS_DARK, TOKENS, NEUTRAL, POS, STRUCTURE;
+let IS_DARK, TOKENS, TINTA, NEUTRAL, POS, STRUCTURE;
 // Neutros por defecto (casilla bloqueada / palabra sin reconocer / superficie / fundido de scroll)
 // sensibles al tema — los estilos inline no los alcanza el override CSS de modo oscuro.
 function buildNeutral(d){
@@ -375,6 +375,11 @@ function buildSTRUCTURE(){ return {
 function refreshTheme(){
   IS_DARK = (typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'dark');
   TOKENS = IS_DARK ? TOKENS_DARK : TOKENS_LIGHT;
+  /* La tinta de las insignias: lo que va ENCIMA cuando el color del rol es
+     RELLENO. Una sola por tema y no una por rol, porque no depende del rol —
+     ver `roles._inkDesc` en design-tokens. Estaba escrita a mano como 'white',
+     que en claro va bien y en oscuro dejaba la «C» en 1,48:1. */
+  TINTA = IS_DARK ? INK.dark : INK.light;
   NEUTRAL = buildNeutral(IS_DARK);
   POS = buildPOS();
   STRUCTURE = buildSTRUCTURE();
@@ -510,7 +515,7 @@ function WordToken({ text, pos, isPunct, unlocked, showLabels, phrasalVerb, unre
   if (splitParts) {
     return (
       <span className="inline-flex flex-col items-center" style={{ verticalAlign: 'bottom' }}>
-        <span className="text-slate-400 leading-none mb-0.5" style={{ fontSize: 9 }}>{text}</span>
+        <span className="text-muted leading-none mb-0.5" style={{ fontSize: 9 }}>{text}</span>
         <span className="inline-flex items-end gap-0">
           {splitParts.map((part, idx) => {
             const cfg = POS[part.pos];
@@ -807,7 +812,7 @@ function StructurePalette({ level, selectedStructure, onSelectStructure, activeS
     <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-xl">
       <div className="flex items-center gap-2 mb-3">
         <div className="w-0.5 h-4 bg-indigo-600 rounded"></div>
-        <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+        <span className="text-xs font-bold tracking-wider text-muted uppercase">
           {isBasic ? 'Básico/Elemental' : 'Intermedio/Intermedio Alto'}: {t.paintStructure}
         </span>
       </div>
@@ -835,7 +840,7 @@ function StructurePalette({ level, selectedStructure, onSelectStructure, activeS
                 <div className="text-xs font-bold leading-tight" style={{ color: s.color }}>
                   {s.name}
                 </div>
-                <div className="text-[10px] text-slate-500 leading-tight">
+                <div className="text-[10px] text-muted leading-tight">
                   {s.def}
                 </div>
               </div>
@@ -1018,7 +1023,7 @@ function StructureBlock({ type, text, isAuxiliary, isMainVerb, formal, showLabel
           {showLabels && (
             <div
               className="h-6 min-w-[1.5rem] px-1 rounded flex items-center justify-center text-xs font-extrabold flex-shrink-0"
-              style={{ background: s.color, color: 'white' }}
+              style={{ background: s.color, color: TINTA }}
             >
               {s.label}
             </div>
@@ -1050,7 +1055,7 @@ function StructureBlock({ type, text, isAuxiliary, isMainVerb, formal, showLabel
         {showLabels && (
           <div
             className="h-6 min-w-[1.5rem] px-1 rounded flex items-center justify-center text-xs font-extrabold flex-shrink-0"
-            style={{ background: s.color, color: 'white' }}
+            style={{ background: s.color, color: TINTA }}
           >
             {s.label}
           </div>
@@ -1125,7 +1130,7 @@ function ClauseRow({ components, isQuestion, showLabels = true, lang = 'es' }) {
     <div className="flex flex-wrap items-center gap-1">
       {components.map((comp, idx) =>
         comp.implied ? (
-          <span key={idx} className="text-xs text-slate-400 italic px-1">
+          <span key={idx} className="text-xs text-muted italic px-1">
             [{comp.type}: ({comp.text})]
           </span>
         ) : (
@@ -1185,9 +1190,9 @@ function SentenceStructure({ sentence, showLabels = true, lang = 'es' }) {
   if (sentence.error && !hasContent) {
     return (
       <div className="mb-4 p-3 rounded-lg border-2 border-slate-300 bg-slate-50">
-        <div className="text-sm text-slate-500 italic">{sentence.text}</div>
+        <div className="text-sm text-muted italic">{sentence.text}</div>
         {sentence.isQuestion ? (
-          <div className="mt-2 text-xs text-slate-500">⚠️ {sentence.error}</div>
+          <div className="mt-2 text-xs text-muted">⚠️ {sentence.error}</div>
         ) : (
           <>
             {/* Chip de hueco del verbo (estilo bloque de estructura, punteado): como en Question Lab */}
@@ -1199,7 +1204,7 @@ function SentenceStructure({ sentence, showLabels = true, lang = 'es' }) {
                 {t.gapVerb}
               </span>
             </div>
-            <div className="mt-2 text-xs text-slate-500">{t.fragmentNote}</div>
+            <div className="mt-2 text-xs text-muted">{t.fragmentNote}</div>
           </>
         )}
       </div>
@@ -1253,7 +1258,7 @@ function SentenceStructure({ sentence, showLabels = true, lang = 'es' }) {
                que es justo lo que hay que aprender, porque de eso depende el
                tiempo verbal de cada una. */
             <div key={i} className="flex flex-col gap-1">
-              <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500 pl-1">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-muted pl-1">
                 {row.papel === 'condicion' ? t.condicion : t.resultado}
               </span>
               <ClauseRow components={row.components} isQuestion={sentence.isQuestion} showLabels={showLabels} lang={lang} />
@@ -1375,12 +1380,15 @@ function LegendItem({ posKey, unlocked, isManual, isSelected, onSelect }) {
         {unlocked ? p.label : '🔒'}
       </div>
       <div className="min-w-0">
-        <div className="text-sm font-bold leading-tight" style={{ color: unlocked ? p.color : '#94A3B8' }}>
+        {/* `NEUTRAL.lockText` y no un '#94A3B8' escrito a mano: era el mismo
+            valor, pero fijo, así que en modo oscuro esta línea se quedaba con el
+            gris del tema claro mientras el cuadro de al lado sí cambiaba. */}
+        <div className="text-sm font-bold leading-tight" style={{ color: unlocked ? p.color : NEUTRAL.lockText }}>
           {p.name}
         </div>
         <div className="text-xs text-slate-600 mt-0.5 leading-snug">
           {p.def}{' '}
-          <span className="italic text-slate-400">({p.ex})</span>
+          <span className="italic text-muted">({p.ex})</span>
         </div>
       </div>
     </div>
@@ -1402,7 +1410,7 @@ function StructureLegend({ level, lang }) {
     <div className="mb-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-0.5 h-4 bg-indigo-600 rounded"></div>
-        <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+        <span className="text-xs font-bold tracking-wider text-muted uppercase">
           {t.sentenceStructure}
         </span>
       </div>
@@ -1421,7 +1429,7 @@ function StructureLegend({ level, lang }) {
                 <div className="text-sm font-bold leading-tight mb-0.5" style={{ color: s.color }}>
                   {s.name}
                 </div>
-                <div className="text-xs text-slate-500 leading-relaxed">
+                <div className="text-xs text-muted leading-relaxed">
                   {t.structureDef[key]}
                 </div>
               </div>
@@ -1477,11 +1485,11 @@ function Sidebar({
           <>
             <div className="flex items-center gap-2 mb-1">
               <div className="w-0.5 h-4 bg-indigo-600 rounded"></div>
-              <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+              <span className="text-xs font-bold tracking-wider text-muted uppercase">
                 {t.partsOfSpeech}
               </span>
             </div>
-            <p className="text-xs text-slate-300 mb-3.5 ml-2.5">
+            <p className="text-xs text-muted mb-3.5 ml-2.5">
               {isManual ? t.clickToSelect : t.colorReference}
             </p>
 
@@ -1593,12 +1601,12 @@ function MobileBar({
       <div className="md:hidden flex-shrink-0 bg-white border-t border-gray-200 z-30 shadow-[0_-2px_14px_rgba(0,0,0,0.08)]">
         {isBoth && (
           <div className="flex bg-slate-100 rounded-lg p-0.5 mx-3 mt-1.5 gap-0.5">
-            <button onClick={() => setBothTab('structure')} className={`flex-1 py-1 rounded text-xs font-bold transition-all ${bothTab === 'structure' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}>{t.sentenceStructure}</button>
-            <button onClick={() => setBothTab('pos')} className={`flex-1 py-1 rounded text-xs font-bold transition-all ${bothTab === 'pos' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}>{t.partsOfSpeech}</button>
+            <button onClick={() => setBothTab('structure')} className={`flex-1 py-1 rounded text-xs font-bold transition-all ${bothTab === 'structure' ? 'bg-white shadow-sm text-indigo-600' : 'text-muted'}`}>{t.sentenceStructure}</button>
+            <button onClick={() => setBothTab('pos')} className={`flex-1 py-1 rounded text-xs font-bold transition-all ${bothTab === 'pos' ? 'bg-white shadow-sm text-indigo-600' : 'text-muted'}`}>{t.partsOfSpeech}</button>
           </div>
         )}
         {!isBoth && (
-          <div className="px-3 pt-1.5 text-xs font-semibold text-slate-400 tracking-wide">
+          <div className="px-3 pt-1.5 text-xs font-semibold text-muted tracking-wide">
             {isManual ? t.structureModeMobile : t.sentenceStructure.toUpperCase()}
           </div>
         )}
@@ -1629,7 +1637,7 @@ function MobileBar({
           <div className="absolute top-0 right-0 h-full w-10 pointer-events-none" style={{background:`linear-gradient(to right, transparent, ${NEUTRAL.fade})`}} />
         </div>
         {showScrollHint && (
-          <p className="text-xs text-gray-400 text-center mt-0.5 pb-1">{t.scrollHint}</p>
+          <p className="text-xs text-muted text-center mt-0.5 pb-1">{t.scrollHint}</p>
         )}
       </div>
     );
@@ -1639,12 +1647,12 @@ function MobileBar({
     <div className="md:hidden flex-shrink-0 bg-white border-t border-gray-200 z-30 shadow-[0_-2px_14px_rgba(0,0,0,0.08)]">
       {isBoth && (
         <div className="flex bg-slate-100 rounded-lg p-0.5 mx-3 mt-1.5 gap-0.5">
-          <button onClick={() => setBothTab('structure')} className={`flex-1 py-1 rounded text-xs font-bold transition-all ${bothTab === 'structure' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}>{t.sentenceStructure}</button>
-          <button onClick={() => setBothTab('pos')} className={`flex-1 py-1 rounded text-xs font-bold transition-all ${bothTab === 'pos' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}>{t.partsOfSpeech}</button>
+          <button onClick={() => setBothTab('structure')} className={`flex-1 py-1 rounded text-xs font-bold transition-all ${bothTab === 'structure' ? 'bg-white shadow-sm text-indigo-600' : 'text-muted'}`}>{t.sentenceStructure}</button>
+          <button onClick={() => setBothTab('pos')} className={`flex-1 py-1 rounded text-xs font-bold transition-all ${bothTab === 'pos' ? 'bg-white shadow-sm text-indigo-600' : 'text-muted'}`}>{t.partsOfSpeech}</button>
         </div>
       )}
       {!isBoth && (
-        <div className="px-3 pt-1.5 text-xs font-semibold text-slate-400 tracking-wide">
+        <div className="px-3 pt-1.5 text-xs font-semibold text-muted tracking-wide">
           {isManual ? t.paintModeMobile : t.partsOfSpeech.toUpperCase()}
         </div>
       )}
@@ -1677,7 +1685,7 @@ function MobileBar({
         <div className="absolute top-0 right-0 h-full w-10 pointer-events-none" style={{background:`linear-gradient(to right, transparent, ${NEUTRAL.fade})`}} />
       </div>
       {showScrollHint && (
-        <p className="text-xs text-gray-400 text-center mt-0.5 pb-1">{t.scrollHint}</p>
+        <p className="text-xs text-muted text-center mt-0.5 pb-1">{t.scrollHint}</p>
       )}
     </div>
   );
@@ -1697,7 +1705,7 @@ function GuidePanel({ lang }) {
       <span className="h-7 min-w-[1.9rem] px-1 rounded flex items-center justify-center text-xs font-extrabold flex-shrink-0" style={{ background: bg, color }}>{label}</span>
       <div className="min-w-0">
         <div className="text-sm font-bold" style={{ color }}>{name}</div>
-        <div className="text-xs text-slate-500 leading-snug">{def}</div>
+        <div className="text-xs text-muted leading-snug">{def}</div>
       </div>
     </div>
   );
@@ -1761,7 +1769,7 @@ function GuidePanel({ lang }) {
               </p>
             </div>
           </div>
-          <p className="text-xs text-slate-500 mt-2 leading-snug">
+          <p className="text-xs text-muted mt-2 leading-snug">
             {es
               ? <>Ejemplo: en <i>“My brother studies English”</i>, <b>brother</b> ES un sustantivo (POS) y HACE de sujeto (estructura). Un mismo sustantivo puede ser sujeto en una oración y objeto en otra.</>
               : <>Example: in <i>“My brother studies English”</i>, <b>brother</b> IS a noun (POS) and ACTS as the subject (structure). The same noun can be the subject in one sentence and the object in another.</>}
@@ -1789,9 +1797,9 @@ function GuidePanel({ lang }) {
             <li>4. {es ? <>Cuando termines, toca <b>{t.checkAnswers}</b>.</> : <>When you are done, tap <b>{t.checkAnswers}</b>.</>}</li>
           </ol>
           <div className="flex flex-wrap gap-3 text-xs text-slate-600">
-            <span><b className="text-emerald-600">✓</b> {es ? 'acertaste' : 'correct'}</span>
-            <span><b className="text-red-500">✗</b> {es ? 'no era esa' : 'not that one'}</span>
-            <span><b className="text-amber-500">?</b> {es ? 'te faltó marcarla' : 'you left it unmarked'}</span>
+            <span><b className="text-emerald-700">✓</b> {es ? 'acertaste' : 'correct'}</span>
+            <span><b className="text-red-700">✗</b> {es ? 'no era esa' : 'not that one'}</span>
+            <span><b className="text-amber-700">?</b> {es ? 'te faltó marcarla' : 'you left it unmarked'}</span>
           </div>
         </div>
 
@@ -1818,7 +1826,7 @@ function GuidePanel({ lang }) {
 
         <div className="pt-2 border-t border-slate-200">
           <h3 className="font-bold text-slate-700">{es ? 'Referencia de colores' : 'Colour reference'}</h3>
-          <p className="text-xs text-slate-500 mb-3">
+          <p className="text-xs text-muted mb-3">
             {es ? 'Qué significa cada etiqueta y cada color. Te sirve mientras analizas o practicas.'
                 : 'What each label and colour means. Handy while you analyse or practise.'}
           </p>
@@ -1826,7 +1834,7 @@ function GuidePanel({ lang }) {
           <div className="space-y-1">
             {POS_ORDER.map(k => { const p = POS[k]; return (
               <Row key={k} label={p.label} color={p.color} bg={p.bg} name={p.name}
-                def={<>{(t.posDef && t.posDef[k]) || p.def} <span className="italic text-slate-400">({p.ex})</span></>} />
+                def={<>{(t.posDef && t.posDef[k]) || p.def} <span className="italic text-muted">({p.ex})</span></>} />
             ); })}
           </div>
         </div>
@@ -1874,8 +1882,8 @@ function ProgressPanel({ lang }) {
         <div className={`rounded-xl p-4 flex items-center gap-4 ${streak > 0 ? 'bg-gradient-to-br from-rose-400 to-amber-400 shadow-lg shadow-rose-400/30' : 'bg-slate-50 border border-slate-200'}`}>
           <span className="text-4xl">{streak > 0 ? '🔥' : '💤'}</span>
           <div>
-            <p className={`text-2xl font-bold ${streak > 0 ? 'text-red-950' : 'text-slate-500'}`}>{streak} {es ? 'días de racha' : 'day streak'}</p>
-            <p className={`text-xs ${streak > 0 ? 'text-red-950/85' : 'text-slate-400'}`}>{es ? 'Mejor' : 'Best'}: {best}</p>
+            <p className={`text-2xl font-bold ${streak > 0 ? 'text-red-950' : 'text-muted'}`}>{streak} {es ? 'días de racha' : 'day streak'}</p>
+            <p className={`text-xs ${streak > 0 ? 'text-red-950/85' : 'text-muted'}`}>{es ? 'Mejor' : 'Best'}: {best}</p>
           </div>
         </div>
         {/* Práctica manual: rondas, precisión y lo que más cuesta */}
@@ -1884,11 +1892,11 @@ function ProgressPanel({ lang }) {
             <div className="grid grid-cols-2 gap-3 text-center">
               <div>
                 <p className="text-2xl font-bold text-indigo-600">{dg.rounds}</p>
-                <p className="text-xs text-slate-500">{es ? 'Rondas verificadas' : 'Rounds checked'}</p>
+                <p className="text-xs text-muted">{es ? 'Rondas verificadas' : 'Rounds checked'}</p>
               </div>
               <div>
                 <p className="text-2xl font-bold text-emerald-600">{acc}%</p>
-                <p className="text-xs text-slate-500">{es ? 'Precisión total' : 'Overall accuracy'}</p>
+                <p className="text-xs text-muted">{es ? 'Precisión total' : 'Overall accuracy'}</p>
               </div>
             </div>
             {hardest.length > 0 && (
@@ -1906,7 +1914,7 @@ function ProgressPanel({ lang }) {
                         <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                           <div className="h-full rounded-full" style={{ width: `${h.pct}%`, background: meta.color }} />
                         </div>
-                        <span className="text-xs text-slate-500 w-9 text-right">{h.pct}%</span>
+                        <span className="text-xs text-muted w-9 text-right">{h.pct}%</span>
                       </div>
                     );
                   })}
@@ -1922,7 +1930,7 @@ function ProgressPanel({ lang }) {
             return (
               <div key={b.id} title={name} className={`flex flex-col items-center text-center gap-1 p-2.5 rounded-xl border ${on ? 'bg-white border-rose-200' : 'bg-slate-50 border-slate-200 opacity-50'}`}>
                 <span className="text-2xl leading-none">{on ? b.icon : '🔒'}</span>
-                <span className="text-[0.6rem] text-slate-500 leading-tight">{name}</span>
+                <span className="text-[0.6rem] text-muted leading-tight">{name}</span>
               </div>
             ); })}
         </div>
@@ -1946,7 +1954,7 @@ function BottomNav({ section, onSelect, lang }) {
           <button key={key} onClick={() => onSelect(key)} aria-pressed={section === key}
             /* hover:text-gray-800 y no -600: QL salta de gris apagado a texto
                pleno y por eso se nota. Con -600 el cambio era casi invisible. */
-            className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-colors ${section === key ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-800'}`}>
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-colors ${section === key ? 'text-indigo-600' : 'text-muted hover:text-ink'}`}>
             <span className="text-xl leading-none">{icon}</span>
             <span className="text-[10px] font-bold leading-tight">{label}</span>
           </button>
@@ -2467,7 +2475,7 @@ function App() {
                 <h3 className="font-bold text-gray-800">{t.reportar}</h3>
                 <p className="text-xs text-gray-600 mt-0.5">{t.reporteAyuda}</p>
               </div>
-              <button onClick={() => setReporte(null)} aria-label={t.cerrarReporte} className="flex-shrink-0 px-1 text-slate-400 hover:text-slate-700">✕</button>
+              <button onClick={() => setReporte(null)} aria-label={t.cerrarReporte} className="flex-shrink-0 px-1 text-muted hover:text-ink">✕</button>
             </div>
             {/* Numerados de verdad: es una secuencia y hay que hacerla en orden. */}
             <ol className="text-xs text-gray-700 space-y-1 list-decimal list-inside marker:font-bold marker:text-indigo-600">
@@ -2558,7 +2566,7 @@ function App() {
               <div className="text-lg md:text-base font-bold text-slate-800 leading-tight">
                 {t.appTitle}
               </div>
-              <div className="text-xs text-slate-400">{t.appSubtitle}</div>
+              <div className="text-xs text-muted">{t.appSubtitle}</div>
             </div>
           </div>
 
@@ -2572,8 +2580,8 @@ function App() {
                   ))}
                 </select>
                 <div className="flex bg-slate-100 border border-slate-200 rounded-lg p-0.5">
-                  <button onClick={() => setLang('es')} className={`px-2 py-0.5 rounded text-xs font-bold transition-all ${lang === 'es' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`} title="Español">ES</button>
-                  <button onClick={() => setLang('en')} className={`px-2 py-0.5 rounded text-xs font-bold transition-all ${lang === 'en' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`} title="English">EN</button>
+                  <button onClick={() => setLang('es')} className={`px-2 py-0.5 rounded text-xs font-bold transition-all ${lang === 'es' ? 'bg-white shadow-sm text-indigo-600' : 'text-muted hover:text-ink'}`} title="Español">ES</button>
+                  <button onClick={() => setLang('en')} className={`px-2 py-0.5 rounded text-xs font-bold transition-all ${lang === 'en' ? 'bg-white shadow-sm text-indigo-600' : 'text-muted hover:text-ink'}`} title="English">EN</button>
                 </div>
               </div>
             )}
@@ -2602,8 +2610,8 @@ function App() {
               ))}
             </select>
             <div className="flex bg-slate-100 border border-slate-200 rounded-lg p-0.5">
-              <button onClick={() => setLang('es')} className={`px-2 py-0.5 rounded text-xs font-bold transition-all ${lang === 'es' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`} title="Español">ES</button>
-              <button onClick={() => setLang('en')} className={`px-2 py-0.5 rounded text-xs font-bold transition-all ${lang === 'en' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`} title="English">EN</button>
+              <button onClick={() => setLang('es')} className={`px-2 py-0.5 rounded text-xs font-bold transition-all ${lang === 'es' ? 'bg-white shadow-sm text-indigo-600' : 'text-muted hover:text-ink'}`} title="Español">ES</button>
+              <button onClick={() => setLang('en')} className={`px-2 py-0.5 rounded text-xs font-bold transition-all ${lang === 'en' ? 'bg-white shadow-sm text-indigo-600' : 'text-muted hover:text-ink'}`} title="English">EN</button>
             </div>
           </div>
         )}
@@ -2773,13 +2781,13 @@ function App() {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-400">{text.length} {t.charsCount}</span>
+                  <span className="text-xs text-muted">{text.length} {t.charsCount}</span>
                   {(text || analyzed) && (
                     <button
                       onClick={handleClearText}
                       title={t.clearText}
                       aria-label={t.clearText}
-                      className="shrink-0 flex items-center px-2 py-1 text-gray-500 hover:text-red-700 hover:bg-red-50 rounded-lg border border-gray-200 hover:border-red-200 transition-all"
+                      className="shrink-0 flex items-center px-2 py-1 text-muted hover:text-red-700 hover:bg-red-50 rounded-lg border border-gray-200 hover:border-red-200 transition-all"
                     >
                       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                     </button>
@@ -2901,14 +2909,14 @@ function App() {
                   <strong className="text-slate-800 text-base">
                     {manualView === 'pos' ? Object.keys(userPOSTags).length : Object.keys(userStructureTags).length}
                   </strong>
-                  <span className="text-slate-300">/</span>
+                  <span className="text-muted">/</span>
                   <strong className="text-slate-800 text-base">{score.total}</strong>
                   <span>{t.tagged}</span>
                   {answerChecked && (
                     <>
-                      <span className="mx-1 text-slate-300">•</span>
+                      <span className="mx-1 text-muted">•</span>
                       <strong className="text-emerald-600 text-base">{score.correct}</strong>
-                      <span className="text-slate-300">/</span>
+                      <span className="text-muted">/</span>
                       <strong className="text-slate-800 text-base">{score.total}</strong>
                       <span>{t.correctLabel}</span>
                     </>
@@ -3084,7 +3092,7 @@ function App() {
            legales es el del código y el LICENSE del repositorio. */
         <>
           <GuidePanel lang={lang} />
-          <p className="pb-4 text-[11px] text-slate-400 text-center">
+          <p className="pb-4 text-[11px] text-muted text-center">
             Desgramatizador · © 2026 Víctor Manuel Morales Muñoz · {lang === 'es' ? 'Todos los derechos reservados' : 'All rights reserved'}
           </p>
         </>

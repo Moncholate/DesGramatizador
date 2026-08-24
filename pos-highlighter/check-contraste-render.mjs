@@ -39,6 +39,17 @@ correr({
     await page.waitForTimeout(900);
   },
 
+  /* Las cuatro pestañas, no solo Análisis. Auditar únicamente donde quedó
+     `conducir` daba un verde que valía para un cuarto de la app: había 33
+     elementos bajo AA escondidos aquí, y la mayor parte en la GUÍA, que es la
+     pantalla donde el estudiante se aprende el código de colores. */
+  pantallas: [
+    { nombre: 'Análisis', ir: (page) => page.locator('nav button:has-text("Análisis")').first().click().then(() => page.waitForTimeout(500)) },
+    { nombre: 'Guía',     ir: (page) => page.locator('nav button:has-text("Guía")').first().click().then(() => page.waitForTimeout(500)) },
+    { nombre: 'Práctica', ir: (page) => page.locator('nav button:has-text("Práctica")').first().click().then(() => page.waitForTimeout(500)) },
+    { nombre: 'Progreso', ir: (page) => page.locator('nav button:has-text("Progreso")').first().click().then(() => page.waitForTimeout(500)) },
+  ],
+
   cambiarTema: async (page) => {
     await page.locator('button:has-text("Oscuro")').first().click();
     await page.waitForTimeout(600);
@@ -47,5 +58,21 @@ correr({
   /* Un fallo que se decide no arreglar se anota aquí con su motivo, y entonces
      deja de contar. Mismo criterio que `check-dark.mjs`: exige una decisión
      humana UNA VEZ y la deja escrita. */
-  revisados: [],
+  revisados: [
+    {
+      txt: 'Conjunction',
+      motivo: 'Categoría POS por encima del nivel elegido: la fila va bloqueada. ' +
+              'WCAG 1.4.3 exime del contraste mínimo a los componentes de interfaz ' +
+              'INACTIVOS, y este lo está de verdad (no es clicable, no recibe foco, ' +
+              'no tiene rol). El estado no lo comunica solo el gris: la etiqueta se ' +
+              'sustituye por un 🔒 y la fila entera va al 40% de opacidad, así que ' +
+              'quien no distinga el gris igual ve que está cerrada. Oscurecerlo para ' +
+              'que pase la medición lo dejaría con el mismo peso que una categoría ' +
+              'abierta, que es justo lo contrario de lo que tiene que decir.',
+    },
+    {
+      txt: 'Numeral',
+      motivo: 'La otra categoría bloqueada en Básico/Elemental. Mismo motivo que «Conjunction».',
+    },
+  ],
 });
