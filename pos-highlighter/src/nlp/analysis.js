@@ -1139,11 +1139,24 @@ function analyzeSentenceStructure(sentenceText, level) {
     // Only fires when the phrase ENDS in use/used and "to + verb" follows
     // immediately, so "I used a key to open the door" is untouched: there the
     // word after "used" is "a", not "to".
+    // El infinitivo puede ser un PHRASAL, y entonces la partícula es parte del
+    // verbo: "didn't use to get up" → V:「did not use to get up」, no
+    // 「did not use to get」 con un 「up」 suelto en el complemento. Lo encontró el
+    // oráculo diferencial en cuanto Grammaster empezó a aceptar frasales en su
+    // campo Verbo: doce combinaciones, todas de `used to` + negativa, que es el
+    // único camino que pasa por aquí. El afirmativo y la pregunta ya iban bien
+    // porque cruzan `splitVerbPhrase`, que sí mira PHRASAL_BY_VERB.
     if (/\b(use|used)$/i.test(verbPhrase.trim())) {
       const escapado = verbPhrase.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const useToRe = new RegExp(`\\b${escapado}\\s+to\\s+(\\w+)`, 'i');
+      const useToRe = new RegExp(`\\b${escapado}\\s+to\\s+(\\w+)(?:\\s+(\\w+))?`, 'i');
       const m = sentenceText.match(useToRe);
-      if (m) verbPhrase = verbPhrase.trim() + ' to ' + m[1];
+      if (m) {
+        const base = m[1].toLowerCase();
+        const siguiente = (m[2] || '').toLowerCase();
+        const particulas = PHRASAL_BY_VERB.get(base) || [];
+        const esParticula = siguiente && particulas.some(p => p[0] === siguiente);
+        verbPhrase = verbPhrase.trim() + ' to ' + m[1] + (esParticula ? ' ' + m[2] : '');
+      }
     }
 
     // Find where the verb appears in the sentence (word-boundary safe)
