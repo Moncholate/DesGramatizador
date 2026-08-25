@@ -7,6 +7,28 @@ import nlp from 'compromise';
 /* Frasales del libro: fuente única en Grammar HUB/phrasal-verbs.json. */
 import { PHRASAL_VERB_LIST, PREP_PARTICLES, ADVERBIAL_HEADS, DETERMINERS } from './phrasal.generated.js';
 
+/* ¿Esta palabra puede ser un verbo, mirándola SOLA?
+   Compromise etiqueta por posición, y eso es justo lo que falla en las dos
+   trampas que esta función viene a resolver: en «The dog runs.» decide que
+   `runs` es Noun,Plural porque va detrás de un sustantivo, y en «Reading helps
+   you learn.» decide que `helps` es Noun,Plural porque va detrás de algo que
+   leyó como verbo. En los dos casos la palabra, suelta y sin la -s, es un verbo
+   clarísimo.
+
+   Medido sobre 18 palabras —9 verbos y 9 sustantivos—: acierta los 9 verbos y
+   solo confunde `keys`→`key` y `books`→`book`, que son verbos de verdad en
+   inglés. Los marcos que preguntan por posición («they X», «must X») dan 7
+   falsos positivos de 9, porque vuelven a suponer verbo por el sitio. */
+const pareceVerbo = (palabra) => {
+  const limpia = String(palabra || '').replace(/[.,;:!?]+$/, '').toLowerCase();
+  if (!/^[a-z']+$/.test(limpia)) return false;
+  const base = limpia
+    .replace(/ies$/, 'y')
+    .replace(/(ch|sh|ss|x|z|o)es$/, '$1')
+    .replace(/s$/, '');
+  return (nlp(base).json()[0]?.terms?.[0]?.tags || []).includes('Verb');
+};
+
 // Clause markers for complexity detection
 const CLAUSE_MARKERS = [
   'because', 'although', 'when', 'if', 'unless', 'while', 'since',
@@ -831,15 +853,55 @@ function analyzeSentenceStructure(sentenceText, level) {
           }
 
           const verbIdx  = wordIndexOf(afterSubject, verbText);
-          const afterVerb = verbIdx !== -1
+          /* El punto final fuera, igual que hace el camino principal. Esta rama
+             sale por su cuenta antes de llegar allí, así que la limpieza no la
+             heredaba: «Swimming is fun.» daba C:「fun.」 mientras «She is happy.»
+             daba C:「happy」. El mismo bloque, con puntuación o sin ella según
+             qué clase de sujeto llevara la oración. */
+          const afterVerb = (verbIdx !== -1
             ? afterSubject.substring(verbIdx + verbText.length).trim()
-            : '';
+            : '').replace(/[.!?]+$/, '');
 
           return {
             components: [
               { type: 'S', text: subjectText },
               { type: 'V', text: verbText },
               ...(afterVerb ? [{ type: 'C', text: afterVerb }] : []),
+            ],
+            isComplex,
+            isQuestion: isQuestionSentence,
+            error: null,
+          };
+        }
+      }
+
+      /* El predicado empieza por un verbo LÉXICO, no por un auxiliar, y encima
+         uno que compromise lee mal. «Reading helps you learn.» daba
+         V:「Reading」 C:「helps you learn」 — la oración se quedaba SIN SUJETO,
+         con el gerundio ascendido a verbo.
+         Pasa cuando la forma en -s del verbo también es un sustantivo plural
+         (`helps`, `causes`): compromise la etiqueta Noun,Plural y se queda con
+         el -ing de delante como único verbo. Con `takes`, `keeps` o `makes` no
+         pasa, y por eso «Cooking takes time.» siempre funcionó — la diferencia
+         no era la estructura, era el diccionario.
+
+         La firma es exacta: el primer verbo que ve compromise ES la palabra en
+         -ing inicial. Con eso el rango es estrecho y no toca las oraciones donde
+         acierta. Se descarta si hay coma en el sujeto, para no llevarse por
+         delante las participiales del tipo «Walking home, I saw a dog». */
+      const primerVerbo = doc.verbs().first();
+      if (primerVerbo.found && primerVerbo.text().replace(/[.,;:!?]+$/, '') === firstWordText.replace(/[.,;:!?]+$/, '')) {
+        const palabras = sentenceText.trim().split(/\s+/);
+        const iVerbo = palabras.findIndex((w, i) => i > 0 && pareceVerbo(w));
+        const sujeto = palabras.slice(0, iVerbo).join(' ');
+        if (iVerbo > 0 && !sujeto.includes(',')) {
+          const verbo = palabras[iVerbo].replace(/[.,;:!?]+$/, '');
+          const resto = palabras.slice(iVerbo + 1).join(' ').replace(/[.!?]+$/, '');
+          return {
+            components: [
+              { type: 'S', text: sujeto },
+              { type: 'V', text: verbo },
+              ...(resto ? [{ type: 'C', text: resto }] : []),
             ],
             isComplex,
             isQuestion: isQuestionSentence,
@@ -1043,6 +1105,35 @@ function analyzeSentenceStructure(sentenceText, level) {
       }
     }
 
+    /* ÚLTIMO RECURSO 3 · «The dog runs.» — sujeto singular con determinante y el
+       verbo cerrando la oración.
+       Compromise lee «the dog runs» como una frase NOMINAL de tres piezas y
+       etiqueta `runs` como Noun,Plural, así que `verbs()` sale vacío y la app
+       devolvía CERO componentes con «Could not parse sentence structure». No es
+       un caso raro: son «The cat sleeps», «The boy walks», «The man works», «A
+       dog runs», «My dog runs» — la oración más básica que se enseña. Se
+       desambigua solo si hay algo detrás («The dog runs fast» sí funciona), si
+       el sujeto es plural o si es un pronombre.
+
+       LA PRUEBA: quitarle la -s a la última palabra y preguntar por ESA, suelta.
+       Medido sobre 18 palabras — 9 verbos y 9 sustantivos —, acierta los 9
+       verbos y solo confunde `keys`→`key` y `books`→`book`, que son verbos de
+       verdad en inglés. Otros marcos que probé son mucho peores: «they X» y
+       «must X» dan 7 falsos positivos de 9, porque compromise supone verbo por
+       la posición sin mirar la palabra.
+
+       Solo se intenta cuando NO se encontró ningún verbo, así que lo peor que
+       puede pasar es que un fragmento nominal de verdad («The car keys.») se lea
+       como sujeto + verbo. A cambio de que deje de fallar la oración con la que
+       empieza el curso, y sabiendo que hoy ese fragmento tampoco daba nada.
+       «The dog and the cat.» sigue sin analizarse, que es lo correcto: `cat`
+       suelto es Noun. */
+    if (!verbPhrase) {
+      const palabras = sentenceText.trim().split(/\s+/);
+      const ultima = (palabras[palabras.length - 1] || '').replace(/[.,;:!?]+$/, '');
+      if (palabras.length >= 2 && pareceVerbo(ultima)) verbPhrase = ultima;
+    }
+
     if (!verbPhrase) {
       return { components: [], isComplex, isQuestion: isQuestionSentence, error: 'Could not parse sentence structure' };
     }
@@ -1156,6 +1247,48 @@ function analyzeSentenceStructure(sentenceText, level) {
         const particulas = PHRASAL_BY_VERB.get(base) || [];
         const esParticula = siguiente && particulas.some(p => p[0] === siguiente);
         verbPhrase = verbPhrase.trim() + ' to ' + m[1] + (esParticula ? ' ' + m[2] : '');
+      }
+    }
+
+    /* El punto final NO es parte del verbo. `verbs()` de compromise devuelve
+       «runs.» con el punto pegado cuando el verbo cierra la oración, y ese punto
+       viajaba hasta la pantalla: el bloque V decía 「works.」 mientras el mismo
+       verbo en medio de la frase decía 「works」. `afterVerb`, aquí abajo, ya se
+       limpiaba desde siempre — era solo el verbo el que no.
+       Se corta aquí y no antes porque este es el punto donde la frase verbal
+       queda fija, después de todas las reglas que la amplían. Lo que quede
+       detrás lo recoge `afterVerb`, que vuelve a limpiar. */
+    verbPhrase = verbPhrase.replace(/[.,;:!?]+$/, '');
+
+    /* EL GERUNDIO QUE SIGUE A UN VERBO LÉXICO ES COMPLEMENTO, NO VERBO.
+       Compromise agrupa «likes swimming» en una sola frase verbal, así que la
+       app daba:
+
+           He likes to swim.    S:「He」  V:「likes」  C:「to swim」
+           He likes swimming.   S:「He」  V:「likes swimming」
+
+       La misma relación con dos análisis distintos según la forma del segundo
+       verbo, que en clase es exactamente lo que no se puede enseñar. Question
+       Lab ya lo hace bien —verb:「like」 comp:「swimming」—, así que no es una
+       cuestión de criterio: era esta app la que se salía de la fila.
+
+       Se parte SOLO si la cabeza es un verbo léxico. Con `be` o `have` delante
+       el -ing es un tiempo continuo y va dentro del verbo: «is swimming», «has
+       been working», «is going to travel». La negación se salta al buscar la
+       cabeza, o «isn't swimming» se leería como cabeza «not» y se partiría un
+       continuo por la mitad. */
+    {
+      const partes = verbPhrase.split(/\s+/);
+      const iIng = partes.findIndex((w, i) => i > 0 && /ing$/i.test(w));
+      if (iIng > 0) {
+        const cabeza = partes.slice(0, iIng);
+        const sinNegacion = cabeza.filter(w => !/^(not|n['’]t)$/i.test(w));
+        const ultima = (sinNegacion[sinNegacion.length - 1] || '').toLowerCase();
+        const AUXILIARES = new Set(['am', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+                                    'have', 'has', 'had', 'get', 'gets', 'got', 'getting',
+                                    'will', 'would', 'shall', 'should', 'can', 'could',
+                                    'may', 'might', 'must', 'do', 'does', 'did']);
+        if (ultima && !AUXILIARES.has(ultima)) verbPhrase = cabeza.join(' ');
       }
     }
 
