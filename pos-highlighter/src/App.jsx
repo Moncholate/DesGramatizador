@@ -53,7 +53,11 @@ function ThemeToggle({ lang = 'es' }) {
       aria-label={`${lang === 'es' ? 'Cambiar a modo' : 'Switch to'} ${name.toLowerCase()}`}
     >
       <span className="text-base leading-none">{target === 'dark' ? '🌙' : '☀️'}</span>
-      <span>{name}</span>
+      {/* El rótulo se va en pantalla de teléfono, como ya hace el de Reportar.
+          Sin esto, a 360px el botón de Reportar terminaba en x=375 — fuera de
+          la pantalla y con scroll horizontal, y 360 es el ancho de bastantes
+          Android. El `title` y el `aria-label` siguen diciendo la acción. */}
+      <span className="hidden sm:inline">{name}</span>
     </button>
   );
 }
@@ -2556,17 +2560,21 @@ function App() {
       <header className="flex-shrink-0 bg-white border-b border-gray-200 shadow-sm z-10 px-4 pt-3 pb-2.5">
         {/* Row 1: logo + title */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          {/* `min-w-0` en los dos niveles: sin eso la marca no encoge y toda la
+              falta de sitio se la come el lado de los controles, que acaba
+              saliéndose de la pantalla. Antes de que Reportar se vaya fuera del
+              borde, que ceda el texto. */}
+          <div className="flex items-center gap-3 min-w-0">
             <img
               src={`${import.meta.env.BASE_URL}logo.svg`}
               alt="Desgramatizador"
               className="w-11 h-11 md:w-9 md:h-9 rounded-[22%] flex-shrink-0"
             />
-            <div>
-              <div className="text-lg md:text-base font-bold text-slate-800 leading-tight">
+            <div className="min-w-0">
+              <div className="text-lg md:text-base font-bold text-slate-800 leading-tight truncate">
                 {t.appTitle}
               </div>
-              <div className="text-xs text-muted">{t.appSubtitle}</div>
+              <div className="text-xs text-muted truncate">{t.appSubtitle}</div>
             </div>
           </div>
 
