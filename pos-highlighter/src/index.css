@@ -41,11 +41,10 @@
 :root[data-theme="dark"] .to-emerald-100 { --tw-gradient-to: #16432f !important; }
 :root[data-theme="dark"] .from-purple-50 { --tw-gradient-from: #241b3c !important; }
 :root[data-theme="dark"] .to-purple-100 { --tw-gradient-to: #2e2350 !important; }
-:root[data-theme="dark"] .from-rose-50 { --tw-gradient-from: #3a1720 !important; }
-:root[data-theme="dark"] .to-rose-100 { --tw-gradient-to: #4a1d29 !important; }
-:root[data-theme="dark"] .from-amber-50 { --tw-gradient-from: #2e2410 !important; }
-:root[data-theme="dark"] .to-amber-100 { --tw-gradient-to: #41310f !important; }
-:root[data-theme="dark"] .bg-orange-50 { background-color: #2e2410 !important; }
+/* Los gradientes de la app son EXACTAMENTE dos (emerald y purple, las dos
+   tarjetas del resumen). Aquí había cuatro overrides más —rose y amber— para
+   clases que App.jsx no usa, y un `.bg-orange-50` igual de huérfano: el naranja
+   solo vive en el chip `bg-orange-100`, que se queda claro a propósito. */
 :root[data-theme="dark"] .border-orange-200, :root[data-theme="dark"] .border-amber-300 { border-color: #3a3320 !important; }
 /* texto de estado (banners) que quedaba oscuro → claro */
 :root[data-theme="dark"] .text-blue-900, :root[data-theme="dark"] .text-blue-800, :root[data-theme="dark"] .text-orange-900, :root[data-theme="dark"] .text-emerald-800, :root[data-theme="dark"] .text-emerald-900, :root[data-theme="dark"] .text-indigo-800, :root[data-theme="dark"] .text-amber-800, :root[data-theme="dark"] .text-purple-800, :root[data-theme="dark"] .text-teal-800 { color: #dfe4f0 !important; }
