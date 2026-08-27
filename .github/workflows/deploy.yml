@@ -3,6 +3,11 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  # Para poder relanzar el despliegue sin ensuciar el historial con un commit
+  # vacío. Question Lab y Grammar HUB ya lo tenían; el día que a Grammaster se
+  # le quedó una ejecución colgada, no tenerlo fue lo que obligó a inventar un
+  # commit para volver a disparar el workflow.
+  workflow_dispatch:
 
 permissions:
   contents: read
