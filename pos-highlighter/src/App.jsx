@@ -345,7 +345,13 @@ const TRANSLATIONS = {
 // tintes claros en modo oscuro (verb/modal/auxiliary/wh ya son dark-aware vía TOKENS).
 const pc = (light, lbg, dark, dbg) => IS_DARK ? { color: dark, bg: dbg } : { color: light, bg: lbg };
 function buildPOS(){ return {
-  noun:         { ...pc('#B45309', '#FEF3C7', '#fbbf24', '#2e2410'), label: 'N',    name: 'Noun',         def: 'person, place, thing, or idea', ex: 'dog, city, love'           },
+  /* amber-800 y no amber-700: #B45309 sobre este tinte daba 4,51:1, o sea que
+     APROBABA por una centésima. Un margen así no es un margen — cualquier
+     retoque del tinte lo tumbaba, y el sustantivo es la categoría que más
+     aparece en cualquier texto. Con #854D0E son 6,15. Es el mismo salto que ya
+     hizo el ámbar del rol adverbio en los tokens, y por lo mismo: el ámbar es
+     el color más claro de la paleta y el que menos margen tiene. */
+  noun:         { ...pc('#854D0E', '#FEF3C7', '#fbbf24', '#2e2410'), label: 'N',    name: 'Noun',         def: 'person, place, thing, or idea', ex: 'dog, city, love'           },
   verb:         { color: TOKENS.verb.color, bg: TOKENS.verb.bg, label: 'V',    name: 'Verb',         def: 'action or state',               ex: 'run, is, think'            },
   adjective:    { ...pc('#0E7490', '#CFFAFE', '#22d3ee', '#0e2a30'), label: 'ADJ',  name: 'Adjective',    def: 'describes a noun',              ex: 'big, happy, red'           },
   adverb:       { ...pc('#A16207', '#FEFCE8', '#fde047', '#2c2910'), label: 'ADV',  name: 'Adverb',       def: 'modifies verb or adjective',    ex: 'quickly, very, often'      },
