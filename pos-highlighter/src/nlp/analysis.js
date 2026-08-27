@@ -1812,9 +1812,13 @@ const ADVERB_LEX = new Set([
   'just', 'already', 'still', 'also', 'really', 'generally', 'recently', 'frequently',
   'occasionally', 'normally', 'hardly', 'barely', 'nearly', 'almost', 'even',
 ]);
-// Pull leading adverbs out of a verb phrase into their own adverbial (A) block —
-// or Complement (C) at Básico/Elemental, where A doesn't exist.
-function extractAdverbs(components, isBasic) {
+/* Pull leading adverbs out of a verb phrase into their own adverbial (A) block.
+   Aquí decía «or Complement (C) at Básico/Elemental, where A doesn't exist», y
+   recibía un `isBasic` que NUNCA se usó. El comentario es el que se quedó
+   viejo: la paleta de Básico/Elemental sí ofrece A (App.jsx, la lista
+   `['WH','S','AUX','V','A','C']`), así que separar el adverbio está bien en los
+   cuatro niveles y el parámetro no tenía nada que decidir. */
+function extractAdverbs(components) {
   const out = [];
   for (const c of components) {
     if (c.type === 'V' && !c.isAuxiliary) {
@@ -1852,9 +1856,8 @@ function analyzeStructure(text, level) {
     // Split auxiliaries into their own AUX block (rose), distinct from the main
     // verb (V, deep red) — applied once here so both the display and the practice
     // answer map (buildStructureAnswerMap) stay consistent.
-    const isBasic = level === 'Básico' || level === 'Elemental';
     const rows = rawRows.map(row =>
-      row.components ? { ...row, components: extractAdverbs(markAuxiliaries(row.components), isBasic) } : row
+      row.components ? { ...row, components: extractAdverbs(markAuxiliaries(row.components)) } : row
     );
 
     return {

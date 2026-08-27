@@ -32,12 +32,15 @@ jobs:
         run: npm install
         working-directory: pos-highlighter
 
-      # Los 173 tests antes de construir, como en las otras tres apps.
-      # `npm run lint` NO entra todavía: hoy sale con 14 errores (variables sin
-      # usar, casi todos en los tests) y meterlo aquí sin limpiarlo antes
-      # bloquearía cualquier publicación por algo que no afecta al alumno.
+      # Los 173 tests y el lint, antes de construir. El lint entró cuando se
+      # limpiaron sus 14 errores, no antes: una guardia que obliga a saltársela
+      # deja de ser una guardia.
       - name: Las pruebas
         run: npm test
+        working-directory: pos-highlighter
+
+      - name: El lint
+        run: npm run lint
         working-directory: pos-highlighter
 
       - name: Build

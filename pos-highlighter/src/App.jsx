@@ -2187,7 +2187,7 @@ function App() {
       const { newly } = evaluateBadges(p, BADGES);
       saveProgress(window.localStorage, p);
       if (newly.length) pushBadgeToasts(newly);
-    } catch (e) {}
+    } catch { /* el progreso es accesorio: si localStorage falla, el análisis sigue */ }
   };
 
   // Práctica calificada → cuenta como intento en el progreso compartido
@@ -2198,7 +2198,7 @@ function App() {
       const { newly } = evaluateBadges(p, BADGES);
       saveProgress(window.localStorage, p);
       if (newly.length) pushBadgeToasts(newly);
-    } catch (e) {}
+    } catch { /* ídem: sin progreso guardado, la práctica se puede seguir haciendo */ }
   };
 
   // Centrar la vista en el análisis al generarlo (queda escondido en móvil)

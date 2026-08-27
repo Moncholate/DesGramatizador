@@ -591,7 +591,9 @@ describe('estructura — preguntas de sujeto (sin auxiliar)', () => {
    entera se iba dentro del complemento. */
 describe('condicionales: condición y resultado', () => {
   // Mapa legible de la fila: «conector» o [papel]
-  const forma = (t, lvl = 'Intermedio') =>
+  // Sin nivel: `analyzeStructure` sin él se comporta como Intermedio, que es
+  // donde viven los condicionales. Antes lo declaraba y no lo pasaba.
+  const forma = (t) =>
     analyzeStructure(t)[0].rows
       .map(r => (r.isConjunction ? `«${r.text}»` : (r.papel ? `[${r.papel}]` : '[·]')))
       .join(' ');
