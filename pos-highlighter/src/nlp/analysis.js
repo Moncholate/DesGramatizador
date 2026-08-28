@@ -1495,16 +1495,85 @@ function analyzeSentenceStructure(sentenceText, level) {
         };
       }
 
-      // Non-copular: try to separate object and adverbial
-      // Priority: if afterVerb starts with an object pronoun, use it directly
+      /* EL OBJETO ─────────────────────────────────────────────────────────
+         Dos cosas estaban mal, y juntas hacían que en Intermedio casi ningún
+         objeto se reconociera como tal:
+
+         1. Se buscaba con `afterDoc.match('(#Determiner|#Possessive)?
+            #Adjective* #Noun+')`, y en esta versión de compromise los
+            cuantificadores opcionales de ese patrón NO casan: con «a book»
+            devuelve vacío (`#Determiner? #Noun+` sí lo encuentra).
+         2. Se preguntaba sobre el TROZO posterior al verbo, y compromise
+            etiqueta POR POSICIÓN: «books» suelto no es sustantivo para él,
+            pero en «She reads books» sí lo es.
+
+         Resultado: el objeto se caía al cajón de «lo que sobra → C». Medido en
+         un párrafo de ocho oraciones en Intermedio: 22 de 41 palabras salían C
+         y solo UNA salía O. Y como la paleta de ese nivel no ofrecía C, más de
+         la mitad de las palabras eran imposibles de acertar en «Pintar la
+         estructura».
+
+         Ahora se recorren los términos de la oración entera, ya etiquetados con
+         su contexto, y se corta donde deja de haber sintagma nominal. */
       const OBJ_PRONOUNS = new Set(['it','him','her','them','me','us','whom']);
+      /* compromise etiqueta «here» como `Noun|Uncountable`, y con eso «She works
+         here» daba O:here. Son adverbiales: nunca son el objeto de la acción.
+         Se miran solo como PRIMERA palabra, así que «a home» sigue siendo
+         objeto y «home» suelto no. */
+      const NUNCA_OBJETO = new Set(['here','there','now','then','today','tonight',
+        'yesterday','tomorrow','home','abroad','outside','inside','upstairs',
+        'downstairs','everywhere','somewhere','anywhere','nowhere','away','back',
+        'again','together','downtown']);
+      const DEL_SINTAGMA = ['Noun', 'ProperNoun', 'Determiner', 'Possessive', 'Adjective', 'Value'];
+      /* `Date`/`Duration` cortan aunque sean sustantivos: «every day» y
+         «yesterday» son adverbiales, no el objeto de «plays». */
+      const CORTA = ['Preposition', 'Conjunction', 'Adverb', 'Verb', 'Date', 'Duration'];
+      const terminosOracion = doc.json({ terms: { tags: true } })[0]?.terms || [];
+      const palabrasDespues = afterVerb.split(/\s+/).filter(Boolean);
+      const terminosDespues = terminosOracion.slice(Math.max(0, terminosOracion.length - palabrasDespues.length));
+      const tagsDe = (i) => (terminosDespues[i] && terminosDespues[i].tags) || [];
+      const sintagmaDesde = (desde) => {
+        const tomados = [];
+        for (let i = desde; i < terminosDespues.length; i++) {
+          const tags = tagsDe(i);
+          const palabra = terminosDespues[i].text.toLowerCase().replace(/[.,;:!?]+$/, '');
+          if (i === desde && NUNCA_OBJETO.has(palabra)) break;
+          if (tags.some(t => CORTA.includes(t)) || !tags.some(t => DEL_SINTAGMA.includes(t))) break;
+          tomados.push(terminosDespues[i].text);
+        }
+        // Un determinante colgando al final no es sintagma: «football every» → «football»
+        while (tomados.length) {
+          const tags = tagsDe(desde + tomados.length - 1);
+          if (tags.includes('Determiner') && !tags.includes('Noun')) tomados.pop(); else break;
+        }
+        /* Sin núcleo nominal no hay objeto. Los adjetivos entran para «the red
+           house», pero solos no bastan: «She should have called earlier» daba
+           O:earlier, y «earlier» es `Adjective|Superlative` para compromise. */
+        const hayNucleo = tomados.some((_, k) =>
+          tagsDe(desde + k).some(t => t === 'Noun' || t === 'ProperNoun'));
+        if (!hayNucleo) return '';
+        /* La relativa viaja CON su antecedente: «I know the man who called» es
+           un solo objeto, no O:«the man» + C:«who called». Se mira la palabra y
+           no la etiqueta porque compromise llama `Preposition` a «who». */
+        const RELATIVOS = new Set(['who', 'whom', 'whose', 'which', 'that']);
+        const siguiente = desde + tomados.length;
+        const palabraSig = (terminosDespues[siguiente]?.text || '').toLowerCase().replace(/[.,;:!?]+$/, '');
+        if (RELATIVOS.has(palabraSig) && terminosDespues.length > siguiente + 1) {
+          for (let i = siguiente; i < terminosDespues.length; i++) tomados.push(terminosDespues[i].text);
+        }
+        return tomados.join(' ').replace(/[.,;:!?]+$/, '').trim();
+      };
+
       const firstAVWord = afterVerb.trim().split(/\s+/)[0].toLowerCase().replace(/[,;:.!?]$/, '');
       let obj = '';
+      let objDirecto = '';
       if (OBJ_PRONOUNS.has(firstAVWord)) {
-        obj = afterVerb.trim().split(/\s+/)[0];
+        obj = afterVerb.trim().split(/\s+/)[0].replace(/[.,;:!?]+$/, '');
+        /* Ditransitivo: «He gave me a present». El pronombre es el objeto
+           indirecto y detrás viene el directo, que antes terminaba en C. */
+        objDirecto = sintagmaDesde(1);
       } else {
-        const objMatch = afterDoc.match('(#Determiner|#Possessive)? #Adjective* #Noun+').first();
-        obj = objMatch.found ? objMatch.text() : '';
+        obj = sintagmaDesde(0);
       }
 
       const advMatch = afterDoc.match('#Preposition .+|#Adverb+');
@@ -1525,6 +1594,9 @@ function analyzeSentenceStructure(sentenceText, level) {
       if (obj) {
         components.push({ type: 'O', text: obj });
       }
+      if (objDirecto) {
+        components.push({ type: 'O', text: objDirecto });
+      }
 
       // Post-verbal adverbial goes as A
       if (adv) {
@@ -1534,15 +1606,24 @@ function analyzeSentenceStructure(sentenceText, level) {
       // Capture any remaining text not accounted for by obj/adv → C
       // This handles cases like "prefer it because they..." where "because..." must not be lost
       let remaining = afterVerb;
-      if (obj) {
-        const objIdx = wordIndexOf(remaining, obj);
-        if (objIdx !== -1) remaining = remaining.substring(objIdx + obj.length).trim();
+      for (const trozo of [obj, objDirecto]) {
+        if (!trozo) continue;
+        const idx = wordIndexOf(remaining, trozo);
+        if (idx !== -1) remaining = remaining.substring(idx + trozo.length).trim();
       }
       if (adv) remaining = remaining.replace(adv, '').trim();
       remaining = remaining.replace(/^[,;]+/, '').trim();
       if (remaining) {
+        /* Una palabra suelta al final se absorbe en el objeto («prefer it
+           earlier»), PERO no si es un adverbial: «I bought a book yesterday»
+           dejaba O:«a book yesterday», con el cuándo metido dentro del qué. */
+        const sobra = remaining.toLowerCase().replace(/[.,;:!?]+$/, '');
+        const tagsSobra = (terminosDespues.find(t =>
+          t.text.toLowerCase().replace(/[.,;:!?]+$/, '') === sobra) || {}).tags || [];
+        const esAdverbial = NUNCA_OBJETO.has(sobra) || ADVERB_LEX.has(sobra) ||
+          tagsSobra.some(t => ['Date', 'Duration', 'Adverb'].includes(t));
         // Single word left over (e.g. a trailing adverb "earlier") → absorb into O, not a new block
-        if (obj && !/\s/.test(remaining)) {
+        if (obj && !/\s/.test(remaining) && !esAdverbial) {
           const oIdx = components.findIndex(c => c.type === 'O');
           if (oIdx !== -1) components[oIdx] = { ...components[oIdx], text: components[oIdx].text + ' ' + remaining };
         } else {

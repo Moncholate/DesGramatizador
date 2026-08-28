@@ -52,8 +52,11 @@ describe('gerundio como SUJETO', () => {
     expect(partes('Dancing helps.')).toEqual(['S:Dancing', 'V:helps']);
   });
 
+  /* «time» pasó de C a O el 28-ago, con el arreglo del objeto: es lo que toma
+     «takes». Los otros dos no se mueven porque son copulativas —«is fun», «is
+     difficult»— y ahí lo que sigue al verbo es complemento de verdad. */
   it('los que ya acertaban no cambian', () => {
-    expect(partes('Cooking takes time.')).toEqual(['S:Cooking', 'V:takes', 'C:time']);
+    expect(partes('Cooking takes time.')).toEqual(['S:Cooking', 'V:takes', 'O:time']);
     expect(partes('Swimming is fun.')).toEqual(['S:Swimming', 'V:is', 'C:fun']);
     expect(partes('Learning English is difficult.')).toEqual(['S:Learning English', 'V:is', 'C:difficult']);
   });

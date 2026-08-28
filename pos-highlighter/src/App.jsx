@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { isQuestion, tokenizeText, analyzeStructure, buildStructureAnswerMap } from './nlp/analysis';
 import { etiquetasPos, etiquetasEstructura } from './reporte';
+import { bloquesDe } from './bloques';
 import { loadProgress, saveProgress, recordAnalysis, recordAttempt, evaluateBadges, BADGES } from './gamification.generated.js';
 import { TOKENS as TOKENS_LIGHT, TOKENS_DARK, INK } from './tokens.generated.js';
 /* Chip de los dos ejes (forma + − ? y tipo abierta/cerrada), generado desde
@@ -815,7 +816,7 @@ function ManualWordPill({
 function StructurePalette({ level, selectedStructure, onSelectStructure, activeStruct, lang }) {
   const t = TRANSLATIONS[lang];
   const isBasic = level === 'Básico' || level === 'Elemental';
-  const items = isBasic ? ['WH', 'S', 'AUX', 'V', 'A', 'C'] : ['WH', 'S', 'AUX', 'V', 'O', 'A'];
+  const items = bloquesDe(level);
   const highlight = selectedStructure || activeStruct;
 
   return (
@@ -1411,10 +1412,7 @@ function LegendItem({ posKey, unlocked, isManual, isSelected, onSelect }) {
 
 function StructureLegend({ level, lang }) {
   const t = TRANSLATIONS[lang];
-  const isBasic = level === 'Básico' || level === 'Elemental';
-  const items = isBasic
-    ? ['WH', 'S', 'AUX', 'V', 'A', 'C']
-    : ['WH', 'S', 'AUX', 'V', 'O', 'A'];
+  const items = bloquesDe(level);
 
   return (
     <div className="mb-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
@@ -1604,8 +1602,7 @@ function MobileBar({
     || (!isManual && (autoView === 'structure' || (isBoth && bothTab === 'structure')));
 
   if (showStructure) {
-    const isBasic = level === 'Básico' || level === 'Elemental';
-    const items = isBasic ? ['WH', 'S', 'AUX', 'V', 'A', 'C'] : ['WH', 'S', 'AUX', 'V', 'O', 'A'];
+    const items = bloquesDe(level);
 
     return (
       <div className="md:hidden flex-shrink-0 bg-white border-t border-gray-200 z-30 shadow-[0_-2px_14px_rgba(0,0,0,0.08)]">
@@ -2296,8 +2293,7 @@ function App() {
       setUserPOSTags(prev => applyTag(prev, tokenId, applied));
       setActivePos(applied);
     } else if (manualView === 'structure') {
-      const isBasic = level === 'Básico' || level === 'Elemental';
-      const cycle = isBasic ? ['WH', 'S', 'AUX', 'V', 'A', 'C'] : ['WH', 'S', 'AUX', 'V', 'O', 'A'];
+      const cycle = bloquesDe(level);
       const current = userStructureTags[tokenId];
       const applied = selectedStructure
         ? (current === selectedStructure ? null : selectedStructure)

@@ -268,9 +268,13 @@ describe('estructura — relativas de sujeto (I4)', () => {
     expect(blocks('The girl who lives next door is my friend.', 'Intermedio'))
       .toEqual(['S:The girl who lives next door', 'V:is', 'C:my friend']);
   });
+  /* La etiqueta pasó de C a O el 28-ago: «the man who called» es el objeto de
+     «know», no un complemento. Lo que este caso vigila —que la relativa no se
+     lea como la cláusula principal— sigue igual: el bloque se mantiene ENTERO,
+     con su antecedente. */
   it('relativa de objeto NO se confunde (verbo principal primero)', () => {
     expect(blocks('I know the man who called.', 'Intermedio'))
-      .toEqual(['S:I', 'V:know', 'C:the man who called']);
+      .toEqual(['S:I', 'V:know', 'O:the man who called']);
   });
   it('"that" complementante no activa la relativa de sujeto', () => {
     const b = blocks('She thinks that he is right.', 'Intermedio');
