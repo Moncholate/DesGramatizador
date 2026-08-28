@@ -150,6 +150,10 @@ const TRANSLATIONS = {
       O: 'recibe la acción: ¿qué? / ¿a quién?',
       A: '¿cuándo? / ¿dónde? / ¿cómo?',
     },
+    /* En Básico el bloque A solo sale con el adverbio de frecuencia, así que
+       prometerle al alumno «¿dónde? / ¿cómo?» era enseñarle una casilla que en
+       su nivel nunca se marca. */
+    structureDefABasico: 'con qué frecuencia: always, never, usually',
     // Structure warnings
     complexWarning: 'Oración compleja (múltiples cláusulas o más de 15 palabras). El análisis puede no ser exacto: consulta con tu docente.',
     questionNotAvailable: 'Pregunta: análisis de estructura no disponible para este tipo de oración.',
@@ -281,6 +285,7 @@ const TRANSLATIONS = {
       O: 'receives the action: what? / whom?',
       A: 'when? / where? / how?',
     },
+    structureDefABasico: 'how often: always, never, usually',
     // Structure warnings
     complexWarning: 'Complex sentence (multiple clauses or 15+ words). The analysis may not be exact: check with your teacher.',
     questionNotAvailable: 'Question: structure analysis not available for this sentence type.',
@@ -813,6 +818,14 @@ function ManualWordPill({
    STRUCTURE PALETTE (block type selector for Paint Structure)
 ═══════════════════════════════════════════════════════════ */
 
+/* La definición del bloque, con el nivel en cuenta. El único caso especial es
+   A: ver `structureDefABasico`. Va aquí y no en el mapa STRUCTURE porque el mapa
+   no sabe de niveles ni de idioma. */
+function defEstructura(t, key, level) {
+  if (key === 'A' && (level === 'Básico') && t.structureDefABasico) return t.structureDefABasico;
+  return (t.structureDef && t.structureDef[key]) || STRUCTURE[key].def;
+}
+
 function StructurePalette({ level, selectedStructure, onSelectStructure, activeStruct, lang }) {
   const t = TRANSLATIONS[lang];
   const isBasic = level === 'Básico' || level === 'Elemental';
@@ -851,8 +864,10 @@ function StructurePalette({ level, selectedStructure, onSelectStructure, activeS
                 <div className="text-xs font-bold leading-tight" style={{ color: s.color }}>
                   {s.name}
                 </div>
+                {/* Estaba `s.def`, o sea el texto en inglés del mapa: en la app
+                    en español la paleta enseñaba la definición sin traducir. */}
                 <div className="text-[10px] text-muted leading-tight">
-                  {s.def}
+                  {defEstructura(t, key, level)}
                 </div>
               </div>
             </button>
@@ -1438,7 +1453,7 @@ function StructureLegend({ level, lang }) {
                   {s.name}
                 </div>
                 <div className="text-xs text-muted leading-relaxed">
-                  {t.structureDef[key]}
+                  {defEstructura(t, key, level)}
                 </div>
               </div>
             </div>
@@ -1703,7 +1718,7 @@ function MobileBar({
    (modelo de pestañas homogéneo con QL / Grammaster)
 ═══════════════════════════════════════════════════════════ */
 
-function GuidePanel({ lang }) {
+function GuidePanel({ lang, level }) {
   const t = TRANSLATIONS[lang] || TRANSLATIONS.es;
   const es = lang === 'es';
   const structKeys = ['WH', 'S', 'AUX', 'V', 'O', 'C', 'A'];
@@ -1850,7 +1865,7 @@ function GuidePanel({ lang }) {
           <div className="space-y-1">
             {structKeys.map(k => { const s = STRUCTURE[k]; return (
               <Row key={k} label={s.label} color={s.color} bg={s.bg} name={s.name}
-                def={(t.structureDef && t.structureDef[k]) || s.def} />
+                def={defEstructura(t, k, level)} />
             ); })}
           </div>
         </div>
@@ -3101,7 +3116,7 @@ function App() {
            fija se come pantalla en un teléfono. El aviso que pesa a efectos
            legales es el del código y el LICENSE del repositorio. */
         <>
-          <GuidePanel lang={lang} />
+          <GuidePanel lang={lang} level={level} />
           <p className="pb-4 text-[11px] text-muted text-center">
             Desgramatizador · © 2026 Víctor Manuel Morales Muñoz · {lang === 'es' ? 'Todos los derechos reservados' : 'All rights reserved'}
           </p>

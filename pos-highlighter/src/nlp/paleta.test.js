@@ -112,19 +112,86 @@ describe('el objeto se reconoce, que es lo que Intermedio enseña', () => {
   });
 
   it('el adverbial no se mete dentro del objeto', () => {
-    expect(bloques('I bought a book yesterday.')).toEqual(['S:I', 'V:bought', 'O:a book', 'C:yesterday']);
+    expect(bloques('I bought a book yesterday.')).toEqual(['S:I', 'V:bought', 'O:a book', 'A:yesterday']);
     expect(bloques('He plays football every day.')).toEqual(['S:He', 'V:plays', 'O:football', 'C:every day']);
   });
 
   /* «here» es adverbial aunque compromise lo etiquete `Noun|Uncountable`, y
      un adjetivo suelto no es un sintagma nominal. */
   it('lo que no es sintagma nominal no se vuelve objeto', () => {
-    expect(bloques('She works here.')).toEqual(['S:She', 'V:works', 'C:here']);
+    expect(bloques('She works here.')).toEqual(['S:She', 'V:works', 'A:here']);
     // El auxiliar va en su propio bloque: esta vista es la de la app, con markAuxiliaries.
     expect(bloques('She should have called earlier.')).toEqual(['S:She', 'AUX:should have', 'V:called', 'C:earlier']);
   });
 
   it('la copulativa sigue llevando complemento, no objeto', () => {
     expect(bloques('The cat is on the table.')).toEqual(['S:The cat', 'V:is', 'C:on the table']);
+  });
+});
+
+/* ============================================================================
+   EL BLOQUE A, POR NIVEL
+   ----------------------------------------------------------------------------
+   Criterio del profesor (28-ago-2026):
+     · En Básico solo se ve el adverbio de FRECUENCIA — el que va delante del
+       verbo. Un «quickly» detrás se queda en el complemento, porque el alumno
+       todavía no ha visto qué es un adverbio.
+     · La formación y el uso de los adverbios entran en Elemental II, así que
+       desde Elemental el adverbio suelto tiene su propio bloque.
+     · Los adverbiales PREPOSICIONALES no se ven en ningún curso: «in the
+       evening» se queda en C en todos los niveles, y la app tenía una rama que
+       pretendía meterlos en A (nunca se ejecutó, por un patrón roto).
+   ========================================================================== */
+describe('el bloque A por nivel', () => {
+  const bloquesEn = (frase, nivel) => analyzeStructure(frase, nivel)[0].rows
+    .flatMap(r => r.components).map(c => `${c.type}:${c.text}`);
+
+  it('la frecuencia es A en TODOS los niveles, también en Básico', () => {
+    for (const nivel of NIVELES) {
+      expect(bloquesEn('She always works here.', nivel), nivel).toContain('A:always');
+    }
+  });
+
+  it('en Básico el adverbio suelto de detrás NO es A todavía', () => {
+    expect(bloquesEn('She works quickly.', 'Básico')).toEqual(['S:She', 'V:works', 'C:quickly']);
+    expect(bloquesEn('They arrived late.', 'Básico')).toEqual(['S:They', 'V:arrived', 'C:late']);
+    expect(bloquesEn('She works here.', 'Básico')).toEqual(['S:She', 'V:works', 'C:here']);
+  });
+
+  it('desde Elemental sí, que es donde se ven', () => {
+    for (const nivel of ['Elemental', 'Intermedio', 'Intermedio Alto']) {
+      expect(bloquesEn('She works quickly.', nivel), nivel).toEqual(['S:She', 'V:works', 'A:quickly']);
+      expect(bloquesEn('They arrived late.', nivel), nivel).toEqual(['S:They', 'V:arrived', 'A:late']);
+    }
+  });
+
+  it('el mismo adverbio vale igual delante que detrás', () => {
+    // Antes «Yesterday she worked» llevaba C y «She never works» A.
+    expect(bloquesEn('Yesterday she worked here.', 'Intermedio'))
+      .toEqual(['A:Yesterday', 'S:she', 'V:worked', 'A:here']);
+  });
+
+  /* En Básico todo lo que sigue al verbo va en UN solo bloque C, así que no se
+     puede pedir el bloque «C:in the evening» exacto: lo que se exige es que la
+     frase preposicional viva dentro de un complemento y nunca en un A. */
+  it('las frases preposicionales NO son A en ningún nivel', () => {
+    const casos = [
+      ['They watch TV in the evening.', 'in the evening'],
+      ['We study at home.', 'at home'],
+      ['The cat is on the table.', 'on the table'],
+    ];
+    for (const nivel of NIVELES) {
+      for (const [frase, trozo] of casos) {
+        const bloques = bloquesEn(frase, nivel);
+        const donde = `${nivel} · ${frase}`;
+        expect(bloques.filter(b => b.startsWith('A:') && b.includes(trozo.split(' ')[0])), donde).toEqual([]);
+        expect(bloques.some(b => b.startsWith('C:') && b.includes(trozo)), donde).toBe(true);
+      }
+    }
+  });
+
+  it('una palabra, no dos: «every day» se queda en el complemento', () => {
+    expect(bloquesEn('He plays football every day.', 'Intermedio'))
+      .toEqual(['S:He', 'V:plays', 'O:football', 'C:every day']);
   });
 });

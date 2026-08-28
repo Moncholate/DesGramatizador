@@ -27,7 +27,10 @@ describe('«The dog runs.» — el sujeto singular con determinante', () => {
   });
 
   it('lo que ya funcionaba sigue igual', () => {
-    expect(partes('The dog runs fast.')).toEqual(['S:The dog', 'V:runs', 'C:fast']);
+    /* «fast» pasó de C a A el 28-ago: el adverbio suelto detrás del verbo tiene
+       su propio bloque desde Elemental. `partes` no pasa nivel, así que va por
+       ahí. En Básico seguiría siendo C. */
+    expect(partes('The dog runs fast.')).toEqual(['S:The dog', 'V:runs', 'A:fast']);
     expect(partes('She runs.')).toEqual(['S:She', 'V:runs']);
     expect(partes('The dogs run.')).toEqual(['S:The dogs', 'V:run']);
   });
