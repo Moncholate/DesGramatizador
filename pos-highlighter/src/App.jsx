@@ -2056,6 +2056,15 @@ function App() {
      de análisis, y el reporte típico va a ser «esta palabra está mal pintada». */
   const [reporte, setReporte] = useState(null);
   const [reporteCopiado, setReporteCopiado] = useState(false);
+  /* ¿HAY ALGO QUE REPORTAR? El botón salía en las cuatro pestañas, también en la
+     Guía o en Progreso sin haber analizado nada, y ahí el informe era el
+     encabezado y una lista de campos vacíos. Un botón que no hace nada enseña a
+     no tocarlo, y el día que sí haga falta ya nadie lo usa.
+     Se reporta lo que la app ANALIZÓ: hace falta texto Y un análisis hecho —con
+     texto escrito pero sin analizar todavía no hay nada que la app haya
+     decidido, así que no hay nada de lo que quejarse—. */
+  const hayQueReportar = analyzed && !!String(text || '').trim();
+
   const construirReporte = () => {
     const linea = (k, v) => (v == null || v === '' ? null : `${k}: ${v}`);
     const etiquetas = (obj) => Object.keys(obj).length
@@ -2615,14 +2624,16 @@ function App() {
                 controles de la cabecera no se encuentra, que fue la queja en
                 Grammaster. `text-amber-700` sobre `bg-amber-50` porque es el
                 par que la capa oscura sabe invertir. */}
-            <button
-              onClick={() => { setReporte(construirReporte()); setReporteCopiado(false); }}
-              title={t.reportar} aria-label={t.reportar}
-              className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-bold bg-amber-50 border border-amber-400 text-amber-700 hover:bg-amber-100 transition-all"
-            >
-              <span aria-hidden="true" className="text-sm leading-none">⚠️</span>
-              <span className="hidden sm:inline whitespace-nowrap">{t.reportarCorto}</span>
-            </button>
+            {hayQueReportar && (
+              <button
+                onClick={() => { setReporte(construirReporte()); setReporteCopiado(false); }}
+                title={t.reportar} aria-label={t.reportar}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-bold bg-amber-50 border border-amber-400 text-amber-700 hover:bg-amber-100 transition-all"
+              >
+                <span aria-hidden="true" className="text-sm leading-none">⚠️</span>
+                <span className="hidden sm:inline whitespace-nowrap">{t.reportarCorto}</span>
+              </button>
+            )}
           </div>
         </div>
 
