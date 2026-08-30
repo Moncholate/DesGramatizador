@@ -110,11 +110,32 @@ export const AUDITOR = () => {
     return [componer(capas, [255, 255, 255])];
   };
 
+  /* LOS CAMPOS DE ESCRITURA NO TIENEN NODO DE TEXTO: lo que se lee en ellos vive
+     en la propiedad `value` —o en el `placeholder` cuando están vacíos—, así que
+     el barrido de nodos de texto no los miraba NUNCA. Se estrenó un `textarea`
+     en el hub y salió con la tinta clara del tema oscuro sobre el fondo blanco
+     que le pone el navegador: ilegible, y la sonda en verde. Lo vio el profesor,
+     no la sonda, que es exactamente el fallo que esta herramienta viene a
+     evitar. */
+  const SIN_TEXTO = ['checkbox', 'radio', 'range', 'color', 'file', 'hidden', 'submit', 'button', 'image'];
+  const textoDeCampo = (el) => {
+    const t = el.tagName;
+    if (t === 'TEXTAREA') return String(el.value || el.placeholder || '');
+    if (t === 'INPUT' && !SIN_TEXTO.includes(el.type)) return String(el.value || el.placeholder || '');
+    if (t === 'SELECT') return String((el.options && el.options[el.selectedIndex] && el.options[el.selectedIndex].text) || '');
+    return '';
+  };
+  const esCampo = (el) => ['TEXTAREA', 'INPUT', 'SELECT'].includes(el.tagName);
+  /* Vacío con placeholder: lo que se ve es el placeholder, y lo pinta su propia
+     pseudo-clase — `cs.color` diría otro color del que el ojo ve. */
+  const usaPlaceholder = (el) => esCampo(el) && !el.value && el.placeholder;
+
   const out = [];
   for (const el of document.querySelectorAll('*')) {
     // Solo el texto PROPIO del elemento: contando el heredado, cada contenedor
     // repetiría el fallo de sus hijos y la lista sería ilegible.
-    const txt = [...el.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim();
+    const propio = [...el.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim();
+    const txt = propio || (esCampo(el) ? textoDeCampo(el).trim() : '');
     if (!txt) continue;
 
     const cs = getComputedStyle(el);
@@ -128,7 +149,9 @@ export const AUDITOR = () => {
        son emoji («*», «●») SÍ se auditan: esos sí los pinta el CSS. */
     if (!txt.replace(/\p{Extended_Pictographic}|[️‍\s]/gu, '')) continue;
 
-    const fg = parse(cs.color);
+    const fg = parse(usaPlaceholder(el)
+      ? getComputedStyle(el, '::placeholder').color
+      : cs.color);
     if (!fg || (fg[3] ?? 1) === 0) continue;
     // Contra un degradado hay varios fondos posibles: se guarda el PEOR, que es
     // el que decide si el texto se lee en todo el recorrido.
