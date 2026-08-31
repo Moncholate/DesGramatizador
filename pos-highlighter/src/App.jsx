@@ -2060,10 +2060,12 @@ function App() {
      Guía o en Progreso sin haber analizado nada, y ahí el informe era el
      encabezado y una lista de campos vacíos. Un botón que no hace nada enseña a
      no tocarlo, y el día que sí haga falta ya nadie lo usa.
-     Se reporta lo que la app ANALIZÓ: hace falta texto Y un análisis hecho —con
-     texto escrito pero sin analizar todavía no hay nada que la app haya
-     decidido, así que no hay nada de lo que quejarse—. */
-  const hayQueReportar = analyzed && !!String(text || '').trim();
+     Se reporta lo que la app ANALIZÓ Y DONDE ESTÁ: hace falta texto, un análisis
+     hecho, y estar en el espacio de trabajo. Con texto escrito pero sin analizar
+     no hay nada que la app haya decidido; y en la Guía o el Progreso no hay nada
+     delante de lo que quejarse aunque el análisis siga cargado — lo dijo el
+     profesor al probarlo: cambiar de pestaña y seguir viendo el botón. */
+  const hayQueReportar = panel === null && analyzed && !!String(text || '').trim();
 
   const construirReporte = () => {
     const linea = (k, v) => (v == null || v === '' ? null : `${k}: ${v}`);
