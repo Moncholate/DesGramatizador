@@ -35,7 +35,7 @@
    llega a la pantalla que vale la pena auditar, y eso es lo único que cada una
    aporta.
    ============================================================================ */
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -231,10 +231,30 @@ export async function correr({ nombre, puerto, conducir, pantallas, cambiarTema,
      porque su package.json no exporta `./bin/vite.js`, y la ruta de
      `node_modules/.bin` cambia de nombre entre Windows y Linux.
      `--strictPort` para que no se mude en silencio a otro puerto si el elegido
-     está ocupado — pasó, y la sonda acabó auditando OTRA app. */
-  const vite = spawn('npx', ['vite', '--port', String(puerto), '--strictPort'],
+     está ocupado — pasó, y la sonda acabó auditando OTRA app.
+
+     `--no-open` PORQUE ESTA SONDA NO ES PARA MIRARLA. Las cuatro apps tienen
+     `server.open: true` en su vite.config —que es lo que se quiere al escribir
+     `npm run dev`— y sin desactivarlo cada pasada abre una pestaña de verdad en
+     el navegador de quien la corre. La sonda audita en un Chromium sin ventana;
+     la pestaña que se abría no servía para nada y molestaba. */
+  const vite = spawn('npx', ['vite', '--port', String(puerto), '--strictPort', '--no-open'],
     { cwd: process.cwd(), stdio: 'ignore', shell: true });
-  const cerrar = () => { try { vite.kill(); } catch {} };
+
+  /* SE MATA EL ÁRBOL, NO EL PROCESO. Con `shell:true`, `vite.kill()` mata el
+     envoltorio de npx y deja vivo el vite de dentro: en Windows queda un
+     servidor huérfano vigilando la carpeta después de cada pasada, y se
+     acumulan sin que nadie lo note porque el comando «terminó bien».
+     En Windows lo resuelve `taskkill /T`; en el resto, el grupo de procesos. */
+  const cerrar = () => {
+    try {
+      if (process.platform === 'win32') {
+        spawnSync('taskkill', ['/PID', String(vite.pid), '/T', '/F'], { stdio: 'ignore' });
+      } else {
+        vite.kill('SIGTERM');
+      }
+    } catch { /* ya estaba muerto */ }
+  };
   process.on('exit', cerrar);
   process.on('SIGINT', () => { cerrar(); process.exit(130); });
 
