@@ -2584,7 +2584,14 @@ function App() {
           {t.offlineMsg}
         </div>
       )}
-      {/* ══ HEADER ══════════════════════════════════════════ */}
+      {/* ══ HEADER ══════════════════════════════════════════
+          DENTRO DEL HUB NO SE PINTA. Estaban las dos barras apiladas —la del
+          hub y esta— repitiendo logo, nombre y botón de tema, y entre ambas se
+          llevaban más de cien píxeles de alto. Ahora la barra del hub lleva la
+          identidad y el tema. Lo único que se queda de este lado es Reportar,
+          más abajo: depende de si HAY algo que reportar, y eso solo lo sabe
+          esta app. */}
+      {!fromHub && (
       <header className="flex-shrink-0 bg-white border-b border-gray-200 shadow-sm z-10 px-4 pt-3 pb-2.5">
         {/* Row 1: logo + title */}
         <div className="flex items-center justify-between">
@@ -2654,6 +2661,27 @@ function App() {
           </div>
         )}
       </header>
+      )}
+
+      {/* REPORTAR, EMBEBIDO. La cabecera se fue, pero este botón no podía irse
+          con ella: sale solo cuando hay algo delante que reportar, y eso lo
+          sabe esta app y no el hub. Subirlo a la barra de allá pedía mensajería
+          en los dos sentidos —avisar cada cambio de estado y devolver el clic—
+          por triplicado, para un botón.
+          Se queda de este lado, pero FUERA de una cabecera: sin borde, sin
+          fondo y sin barra. Cuando no hay nada que reportar no ocupa nada. */}
+      {fromHub && hayQueReportar && (
+        <div className="flex-shrink-0 px-4 pt-3 max-w-5xl w-full mx-auto flex justify-end">
+          <button
+            onClick={() => { setReporte(construirReporte()); setReporteCopiado(false); }}
+            title={t.reportar} aria-label={t.reportar}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-bold bg-amber-50 border border-amber-400 text-amber-700 hover:bg-amber-100 transition-all"
+          >
+            <span aria-hidden="true" className="text-sm leading-none">⚠️</span>
+            <span className="hidden sm:inline whitespace-nowrap">{t.reportarCorto}</span>
+          </button>
+        </div>
+      )}
 
       {/* Salir de la sección al análisis. Antes solo se podía por la barra de
           abajo, así que el único «atrás» a la vista era el del Hub —arriba a la
