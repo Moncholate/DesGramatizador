@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Search, BookOpen, PenLine, BarChart2, Sun, Moon } from 'lucide-react';
 import { isQuestion, tokenizeText, analyzeStructure, buildStructureAnswerMap } from './nlp/analysis';
 import { etiquetasPos, etiquetasEstructura } from './reporte';
 import { bloquesDe } from './bloques';
@@ -53,7 +54,12 @@ function ThemeToggle({ lang = 'es' }) {
       title={`${lang === 'es' ? 'Cambiar a modo' : 'Switch to'} ${name.toLowerCase()}`}
       aria-label={`${lang === 'es' ? 'Cambiar a modo' : 'Switch to'} ${name.toLowerCase()}`}
     >
-      <span className="text-base leading-none">{target === 'dark' ? '🌙' : '☀️'}</span>
+      {/* Icono de línea y no emoji, como la barra de abajo y como el mismo
+          botón en las otras dos apps y en el hub: el emoji lo dibuja el sistema
+          y no se tiñe con el botón. */}
+      {target === 'dark'
+        ? <Moon className="w-4 h-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+        : <Sun className="w-4 h-4 shrink-0" strokeWidth={2} aria-hidden="true" />}
       {/* El rótulo se va en pantalla de teléfono, como ya hace el de Reportar.
           Sin esto, a 360px el botón de Reportar terminaba en x=375 — fuera de
           la pantalla y con scroll horizontal, y 360 es el ancho de bastantes
@@ -1961,26 +1967,48 @@ function ProgressPanel({ lang }) {
   );
 }
 
+/* ICONOS DE LÍNEA, NO EMOJI. Los cuatro eran emoji y se veían como salidos de
+   un teclado y no de la app: cada uno con su color, su volumen y su tamaño
+   óptico, porque los dibuja el sistema operativo y no nosotros. Con lucide los
+   cuatro comparten grosor de trazo, caja y color (`currentColor`), así que la
+   barra se lee como una sola familia y el activo se tiñe de índigo junto al
+   rótulo en vez de quedarse de su color de emoji.
+   Son los MISMOS cuatro de Grammaster y de Question Lab: las tres barras dicen
+   lo mismo con la misma cara, que es lo que se venía arreglando en la suite.
+   Grammaster usa lucide 0.294 y esta app 0.544, y NO es un descuido que haya
+   que «alinear»: esta app va en React 19 y aquella en React 18, y 0.294 no
+   declara React 19 como peer. Igualarlas obliga a `--legacy-peer-deps`. */
 function BottomNav({ section, onSelect, lang }) {
   const es = lang === 'es';
   const items = [
-    { key: 'analyze', icon: '🔍', label: es ? 'Análisis' : 'Analysis' },
-    { key: 'guide', icon: '📖', label: es ? 'Guía' : 'Guide' },
-    { key: 'practice', icon: '✏️', label: es ? 'Práctica' : 'Practice' },
-    { key: 'progress', icon: '📊', label: es ? 'Progreso' : 'Progress' },
+    { key: 'analyze', icon: Search, label: es ? 'Análisis' : 'Analysis' },
+    { key: 'guide', icon: BookOpen, label: es ? 'Guía' : 'Guide' },
+    { key: 'practice', icon: PenLine, label: es ? 'Práctica' : 'Practice' },
+    { key: 'progress', icon: BarChart2, label: es ? 'Progreso' : 'Progress' },
   ];
   return (
     <nav className="flex-shrink-0 bg-white border-t border-gray-200 shadow-lg z-30" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0)' }}>
       <div className="flex items-stretch max-w-2xl mx-auto">
-        {items.map(({ key, icon, label }) => (
+        {/* El componente se saca a una CONSTANTE en mayúscula y no se renombra
+            en el destructurado del parámetro: `varsIgnorePattern: ^[A-Z_]` de
+            eslint.config.js cubre variables, no argumentos, y aquí no está el
+            plugin de React que marca lo usado dentro del JSX. Renombrando en el
+            parámetro, el lint lo da por no usado y tumba el despliegue. */}
+        {items.map((item) => {
+          const { key, label } = item;
+          const Icono = item.icon;
+          return (
           <button key={key} onClick={() => onSelect(key)} aria-pressed={section === key}
             /* hover:text-gray-800 y no -600: QL salta de gris apagado a texto
                pleno y por eso se nota. Con -600 el cambio era casi invisible. */
             className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-colors ${section === key ? 'text-indigo-600' : 'text-muted hover:text-ink'}`}>
-            <span className="text-xl leading-none">{icon}</span>
+            <span className="text-xl leading-none">
+              <Icono className="w-[1.15em] h-[1.15em]" strokeWidth={2} aria-hidden="true" />
+            </span>
             <span className="text-[10px] font-bold leading-tight">{label}</span>
           </button>
-        ))}
+          );
+        })}
       </div>
     </nav>
   );
