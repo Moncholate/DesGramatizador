@@ -31,7 +31,12 @@
 :root[data-theme="dark"] .text-gray-500, :root[data-theme="dark"] .text-gray-400, :root[data-theme="dark"] .text-slate-500, :root[data-theme="dark"] .text-slate-400 { color: #9aa2b6 !important; }
 :root[data-theme="dark"] .border-gray-100, :root[data-theme="dark"] .border-gray-200, :root[data-theme="dark"] .border-slate-100, :root[data-theme="dark"] .border-slate-200, :root[data-theme="dark"] .border-slate-300 { border-color: #2a3042 !important; }
 :root[data-theme="dark"] input, :root[data-theme="dark"] textarea, :root[data-theme="dark"] select { background-color: #141826 !important; color: #eceff8 !important; }
-:root[data-theme="dark"] input::placeholder, :root[data-theme="dark"] textarea::placeholder { color: #6c7488 !important; }
+/* #6c7488 daba 3,78:1 sobre el fondo oscuro de los campos (#141826) y no pasaba
+   AA (pide 4,5): lo cazó el hub —ver su index.css— con un placeholder de un
+   solo carácter visible en reposo, sin nada escrito encima. Mismo fondo de
+   campo en las tres apps, así que el mismo fallo. #828aa0 da 5,13:1, muy cerca
+   de lo apagado que ya es el placeholder en modo claro (#64748b, 4,76:1). */
+:root[data-theme="dark"] input::placeholder, :root[data-theme="dark"] textarea::placeholder { color: #828aa0 !important; }
 :root[data-theme="dark"] .bg-red-50 { background-color: #2e1618 !important; }
 :root[data-theme="dark"] .bg-amber-50 { background-color: #2e2410 !important; }
 :root[data-theme="dark"] .bg-emerald-50, :root[data-theme="dark"] .bg-green-50 { background-color: #123024 !important; }
