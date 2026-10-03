@@ -7,6 +7,6 @@ export const PHRASAL_VERB_LIST = [["get","up"],["wake","up"],["sit","down"],["st
 export const PREP_PARTICLES = new Set(["in","on","at","into","after","to","for"]);
 
 /* Sustantivos que marcan adverbial en vez de objeto del frasal. */
-export const ADVERBIAL_HEADS = new Set(["morning","afternoon","evening","night","midnight","noon","monday","tuesday","wednesday","thursday","friday","saturday","sunday","january","february","march","april","may","june","july","august","september","october","november","december","weekend","week","weekday","holiday","holidays","vacation","vacations","day","summer","winter","spring","autumn","fall","easter","christmas","home","time","foot"]);
+export const ADVERBIAL_HEADS = new Set(["morning","afternoon","evening","night","midnight","noon","monday","tuesday","wednesday","thursday","friday","saturday","sunday","january","february","march","april","may","june","july","august","september","october","november","december","weekend","week","weekday","holiday","holidays","vacation","vacations","day","summer","winter","spring","autumn","fall","easter","christmas","mornings","afternoons","evenings","nights","mondays","tuesdays","wednesdays","thursdays","fridays","saturdays","sundays","weekends","weekdays","home","time","foot"]);
 
 export const DETERMINERS = ["the","a","an","my","your","his","her","our","their"];
