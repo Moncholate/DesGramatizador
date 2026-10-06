@@ -1014,7 +1014,7 @@ function QuestionMessage({ text, lang = 'es' }) {
               : 'is the suite app that specializes in questions: it shows you how this one is built, piece by piece.'}{' '}
             {window.self === window.top ? (
               <a
-                href="https://moncholate.github.io/Question-Lab/"
+                href="https://moncholate.github.io/question-lab/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-bold underline text-teal-700 hover:text-teal-800"

@@ -20,7 +20,7 @@ export default defineConfig({
   define: {
     __APP_BUILD__: JSON.stringify(versionDelCommit()),
   },
-  base: '/DesGramatizador/',
+  base: '/desgramatizador/',
   server: {
     port: 5175,
     open: false
@@ -39,13 +39,14 @@ export default defineConfig({
         display: 'standalone',
         orientation: 'portrait',
         /* `id` fija la identidad de la app instalada aparte de la URL. Sin él
-           la identidad ES el start_url, y esta app ya lo cambió dos veces
-           (/pos-highlighter/ → /Desgramatizador/ → /DesGramatizador/): cada
+           la identidad ES el start_url, y esta app ya lo cambió tres veces
+           (/pos-highlighter/ → /Desgramatizador/ → /DesGramatizador/ →
+           /desgramatizador/, 6-oct-2026, a minúscula): cada
            cambio dejó huérfana a la copia instalada. Si algún día se renombra
            otra vez, se mueven scope y start_url y este `id` se deja quieto. */
         id: '/DesGramatizador/',
-        scope: '/DesGramatizador/',
-        start_url: '/DesGramatizador/',
+        scope: '/desgramatizador/',
+        start_url: '/desgramatizador/',
         icons: [
           { src: 'web-app-manifest-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: 'web-app-manifest-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },

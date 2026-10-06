@@ -4,7 +4,7 @@ Identificador interactivo de Partes de la Oración (POS) para estudiantes de ing
 Pensado para uso en aula, con el temario gramatical de _American English File_
 (3.ª ed.) como referencia de en qué unidad se enseña cada cosa.
 
-🔗 **App en vivo:** https://moncholate.github.io/DesGramatizador/
+🔗 **App en vivo:** https://moncholate.github.io/desgramatizador/
 
 ---
 
